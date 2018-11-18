@@ -180,7 +180,7 @@ function lti_do_connect($tool_provider) {
   // Login the user
   wp_set_current_user($user_id, $user_login);
   wp_set_auth_cookie($user_id);
-  do_action('wp_login', $user_login, $user);  // $ user was added as additional argument for PHP7.2 compatibility MA
+  do_action('wp_login', $user_login, $user);
 
   // Switch to blog
   switch_to_blog($blog_id);
