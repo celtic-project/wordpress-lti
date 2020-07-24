@@ -28,8 +28,12 @@ require_once dirname( __FILE__ ) . DIRECTORY_SEPARATOR . 'lib.php';
 
 class LTI_List_Table extends WP_List_Table {
 
-  function __construct(){
+  private $per_page;
+
+  function __construct($per_page){
     global $status, $page;
+    
+    $this->per_page = $per_page;
 
     // Set parent defaults
     parent::__construct
@@ -184,7 +188,7 @@ class LTI_List_Table extends WP_List_Table {
    * @uses $this->get_pagenum()
    * @uses $this->set_pagination_args()
    ---------------------------------------------------------------*/
-  function prepare_items($per_page) {
+  function prepare_items() {
 
     global $lti_db_connector;
 
@@ -288,7 +292,7 @@ class LTI_List_Table extends WP_List_Table {
      * to ensure that the data is trimmed to only the current page. We can use
      * array_slice() to
      */
-     $data = array_slice($data,(($current_page-1)*$per_page),$per_page);
+     $data = array_slice($data,(($current_page-1)*$this->per_page),$this->per_page);
 
      /**
       * REQUIRED. Now we can add our *sorted* data to the items property, where
@@ -303,8 +307,8 @@ class LTI_List_Table extends WP_List_Table {
        (
          array(
            'total_items' => $total_items,                  //WE have to calculate the total number of items
-           'per_page'    => $per_page,                     //WE have to determine how many items to show on a page
-           'total_pages' => ceil($total_items/$per_page)   //WE have to calculate the total number of pages
+           'per_page'    => $this->per_page,                     //WE have to determine how many items to show on a page
+           'total_pages' => ceil($total_items/$this->per_page)   //WE have to calculate the total number of pages
          )
        );
     }

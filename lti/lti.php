@@ -223,9 +223,11 @@ function lti_manage_screen_options() {
 
 function lti_set_screen_options($status, $option, $value) {
   if ('lti_per_page' == $option) return $value;
+  return $status;
 }
 
 add_filter('set-screen-option', 'lti_set_screen_options', 10, 3);
+add_filter('set_screen_option_lti_per_page', 'lti_set_screen_options', 10, 3);
 
 /*-------------------------------------------------------------------
  * Function to produce the LTI list. Basically builds the form and
@@ -246,8 +248,8 @@ function lti_consumers() {
     $per_page = $screen->get_option('per_page', 'default');
   }
 
-  $lti = new LTI_List_Table();
-  $lti->prepare_items($per_page);
+  $lti = new LTI_List_Table($per_page);
+  $lti->prepare_items();
 
 ?>
 <div class="wrap">

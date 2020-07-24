@@ -124,8 +124,8 @@ function lti_delete($key) {
   // blog is depreciated and so we'll do a direct DB access (look the other way)
   $search_str = '/' . str_replace('.', '', $key) . '%';
   $sites = $wpdb->get_col($wpdb->prepare(
-             "SELECT blog_id FROM wp_blogs WHERE path LIKE %s",
-             $search_str, 0));
+             "SELECT blog_id FROM {$wpdb->prefix}blogs WHERE path LIKE %s",
+             $search_str));
 
   // Delete the blog
   foreach ($sites as $site) {
