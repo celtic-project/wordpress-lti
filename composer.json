@@ -1,0 +1,23 @@
+{
+  "name": "celtic/wordpress-lti",
+  "version": "2.0.0",
+  "description": "WordPress module to add LTI support",
+  "type": "project",
+  "license": "GPL-3.0",
+  "authors": [
+    {
+      "name": "Simon Booth",
+      "email": "s.p.booth@stir.ac.uk"
+    },
+    {
+      "name": "Stephen P Vickers",
+      "email": "stephen@spvsoftwareproducts.com"
+    }
+  ],
+  "support": {
+    "docs": "https://github.com/celtic-project/wordpress-lti"
+  },
+  "require": {
+    "celtic/lti": "^4.0.2"
+  }
+}

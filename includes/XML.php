@@ -1,7 +1,7 @@
 <?php
 /*
  *  wordpress-lti - WordPress module to add LTI support
- *  Copyright (C) 2015  Simon Booth, Stephen P Vickers
+ *  Copyright (C) 2020  Simon Booth, Stephen P Vickers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -18,23 +18,25 @@
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
  *  Contact: s.p.booth@stir.ac.uk
- *
- *  Version history:
- *    1.0.00  18-Apr-13  Initial release
- *    1.1.00  14-Jan-15  Updated for later releases of WordPress
  */
 
-require_once dirname(dirname(dirname(dirname(dirname(__FILE__))))) . DIRECTORY_SEPARATOR . 'wp-admin' . DIRECTORY_SEPARATOR . 'admin.php';
+use ceLTIc\LTI\Platform;
+
 require_once 'lib.php';
 
-$key = $_GET['lti'];
-$consumer = new LTI_Tool_Consumer($key, $lti_db_connector);
+if (!current_user_can('administrator')) {
+    http_response_code(404);
+    die;
+}
 
-$filename = $consumer->name;
-$sanitised = preg_replace('/[^_a-zA-Z0-9-]/','', $filename)  . '.xml';
+$key = $_REQUEST['key'];
+$platform = Platform::fromConsumerKey($key, $lti_db_connector);
 
-$siteurl = get_bloginfo('siteurl') . '/?lti';
-$iconurl = get_bloginfo('siteurl') . '/wp-content/plugins/lti/wp.png';
+$filename = $platform->name;
+$sanitised = preg_replace('/[^_a-zA-Z0-9-]/', '', $filename) . '.xml';
+
+$siteurl = get_bloginfo('url') . '/?lti';
+$iconurl = "{$siteurl}&amp;icon";
 
 $xml = <<< EOD
 <?xml version="1.0" encoding="UTF-8"?>
@@ -55,7 +57,7 @@ $xml = <<< EOD
   <custom />
   <extensions platform="learn">
     <lticm:property name="guid">{$key}</lticm:property>
-    <lticm:property name="secret">{$consumer->secret}</lticm:property>
+    <lticm:property name="secret">{$platform->secret}</lticm:property>
   </extensions>
   <vendor>
     <lticp:code>spvsp</lticp:code>
@@ -71,7 +73,7 @@ EOD;
 
 header("Cache-Control: public");
 header("Content-Description: File Transfer");
-header("Content-Length: ". strlen($xml).";");
+header("Content-Length: " . strlen($xml) . ";");
 header("Content-Disposition: attachment; filename=$sanitised");
 header("Content-Type: application/octet-stream; ");
 header("Content-Transfer-Encoding: binary");
