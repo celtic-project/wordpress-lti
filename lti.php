@@ -82,7 +82,7 @@ function lti_parse_request($wp)
             require_once('includes' . DIRECTORY_SEPARATOR . 'CanvasJSON.php');
         }
         exit;
-    } else if ($_SERVER['REQUEST_METHOD'] !== 'POST') {
+    } else if (($_SERVER['REQUEST_METHOD'] !== 'POST') && empty($_GET['iss'])) {
         return false;
     }
     // Clear any existing session variables for this plugin
@@ -515,7 +515,7 @@ function lti_admin_bar_item_remove()
     /*     * *edit-profile is the ID** */
     $wp_admin_bar->remove_menu('edit-profile');
     $options = get_option('lti_options');
-    if ($options['mysites'] == 1) {
+    if ($options && $options['mysites'] == 1) {
         $wp_admin_bar->remove_node('my-sites');
     }
 }
