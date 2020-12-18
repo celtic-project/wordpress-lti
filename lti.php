@@ -201,6 +201,19 @@ function lti_register_user_submenu_page()
 add_action('admin_menu', 'lti_register_user_submenu_page');
 
 /* -------------------------------------------------------------------
+ * Called to redirect via html meta refresh when headers may have 
+ * already been sent
+  ------------------------------------------------------------------ */
+
+function lti_header_safe_redirect($target_url) {
+    if (headers_sent()) {
+        printf('<meta http-equiv="refresh" content="0; URL='.$target_url.'" />');
+    } else {
+        wp_redirect($target_url);
+    }
+}
+
+/* -------------------------------------------------------------------
  * Called when the admin header is generated and used to do the
  * synchronising of membership
   ------------------------------------------------------------------ */
@@ -217,10 +230,10 @@ function lti_sync_admin_header()
 
     if (isset($_REQUEST['nodelete']) || isset($_REQUEST['delete'])) {
         if (!empty($_SESSION[LTI_SESSION_PREFIX . 'error'])) {
-            wp_redirect(get_admin_url() . "users.php?page=lti_sync_enrolments&action=error");
+            lti_header_safe_redirect(get_admin_url() . "users.php?page=lti_sync_enrolments&action=error");
             exit();
         }
-        wp_redirect('users.php');
+        lti_header_safe_redirect('users.php');
     }
 }
 
