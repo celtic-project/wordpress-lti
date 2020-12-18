@@ -440,6 +440,8 @@ function lti_update($choice)
         );
 
         if (is_wp_error($result)) {
+            // Ensure the element exists before attempting to append
+            if (!in_array(LTI_SESSION_PREFIX . 'error', $_SESSION)) $_SESSION[LTI_SESSION_PREFIX . 'error'] = "";
             $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
             continue;
         }
@@ -453,6 +455,8 @@ function lti_update($choice)
         // Add newly created users to blog and set role
         add_user_to_blog($blog_id, $result, $role);
         if (is_wp_error($result)) {
+            // Ensure the element exists before attempting to append
+            if (!in_array(LTI_SESSION_PREFIX . 'error', $_SESSION)) $_SESSION[LTI_SESSION_PREFIX . 'error'] = "";
             $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
         }
     }
@@ -466,6 +470,8 @@ function lti_update($choice)
         }
         add_user_to_blog($blog_id, $new_u->id, $role);
         if (is_wp_error($result)) {
+            // Ensure the element exists before attempting to append
+            if (!in_array(LTI_SESSION_PREFIX . 'error', $_SESSION)) $_SESSION[LTI_SESSION_PREFIX . 'error'] = "";
             $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
         }
     }
@@ -506,6 +512,8 @@ function lti_update($choice)
             $user = get_user_by('login', $del->username);
             remove_user_from_blog($user->ID, $blog_id);
             if (is_wp_error($result)) {
+                // Ensure the element exists before attempting to append
+                if (!in_array(LTI_SESSION_PREFIX . 'error', $_SESSION)) $_SESSION[LTI_SESSION_PREFIX . 'error'] = "";
                 $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
             }
         }
