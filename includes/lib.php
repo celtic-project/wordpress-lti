@@ -426,10 +426,11 @@ function lti_update($choice)
     $add_users = unserialize($_SESSION[LTI_SESSION_PREFIX . 'provision']);
     foreach ($add_users as $new_u) {
 
+        $nice_trunc = substr($new_u->username,0,40);
         $result = wp_insert_user(
             array(
                 'user_login' => $new_u->username,
-                'user_nicename' => $new_u->username,
+                'user_nicename' => $nice_trunc,
                 'user_pass' => wp_generate_password(),
                 'first_name' => $new_u->firstname,
                 'last_name' => $new_u->lastname,

@@ -103,11 +103,12 @@ class WPTool extends Tool
             $result = wp_insert_user($user);
         } else {
             // Create username if user provisioning is on
+            $nice_trunc = substr($user_login,0,40);
             $result = wp_insert_user(
                 array(
                     'user_login' => $user_login,
                     'user_pass' => wp_generate_password(),
-                    'user_nicename' => $user_login,
+                    'user_nicename' => $nice_trunc,
                     'first_name' => $this->userResult->firstname,
                     'last_name' => $this->userResult->lastname,
                     //'user_email'=> $this->userResult->email,
