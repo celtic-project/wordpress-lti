@@ -422,6 +422,8 @@ function lti_update($choice)
 {
     global $blog_id, $lti_db_connector;
 
+    $_SESSION[LTI_SESSION_PREFIX . 'error'] = '';
+
     // Add users
     $add_users = unserialize($_SESSION[LTI_SESSION_PREFIX . 'provision']);
     foreach ($add_users as $new_u) {
