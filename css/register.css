@@ -1,0 +1,44 @@
+.aligncentre {
+  text-align: center;
+}
+.tbc {
+  margin-bottom: 0;
+  padding-bottom: 0;
+}
+.indent {
+  line-height: 1.5;
+  padding-left: 2em;
+  padding-bottom: 1em;
+}
+.success, .error {
+  border: 1px solid;
+  padding: .75rem 1.25rem;
+}
+.success {
+  color: #155724;
+  background-color: #d4edda;
+  border-color: #c3e6cb;
+}
+.error {
+  color: #721c24;
+  background-color: #f8d7da;
+  border-color: #f5c6cb;
+}
+.hide {
+  display: none;
+}
+button {
+  background: #007cba;
+  border-color: #007cba;
+  color: #fff;
+  min-height: 30px;
+  margin: 0;
+  padding: 0 10px;
+  cursor: pointer;
+  border-width: 1px;
+  border-style: solid;
+  border-radius: 3px;
+}
+button.disabled {
+  opacity: 0.65;
+}

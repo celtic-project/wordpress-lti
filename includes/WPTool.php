@@ -22,8 +22,11 @@
 
 use ceLTIc\LTI;
 use ceLTIc\LTI\Tool;
+use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\Outcome;
+use ceLTIc\LTI\Profile;
+use ceLTIc\LTI\Util;
 
 /* -------------------------------------------------------------------
  * This function is called when a successful LTI call is made. Is is
@@ -41,6 +44,18 @@ class WPTool extends Tool
     {
         parent::__construct($data_connector);
 
+        $this->baseUrl = get_bloginfo('url') . '/';
+
+        $this->vendor = new Profile\Item('celtic', 'ceLTIc Project', 'ceLTIc Project', 'https://www.celtic-project.org/');
+        $this->product = new Profile\Item('687e09a3-4845-4581-9ca4-6845b8728a79', 'WordPress',
+            'Open source software for creating beautiful blogs.', 'https://wordpress.org');
+
+        $requiredMessages = array(new Profile\Message('basic-lti-launch-request', '?lti',
+                array('User.id', 'Membership.role', 'Person.name.full', 'Person.name.family', 'Person.name.given')));
+
+        $this->resourceHandlers[] = new Profile\ResourceHandler(
+            new Profile\Item('wp', 'WordPress', 'Create a beautiful blog.'), '?lti&icon', $requiredMessages, array());
+
         $this->setParameterConstraint('resource_link_id', true, 40, array('basic-lti-launch-request'));
         $this->setParameterConstraint('user_id', true);
 
@@ -48,6 +63,7 @@ class WPTool extends Tool
         $this->allowSharing = true;
 
         $this->signatureMethod = LTI_SIGNATURE_METHOD;
+        $this->jku = $this->baseUrl . '?lti&keys';
         $this->kid = LTI_KID;
         $this->rsaKey = LTI_PRIVATE_KEY;
         $this->requiredScopes = array(
@@ -58,7 +74,7 @@ class WPTool extends Tool
         );
     }
 
-    public function onLaunch()
+    protected function onLaunch()
     {
         // If multisite support isn't in play, go home
         if (!is_multisite()) {
@@ -266,6 +282,152 @@ class WPTool extends Tool
         $this->redirectUrl = get_bloginfo('url');
     }
 
+    protected function onRegistration()
+    {
+        ob_start();
+
+        add_action('wp_enqueue_scripts', 'addToHeader');
+
+        get_header();
+
+        if (!defined('AUTO_ENABLE') || !AUTO_ENABLE) {
+            $successMessage = 'Note that the tool must be enabled by the tool provider before it can be used.';
+        } else if (!defined('ENABLE_FOR_DAYS') || (ENABLE_FOR_DAYS <= 0)) {
+            $successMessage = 'The tool has been automatically enabled by the tool provider for immediate use.';
+        } else {
+            $successMessage = 'The tool has been enabled for you to use for the next ' . ENABLE_FOR_DAYS . ' day';
+            if (ENABLE_FOR_DAYS > 1) {
+                $successMessage .= 's';
+            }
+            $successMessage .= '.';
+        }
+
+        echo <<< EOD
+<div id="primary" class="content-area">
+  <div id="content" class="site-content" role="main">
+
+    <h2 class="entry-title">Registration page</h2>
+
+    <div class="entry-content">
+
+      <p>
+        This page allows you to complete a registration with a Moodle LTI 1.3 platform (other platforms will be supported once they offer this facility).
+      </p>
+
+      <p class="tbc">
+        Select how you would like users to be created within WordPress:
+      </p>
+      <div class="indent">
+        <legend class="screen-reader-text">
+          <span>Resource-specific: Prefix the ID with the consumer key and resource link ID</span>
+        </legend>
+        <label for="lti_scope3">
+          <input name="lti_scope" type="radio" id="lti_scope3" value="3" />
+          <em>Resource-specific:</em> Prefix the ID with the consumer key and resource link ID
+        </label><br />
+        <legend class="screen-reader-text">
+          <span>Context-specific: Prefix the ID with the consumer key and context ID</span>
+        </legend>
+        <label for="lti_scope2">
+          <input name="lti_scope" type="radio" id="lti_scope2" value="2" />
+          <em>Context-specific:</em> Prefix the ID with the consumer key and context ID
+        </label><br />
+        <legend class="screen-reader-text">
+          <span>Platform-specific: Prefix an ID with the consumer key</span>
+        </legend>
+        <label for="lti_scope1">
+          <input name="lti_scope" type="radio" id="lti_scope1" value="1" />
+          <em>Platform-specific:</em> Prefix the ID with the consumer key
+        </label><br />
+        <legend class="screen-reader-text">
+          <span>Global: Use ID value only</span>
+        </legend>
+        <label for="lti_scope0">
+          <input name="lti_scope" type="radio" id="lti_scope0" value="0" />
+          <em>Global:</em> Use ID value only
+        </label>
+      </div>
+
+      <p id="id_continue" class="aligncentre">
+        <button type="button" id="id_continuebutton" class="disabled" onclick="return doRegister();" disabled>Register</button>
+      </p>
+      <p id="id_loading" class="aligncentre hide">
+        <img src="?lti&loading">
+      </p>
+
+      <p id="id_registered" class="success hide">
+        The tool registration was successful.  {$successMessage}
+      </p>
+      <p id="id_notregistered" class="error hide">
+        The tool registration failed.  <span id="id_reason"></span>
+      </p>
+
+      <p id="id_close" class="aligncentre hide">
+        <button type="button" onclick="return doClose(this);">Close</button>
+      </p>
+
+    </div>
+
+  </div>
+</div>
+<script>
+var openid_configuration = '{$_REQUEST['openid_configuration']}';
+var registration_token = '{$_REQUEST['registration_token']}';
+</script>
+EOD;
+
+        get_footer();
+
+        $html = ob_get_contents();
+        ob_end_clean();
+
+        $this->output = $html;
+    }
+
+    public function doRegistration()
+    {
+        $platformConfig = $this->getPlatformConfiguration();
+        if ($this->ok) {
+            $toolConfig = $this->getConfiguration($platformConfig);
+            $registrationConfig = $this->sendRegistration($platformConfig, $toolConfig);
+            if ($this->ok) {
+                $now = time();
+                $this->getPlatformToRegister($platformConfig, $registrationConfig, false);
+                do {
+                    $key = self::getGUID($_POST['lti_scope']);
+                    $platform = Platform::fromConsumerKey($key, $this->dataConnector);
+                } while (!is_null($platform->created));
+                $this->platform->setKey($key);
+                $this->platform->secret = Util::getRandomString(32);
+                $this->platform->name = 'Trial (' . date('Y-m-d H:i:s', $now) . ')';
+                $this->platform->protected = true;
+                if (defined('AUTO_ENABLE') && AUTO_ENABLE) {
+                    $this->platform->enabled = true;
+                }
+                if (defined('ENABLE_FOR_DAYS') && (ENABLE_FOR_DAYS > 0)) {
+                    $this->platform->enableFrom = $now;
+                    $this->platform->enableUntil = $now + (ENABLE_FOR_DAYS * 24 * 60 * 60);
+                }
+                $this->ok = $this->platform->save();
+                if (!$this->ok) {
+                    $this->reason = 'Sorry, an error occurred when saving the platform details.';
+                }
+            }
+        }
+    }
+
+    private static function getGUID($scope)
+    {
+        return "WP{$scope}-" . strtoupper(Util::getRandomString(6));
+    }
+
+}
+
+function addToHeader()
+{
+    wp_register_style('lti-register-style', plugins_url('css/register.css', dirname(__FILE__)));
+    wp_enqueue_style('lti-register-style');
+    wp_enqueue_script('lti-register_script', plugins_url('js/registerjs.php', dirname(__FILE__)), array('jquery'));
 }
 
 ?>

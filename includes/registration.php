@@ -20,22 +20,17 @@
  *  Contact: s.p.booth@stir.ac.uk
  */
 
-use ceLTIc\LTI\Util;
+if ($_SERVER['REQUEST_METHOD'] === 'POST') {
+    $tool = new WPTool($lti_db_connector);
+    $tool->doRegistration();
+    $ok = $tool->ok;
+    $message = $tool->reason;
 
-define('LTI_ID_SCOPE_DEFAULT', '3');
-define('LTI_LOG_LEVEL', Util::LOGLEVEL_ERROR);
-define('LTI_SIGNATURE_METHOD', 'RS256');
-define('LTI_KID', '');  // A random string to identify the key value
-define('LTI_PRIVATE_KEY', <<< EOD
------BEGIN RSA PRIVATE KEY-----
-...
------END RSA PRIVATE KEY-----
-EOD
-);
+    $response = array();
+    $response['ok'] = $ok;
+    $response['message'] = $message;
 
-###
-###  Registration settings
-###
-define('AUTO_ENABLE', false);
-define('ENABLE_FOR_DAYS', 0);
+    header('Content-type: application/json');
+    echo json_encode($response);
+}
 ?>

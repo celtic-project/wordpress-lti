@@ -83,7 +83,13 @@ function lti_parse_request($wp)
                 require_once('includes' . DIRECTORY_SEPARATOR . 'CanvasJSON.php');
             }
             exit;
-        } else if (($_SERVER['REQUEST_METHOD'] !== 'POST') && empty($_GET['iss'])) {
+        } else if (isset($_GET['registration'])) {
+            require_once('includes' . DIRECTORY_SEPARATOR . 'registration.php');
+            exit;
+        } else if (isset($_GET['loading'])) {
+            wp_redirect(plugins_url() . '/lti/loading.gif');
+            exit;
+        } else if (($_SERVER['REQUEST_METHOD'] !== 'POST') && empty($_GET['iss']) && empty($_GET['openid_configuration'])) {
             return false;
         }
         // Clear any existing session variables for this plugin
