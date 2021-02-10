@@ -67,6 +67,9 @@ function lti_parse_request($wp)
         if (isset($_GET['addplatform'])) {
             require_once('includes' . DIRECTORY_SEPARATOR . 'DoAddLTIPlatform.php');
             exit;
+        } else if (isset($_GET['options'])) {
+            require_once('includes' . DIRECTORY_SEPARATOR . 'DoSaveOptions.php');
+            exit;
         } else if (isset($_GET['keys'])) {
             require_once('includes' . DIRECTORY_SEPARATOR . 'jwks.php');
             exit;
@@ -420,7 +423,7 @@ function lti_options_section_info()
 
 function lti_adduser_callback()
 {
-    $options = get_option('lti_options');
+    $options = get_site_option('lti_choices');
     printf(
         '<input type="checkbox" name="lti_options[adduser]" id="adduser" value="1"%s> <label for="adduser">Check this box if there is no need to invite external users into blogs; i.e. all users will come via an LTI connection</label>',
         ( isset($options['adduser']) && $options['adduser'] === '1' ) ? ' checked' : ''
@@ -429,7 +432,7 @@ function lti_adduser_callback()
 
 function lti_mysites_callback()
 {
-    $options = get_option('lti_options');
+    $options = get_site_option('lti_choices');
     printf(
         '<input type="checkbox" name="lti_options[mysites]" id="mysites" value="1"%s> <label for="mysites">Check this box to prevent users from moving between their blogs in WordPress</label>',
         ( isset($options['mysites']) && $options['mysites'] === '1' ) ? ' checked' : ''
@@ -438,7 +441,7 @@ function lti_mysites_callback()
 
 function lti_scope_callback()
 {
-    $options = get_option('lti_options');
+    $options = get_site_option('lti_choices');
     ?>
     <fieldset><?php $checked = ( isset($options['scope']) && $options['scope'] === '3' ) ? 'checked' : ''; ?>
       <label for="lti_scope3"><input type="radio" name="lti_options[scope]" id="lti_scope3" value="3"<?php echo $checked; ?>> Resource: Prefix the ID with the consumer key and resource link ID</label><br>
@@ -463,13 +466,18 @@ function lti_options_page()
       <h2><?php _e('Options', 'lti-text') ?></h2>
       <?php settings_errors(); ?>
 
-      <form method="post" action="../options.php">
+      <form method="post" action="<?php echo get_option('siteurl') . '/?lti&options'; ?>">
         <?php
         settings_fields('lti_options_settings_group');
-        $options = get_option('lti_options');
-        // If no options set defaults
-        if (!isset($options) || empty($options)) {
-            update_option('lti_options', array('adduser' => 0, 'mysites' => 0, 'scope' => LTI_ID_SCOPE_DEFAULT));
+        $options = get_site_option('lti_choices');
+        if (!$options) {
+            $options = get_option('lti_options');  // Check in deprecated location
+            if (!$options) {  // If no options set defaults
+                $options = array('adduser' => 0, 'mysites' => 0, 'scope' => LTI_ID_SCOPE_DEFAULT);
+            } else {
+                delete_option('lti_options');
+            }
+            add_site_option('lti_choices', $options);
         }
         do_settings_sections('lti_options_admin');
         submit_button();
@@ -498,7 +506,7 @@ function lti_remove_menus()
 {
     global $submenu;
 
-    $options = get_option('lti_options');
+    $options = get_site_option('lti_choices');
     if ($options['adduser'] == 1) {
         unset($submenu['users.php'][10]);
     }
@@ -522,7 +530,7 @@ function lti_admin_bar_item_remove()
 
     /*     * *edit-profile is the ID** */
     $wp_admin_bar->remove_menu('edit-profile');
-    $options = get_option('lti_options');
+    $options = get_site_option('lti_choices');
     if ($options && $options['mysites'] == 1) {
         $wp_admin_bar->remove_node('my-sites');
     }
