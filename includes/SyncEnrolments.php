@@ -81,7 +81,7 @@ function lti_sync_enrolments()
     $resource_link = ResourceLink::fromPlatform($platform, $_SESSION[LTI_SESSION_PREFIX . 'userresourcelink']);
 
     if (!$resource_link->hasMembershipsService()) {
-        echo '<h2>' . __('No Memberships service', 'lti-text') . '</h2>';
+        echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('No Memberships service', 'lti-text') . '</h1></div>';
         return;
     }
 
@@ -92,11 +92,11 @@ function lti_sync_enrolments()
             $lti_users = $resource_link->getMemberships();
 
             if (!$lti_users) {
-                echo '<h2>' . __('Error on Synchronisation', 'lti-text') . '</h2>';
+                echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Error on Synchronisation', 'lti-text') . '</h1>';
                 echo '<p>' . sprintf(__('Error returned from platform (%s)', 'lti-text'), $platform->name) . '</p>';
                 echo '<p>' . sprintf(__('Request to platform:  %s', 'lti-text'),
                     '<br />' . urldecode(str_replace('&', '<br />', $resource_link->extRequest))) . '</p>';
-                echo '<p>' . sprintf(__('Response from platform: %s', 'lti-text'), '<br />' . $resource_link->extResponse) . '</p>';
+                echo '<p>' . sprintf(__('Response from platform: %s', 'lti-text'), '<br />' . $resource_link->extResponse) . '</p></div>';
                 return;
             }
             // Get straight-forward list to work with in WordPress
@@ -125,50 +125,61 @@ function lti_sync_enrolments()
             $_SESSION[LTI_SESSION_PREFIX . 'remove'] = serialize(lti_deleted_members($membership_platform, $current_members));
         case 'all': // Not currently used
             // Display all the members from the platform
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Synchronise Enrolments', 'lti-text') . '</h1>';
             lti_display($_SESSION[LTI_SESSION_PREFIX . 'all'], $ltiuser);
+            echo '</div>';
             break;
         case 'provision': // Not currently used
-            echo "<h2>" . __('Membership Synchronisation - New Members', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - New Members', 'lti-text') . '</h1>';
             if (!empty($_SESSION[LTI_SESSION_PREFIX . 'provision'])) {
                 lti_display($_SESSION[LTI_SESSION_PREFIX . 'provision'], $ltiuser);
             }
+            echo '</div>';
             break;
         // Display the various lists
         case 'new_to_blog': // Not currently used
-            echo "<h2>" . __('Membership Synchronisation - New Blog Members', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - New Blog Members', 'lti-text') . '</h1>';
             if (!empty($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'])) {
                 lti_display($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'], $ltiuser);
             }
+            echo '</div>';
             break;
         case 'newadmins':
-            echo "<h2>" . __('Membership Synchronisation - New Administrators to Blog', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - New Administrators to Blog',
+                'lti-text') . '</h1>';
             if (!empty($_SESSION[LTI_SESSION_PREFIX . 'newadmins'])) {
                 lti_display($_SESSION[LTI_SESSION_PREFIX . 'newadmins'], $ltiuser);
             }
+            echo '</div>';
             break;
         case 'changed': // Not currently used
-            echo "<h2>" . __('Membership Synchronisation - Changed Members', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - Changed Members', 'lti-text') . '</h1>';
             if (!empty($_SESSION[LTI_SESSION_PREFIX . 'changed'])) {
                 lti_display($_SESSION[LTI_SESSION_PREFIX . 'changed'], $ltiuser);
             }
+            echo '</div>';
             break;
         case 'rchanged':
-            echo "<h2>" . __('Membership Synchronisation - Role Changed', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - Role Changed', 'lti-text') . '</h1>';
             if (!empty($_SESSION[LTI_SESSION_PREFIX . 'role_changed'])) {
                 lti_display($_SESSION[LTI_SESSION_PREFIX . 'role_changed'], $ltiuser);
             }
+            echo '</div>';
             break;
         case 'remove':
-            echo "<h2>" . __('Membership Synchronisation - Members for Removal from Blog', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - Members for Removal from Blog',
+                'lti-text') . '</h1>';
             if (!empty($_SESSION[LTI_SESSION_PREFIX . 'remove'])) {
                 lti_display($_SESSION[LTI_SESSION_PREFIX . 'remove'], $ltiuser);
             }
+            echo '</div>';
             break;
         case 'error':
-            echo "<h2>" . __('Synchronisation Errors', 'lti-text') . "</h2>";
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Synchronisation Errors', 'lti-text') . '</h1>';
             echo "<p>" . $_SESSION[LTI_SESSION_PREFIX . 'error'] . "</p>";
             echo "<p>" . __('Remaining users from platform added', 'lti-text') . "</p>";
             $_SESSION[LTI_SESSION_PREFIX . 'error'] = '';
+            echo '</div>';
             break;
         default:
             // If platform has setting service then get date/time of last synchronisation
@@ -180,29 +191,30 @@ function lti_sync_enrolments()
             // Simply produce descriptive text when page first encountered.
             ?>
 
-            <h2><?php _e('Membership Synchronisation', 'lti-text') ?></h2>
+            <div class="wrap">
+              <h1 class="wp-heading-inline"><?php _e('Membership Synchronisation', 'lti-text') ?></h1>
 
-            <p><?php _e('This page allows you to update this group with any changes to the enrolments in the course
+              <p><?php _e('This page allows you to update this group with any changes to the enrolments in the course
      which is the source for this group. These updates may include:', 'lti-text') ?></p>
-            <ul style="list-style-type: disc; margin-left: 15px; padding-left: 15px;">
-              <li><?php _e('new members', 'lti-text') ?></li>
-              <li><?php _e('changes to the names of existing members', 'lti-text') ?></li>
-              <li><?php _e('changes to the type (instructor or student) of an existing member', 'lti-text') ?></li>
-              <li><?php _e('deletion of members which no longer exist in the course', 'lti-text') ?></li>
-            </ul>
-            <p><?php _e('Click on the <i>Continue</i> to obtain a list of the changes to be processed. The updates
+              <ul style="list-style-type: disc; margin-left: 15px; padding-left: 15px;">
+                <li><?php _e('new members', 'lti-text') ?></li>
+                <li><?php _e('changes to the names of existing members', 'lti-text') ?></li>
+                <li><?php _e('changes to the type (instructor or student) of an existing member', 'lti-text') ?></li>
+                <li><?php _e('deletion of members which no longer exist in the course', 'lti-text') ?></li>
+              </ul>
+              <p><?php _e('Click on the <i>Continue</i> to obtain a list of the changes to be processed. The updates
      will not be made until you confirm them.', 'lti-text') ?></p>
-            <?php
-            if (!empty($last_sync)) {
-                echo '<p>' . sprintf(__('Last Synchronisation: %s', 'lti-text'), $last_sync) . '</p>';
-            }
-            ?>
-            <form method="post" action="<?php get_admin_url(); ?>users.php?page=lti_sync_enrolments">
-              <input type="hidden" name="action" value="continue" />
-              <p class="submit">
-                <input id="membership" class="button-primary" type="submit" value="<?php _e('Continue', 'lti-text'); ?>" name="membership">
-              </p>
-            </form>
+              <?php
+              if (!empty($last_sync)) {
+                  echo '<p>' . sprintf(__('Last Synchronisation: %s', 'lti-text'), $last_sync) . '</p>';
+              }
+              ?>
+              <form method="post" action="<?php get_admin_url(); ?>users.php?page=lti_sync_enrolments&action=continue">
+                <p class="submit">
+                  <input id="membership" class="button-primary" type="submit" value="<?php _e('Continue', 'lti-text'); ?>">
+                </p>
+              </form>
+            </div>
 
             <?php
             // Set sessions changes to 0

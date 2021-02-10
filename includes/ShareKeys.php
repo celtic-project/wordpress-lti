@@ -75,7 +75,7 @@ function lti_create_share_key()
         if (wp_mail($_POST['email'], 'WordPress Share Key', $senttext, $headers)) {
             echo '<div class="wrap"><h2>' . __('Share this Site', 'lti-text') . '</h2>';
             echo '<p>' . sprintf(__('The text below has been emailed to %s', 'lti-text'), $_POST['email']) . '</p>';
-            echo '<p1>' . $senttext . '</p1></div>';
+            echo '<p>' . $senttext . '</p></div>';
         } else {
             echo '<div class="wrap"><h2>' . __('Share this Site', 'lti-text') . '</h2>';
             echo '<p>' . $senttext . '</p></div>';

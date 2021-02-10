@@ -60,34 +60,8 @@ class LTI_User_List_Table extends WP_List_Table
         $role = isset($_REQUEST['role']) ? $_REQUEST['role'] : '';
         $per_page = ( $this->is_site_users ) ? 'site_users_network_per_page' : 'users_per_page';
         $users_per_page = $this->get_items_per_page($per_page);
-        $paged = $this->get_pagenum();
-        $args = array(
-            'number' => $users_per_page,
-            'offset' => ( $paged - 1 ) * $users_per_page,
-            'role' => $role,
-            'search' => $usersearch,
-            'fields' => 'all_with_meta'
-        );
-
-        if ('' !== $args['search']) {
-            $args['search'] = '*' . $args['search'] . '*';
-        }
-
-        if ($this->is_site_users) {
-            $args['blog_id'] = $this->site_id;
-        }
-
-        if (isset($_REQUEST['orderby'])) {
-            $args['orderby'] = $_REQUEST['orderby'];
-        }
-
-        if (isset($_REQUEST['order'])) {
-            $args['order'] = $_REQUEST['order'];
-        }
-
-        // Query the user IDs for this page
-        // $wp_user_search = new WP_User_Query( $args );
-        $this->items = $this->users;
+        $current_page = $this->get_pagenum();
+        $this->items = array_slice($this->users, (($current_page - 1) * $users_per_page), $users_per_page);
 
         $this->set_pagination_args(array(
             'total_items' => sizeof($this->users), //$wp_user_search->get_total(),

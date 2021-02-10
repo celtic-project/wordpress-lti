@@ -233,6 +233,13 @@ function lti_sync_admin_header()
         }
         wp_redirect('users.php');
     }
+    $screen = get_current_screen();
+    add_screen_option('per_page', array('label' => __('Users', 'lti-text'), 'default' => 5, 'option' => 'users_per_page'));
+    $screen->add_help_tab(array(
+        'id' => 'lti-text-display',
+        'title' => __('Screen Display', 'lti-text'),
+        'content' => '<p>' . __('You can decide how many users to list per screen using the Screen Options tab.', 'lti-text') . '</p>'
+    ));
 }
 
 /* -------------------------------------------------------------------
@@ -287,11 +294,11 @@ function lti_platforms()
     ?>
     <div class="wrap">
 
-      <div id="icon-users" class="icon32"><br/></div>
-      <h2><?php _e('Platforms', 'lti-text'); ?>
-        <a href="<?php echo get_admin_url() ?>network/admin.php?page=lti_add_platform" class="add-new-h2"><?php
-          _e('Add New', 'lti-text');
-          ?></a></h2>
+      <h1 class="wp-heading-inline"><?php _e('Platforms', 'lti-text'); ?></h1>
+      <a href="<?php echo get_admin_url(); ?>network/admin.php?page=lti_add_platform" class="page-title-action"><?php
+        _e('Add New', 'lti-text');
+        ?></a>
+      <hr class="wp-header-end">
       <p>
         <?php echo __('Launch URL, Initiate Login URL, Redirection URI: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti</b><br>'; ?>
         <?php echo __('Public Keyset URL: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti&keys</b><br>'; ?>
@@ -463,7 +470,7 @@ function lti_options_page()
 {
     ?>
     <div class="wrap">
-      <h2><?php _e('Options', 'lti-text') ?></h2>
+      <h1 class="wp-heading-inline"><?php _e('Options', 'lti-text'); ?></h1>
       <?php settings_errors(); ?>
 
       <form method="post" action="<?php echo get_option('siteurl') . '/?lti&options'; ?>">
