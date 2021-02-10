@@ -180,7 +180,7 @@ function lti_register_user_submenu_page()
                 __('lti_sync_enrolments', 'lti-text'), 'lti_sync_enrolments');
 
             // Called when lti_sync_enrolments page is called
-            add_action('admin_head-' . $plugin_page, 'lti_sync_admin_header');
+            add_action('load-' . $plugin_page, 'lti_sync_admin_header');
         }
 
         // Add a submenu to the tool menu for sharing if sharing is enabled and this is
