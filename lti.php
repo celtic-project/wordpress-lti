@@ -413,6 +413,13 @@ function lti_options_init()
         'lti_options_setting_section', '', 'lti_options_section_info', 'lti_options_admin'
     );
     add_settings_field(
+        'uninstalldb', 'Delete data on uninstall?', 'lti_uninstalldb_callback', 'lti_options_admin', 'lti_options_setting_section'
+    );
+    add_settings_field(
+        'uninstallblogs', 'Delete LTI blogs on uninstall?', 'lti_uninstallblogs_callback', 'lti_options_admin',
+        'lti_options_setting_section'
+    );
+    add_settings_field(
         'adduser', 'Hide Add User Menu', 'lti_adduser_callback', 'lti_options_admin', 'lti_options_setting_section'
     );
     add_settings_field(
@@ -426,6 +433,24 @@ function lti_options_init()
 function lti_options_section_info()
 {
 
+}
+
+function lti_uninstalldb_callback()
+{
+    $options = get_site_option('lti_choices');
+    printf(
+        '<input type="checkbox" name="lti_options[uninstalldb]" id="uninstalldb" value="1"%s> <label for="uninstalldb">Check this box if you want to permanently delete the LTI tables from the database when the plugin is uninstalled</label>',
+        ( isset($options['uninstalldb']) && $options['uninstalldb'] === '1' ) ? ' checked' : ''
+    );
+}
+
+function lti_uninstallblogs_callback()
+{
+    $options = get_site_option('lti_choices');
+    printf(
+        '<input type="checkbox" name="lti_options[uninstallblogs]" id="uninstallblogs" value="1"%s> <label for="uninstallblogs">Check this box if you want to permanently delete the LTI blogs when the plugin is uninstalled</label>',
+        ( isset($options['uninstallblogs']) && $options['uninstallblogs'] === '1' ) ? ' checked' : ''
+    );
 }
 
 function lti_adduser_callback()
