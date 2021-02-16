@@ -137,10 +137,10 @@ function lti_delete($key)
     $platform->delete();
 
     // Now delete the blogs associated with this key. The WP function that lists all
-    // blog is depreciated and so we'll do a direct DB access (look the other way)
-    $search_str = '/' . str_replace('.', '', $key) . '%';
+    // blog is deprecated and so we'll do a direct DB access (look the other way)
+    $search_str = '%/' . str_replace('.', '', $key) . '%';
     $sites = $wpdb->get_col($wpdb->prepare(
-            "SELECT blog_id FROM {$wpdb->prefix}blogs WHERE path LIKE %s", $search_str));
+            "SELECT blog_id FROM {$wpdb->prefix}blogs WHERE path LIKE '%s'", $search_str));
 
     // Delete the blog
     foreach ($sites as $site) {
@@ -192,219 +192,221 @@ function lti_create_db()
     $prefix = $wpdb->prefix;
     $charset_collate = $wpdb->get_charset_collate();
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (' .
-        'consumer_pk int(11) NOT NULL AUTO_INCREMENT, ' .
-        'name varchar(50) NOT NULL, ' .
-        'consumer_key varchar(256) DEFAULT NULL, ' .
-        'secret varchar(1024) DEFAULT NULL, ' .
-        'platform_id varchar(255) DEFAULT NULL, ' .
-        'client_id varchar(255) DEFAULT NULL, ' .
-        'deployment_id varchar(255) DEFAULT NULL, ' .
-        'public_key text DEFAULT NULL, ' .
-        'lti_version varchar(10) DEFAULT NULL, ' .
-        'signature_method varchar(15) DEFAULT NULL, ' .
-        'consumer_name varchar(255) DEFAULT NULL, ' .
-        'consumer_version varchar(255) DEFAULT NULL, ' .
-        'consumer_guid varchar(1024) DEFAULT NULL, ' .
-        'profile text DEFAULT NULL, ' .
-        'tool_proxy text DEFAULT NULL, ' .
-        'settings text DEFAULT NULL, ' .
-        'protected tinyint(1) NOT NULL, ' .
-        'enabled tinyint(1) NOT NULL, ' .
-        'enable_from datetime DEFAULT NULL, ' .
-        'enable_until datetime DEFAULT NULL, ' .
-        'last_access date DEFAULT NULL, ' .
-        'created datetime NOT NULL, ' .
-        'updated datetime NOT NULL, ' .
-        'PRIMARY KEY (consumer_pk)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+    if ($wpdb->get_var("SHOW TABLES LIKE '{$prefix}" . DataConnector::PLATFORM_TABLE_NAME . "'") !== $prefix . DataConnector::PLATFORM_TABLE_NAME) {
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (' .
+            'consumer_pk int(11) NOT NULL AUTO_INCREMENT, ' .
+            'name varchar(50) NOT NULL, ' .
+            'consumer_key varchar(256) DEFAULT NULL, ' .
+            'secret varchar(1024) DEFAULT NULL, ' .
+            'platform_id varchar(255) DEFAULT NULL, ' .
+            'client_id varchar(255) DEFAULT NULL, ' .
+            'deployment_id varchar(255) DEFAULT NULL, ' .
+            'public_key text DEFAULT NULL, ' .
+            'lti_version varchar(10) DEFAULT NULL, ' .
+            'signature_method varchar(15) DEFAULT NULL, ' .
+            'consumer_name varchar(255) DEFAULT NULL, ' .
+            'consumer_version varchar(255) DEFAULT NULL, ' .
+            'consumer_guid varchar(1024) DEFAULT NULL, ' .
+            'profile text DEFAULT NULL, ' .
+            'tool_proxy text DEFAULT NULL, ' .
+            'settings text DEFAULT NULL, ' .
+            'protected tinyint(1) NOT NULL, ' .
+            'enabled tinyint(1) NOT NULL, ' .
+            'enable_from datetime DEFAULT NULL, ' .
+            'enable_until datetime DEFAULT NULL, ' .
+            'last_access date DEFAULT NULL, ' .
+            'created datetime NOT NULL, ' .
+            'updated datetime NOT NULL, ' .
+            'PRIMARY KEY (consumer_pk)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' ' .
-        "ADD UNIQUE INDEX {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . '_' .
-        'consumer_key_UNIQUE (consumer_key ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' ' .
+            "ADD UNIQUE INDEX {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . '_' .
+            'consumer_key_UNIQUE (consumer_key ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' ' .
-        "ADD UNIQUE INDEX {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . '_' .
-        'platform_UNIQUE (platform_id ASC, client_id ASC, deployment_id ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' ' .
+            "ADD UNIQUE INDEX {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . '_' .
+            'platform_UNIQUE (platform_id ASC, client_id ASC, deployment_id ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::NONCE_TABLE_NAME . ' (' .
-        'consumer_pk int(11) NOT NULL, ' .
-        'value varchar(50) NOT NULL, ' .
-        'expires datetime NOT NULL, ' .
-        'PRIMARY KEY (consumer_pk, value)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::NONCE_TABLE_NAME . ' (' .
+            'consumer_pk int(11) NOT NULL, ' .
+            'value varchar(50) NOT NULL, ' .
+            'expires datetime NOT NULL, ' .
+            'PRIMARY KEY (consumer_pk, value)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::NONCE_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::NONCE_TABLE_NAME . '_' .
-        DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::NONCE_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::NONCE_TABLE_NAME . '_' .
+            DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . ' (' .
-        'consumer_pk int(11) NOT NULL, ' .
-        'scopes text NOT NULL, ' .
-        'token varchar(2000) NOT NULL, ' .
-        'expires datetime NOT NULL, ' .
-        'created datetime NOT NULL, ' .
-        'updated datetime NOT NULL, ' .
-        'PRIMARY KEY (consumer_pk)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . ' (' .
+            'consumer_pk int(11) NOT NULL, ' .
+            'scopes text NOT NULL, ' .
+            'token varchar(2000) NOT NULL, ' .
+            'expires datetime NOT NULL, ' .
+            'created datetime NOT NULL, ' .
+            'updated datetime NOT NULL, ' .
+            'PRIMARY KEY (consumer_pk)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . '_' .
-        DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . '_' .
+            DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' (' .
-        'context_pk int(11) NOT NULL AUTO_INCREMENT, ' .
-        'consumer_pk int(11) NOT NULL, ' .
-        'lti_context_id varchar(255) NOT NULL, ' .
-        'title varchar(255) DEFAULT NULL, ' .
-        'type varchar(50) DEFAULT NULL, ' .
-        'settings text DEFAULT NULL, ' .
-        'created datetime NOT NULL, ' .
-        'updated datetime NOT NULL, ' .
-        'PRIMARY KEY (context_pk)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' (' .
+            'context_pk int(11) NOT NULL AUTO_INCREMENT, ' .
+            'consumer_pk int(11) NOT NULL, ' .
+            'lti_context_id varchar(255) NOT NULL, ' .
+            'title varchar(255) DEFAULT NULL, ' .
+            'type varchar(50) DEFAULT NULL, ' .
+            'settings text DEFAULT NULL, ' .
+            'created datetime NOT NULL, ' .
+            'updated datetime NOT NULL, ' .
+            'PRIMARY KEY (context_pk)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . '_' .
-        DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . '_' .
+            DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' ' .
-        "ADD INDEX {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . '_' .
-        'consumer_id_IDX (consumer_pk ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' ' .
+            "ADD INDEX {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . '_' .
+            'consumer_id_IDX (consumer_pk ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (' .
-        'resource_link_pk int(11) AUTO_INCREMENT, ' .
-        'context_pk int(11) DEFAULT NULL, ' .
-        'consumer_pk int(11) DEFAULT NULL, ' .
-        'title varchar(255) DEFAULT NULL, ' .
-        'lti_resource_link_id varchar(255) NOT NULL, ' .
-        'settings text, ' .
-        'primary_resource_link_pk int(11) DEFAULT NULL, ' .
-        'share_approved tinyint(1) DEFAULT NULL, ' .
-        'created datetime NOT NULL, ' .
-        'updated datetime NOT NULL, ' .
-        'PRIMARY KEY (resource_link_pk)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (' .
+            'resource_link_pk int(11) AUTO_INCREMENT, ' .
+            'context_pk int(11) DEFAULT NULL, ' .
+            'consumer_pk int(11) DEFAULT NULL, ' .
+            'title varchar(255) DEFAULT NULL, ' .
+            'lti_resource_link_id varchar(255) NOT NULL, ' .
+            'settings text, ' .
+            'primary_resource_link_pk int(11) DEFAULT NULL, ' .
+            'share_approved tinyint(1) DEFAULT NULL, ' .
+            'created datetime NOT NULL, ' .
+            'updated datetime NOT NULL, ' .
+            'PRIMARY KEY (resource_link_pk)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
-        DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
+            DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
-        DataConnector::CONTEXT_TABLE_NAME . '_FK1 FOREIGN KEY (context_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' (context_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
-        DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (primary_resource_link_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
-        "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
-        'consumer_pk_IDX (consumer_pk ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
-        "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
-        'context_pk_IDX (context_pk ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
+            DataConnector::CONTEXT_TABLE_NAME . '_FK1 FOREIGN KEY (context_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' (context_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
+            DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (primary_resource_link_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
+            "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
+            'consumer_pk_IDX (consumer_pk ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
+            "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
+            'context_pk_IDX (context_pk ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' (' .
-        'user_result_pk int(11) AUTO_INCREMENT, ' .
-        'resource_link_pk int(11) NOT NULL, ' .
-        'lti_user_id varchar(255) NOT NULL, ' .
-        'lti_result_sourcedid varchar(1024) NOT NULL, ' .
-        'created datetime NOT NULL, ' .
-        'updated datetime NOT NULL, ' .
-        'PRIMARY KEY (user_result_pk)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . '_' .
-        DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (resource_link_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' ' .
-        "ADD INDEX {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . '_' .
-        'resource_link_pk_IDX (resource_link_pk ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' (' .
+            'user_result_pk int(11) AUTO_INCREMENT, ' .
+            'resource_link_pk int(11) NOT NULL, ' .
+            'lti_user_id varchar(255) NOT NULL, ' .
+            'lti_result_sourcedid varchar(1024) NOT NULL, ' .
+            'created datetime NOT NULL, ' .
+            'updated datetime NOT NULL, ' .
+            'PRIMARY KEY (user_result_pk)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . '_' .
+            DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (resource_link_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' ' .
+            "ADD INDEX {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . '_' .
+            'resource_link_pk_IDX (resource_link_pk ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
 
-    $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' (' .
-        'share_key_id varchar(32) NOT NULL, ' .
-        'resource_link_pk int(11) NOT NULL, ' .
-        'auto_approve tinyint(1) NOT NULL, ' .
-        'expires datetime NOT NULL, ' .
-        'PRIMARY KEY (share_key_id)' .
-        ') ENGINE=InnoDB ' . $charset_collate;
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' ' .
-        "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . '_' .
-        DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (resource_link_pk) ' .
-        "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
-    }
-    $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' ' .
-        "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . '_' .
-        'resource_link_pk_IDX (resource_link_pk ASC)';
-    if (!$wpdb->query($sql)) {
-        error_log($wpdb->print_error());
+        $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' (' .
+            'share_key_id varchar(32) NOT NULL, ' .
+            'resource_link_pk int(11) NOT NULL, ' .
+            'auto_approve tinyint(1) NOT NULL, ' .
+            'expires datetime NOT NULL, ' .
+            'PRIMARY KEY (share_key_id)' .
+            ') ENGINE=InnoDB ' . $charset_collate;
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' ' .
+            "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . '_' .
+            DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (resource_link_pk) ' .
+            "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
+        $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' ' .
+            "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . '_' .
+            'resource_link_pk_IDX (resource_link_pk ASC)';
+        if (!$wpdb->query($sql)) {
+            error_log($wpdb->print_error());
+        }
     }
 
     return true;
