@@ -3,7 +3,7 @@
   Plugin Name: LTI
   Plugin URI: http://www.spvsoftwareproducts.com/php/wordpress-lti/
   Description: This plugin allows WordPress to be integrated with on-line courses using the IMS Learning Tools Interoperability (LTI) specification.
-  Version: 2.0
+  Version: 2.2
   Network: true
   Author: Simon Booth, Stephen Vickers
   Author URI: http://www.celtic-project.org/
