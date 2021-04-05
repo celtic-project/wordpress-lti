@@ -41,7 +41,7 @@ function lti_add_platform()
     ?>
     <script src="<?php echo plugins_url() . '/lti/js/GenKey.js' ?>" language="javascript" type="text/javascript" >
     </script>
-    <div class="wrap">
+    <div id="form" class="wrap">
       <h1 class="wp-heading-inline"><?php echo $verb . __(' Platform', 'lti-text'); ?></h1>
       <p><?php echo $verb . __(' a platform connecting to this server.', 'lti-text'); ?></p>
 
