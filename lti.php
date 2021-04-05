@@ -148,6 +148,20 @@ function lti_register_manage_submenu_page()
 add_action('network_admin_menu', 'lti_register_manage_submenu_page');
 
 /* -------------------------------------------------------------------
+ * Add script for input form pages to prompt before leaving changes unsaved
+  ------------------------------------------------------------------ */
+
+function lti_enqueue_scripts($hook)
+{
+    if (($hook === 'lti-platforms_page_lti_add_platform') || ($hook === 'lti-platforms_page_lti_options')) {
+        wp_enqueue_script(__('lti_platforms', 'lti-text'), plugin_dir_url(__FILE__) . 'js/formchanges.js');
+    }
+}
+
+// Insert the script file
+add_action('admin_enqueue_scripts', 'lti_enqueue_scripts');
+
+/* -------------------------------------------------------------------
  * Add menu page under user (in network sites) for Synchronising
  * enrolments, sharing and managing shares
   ------------------------------------------------------------------ */
