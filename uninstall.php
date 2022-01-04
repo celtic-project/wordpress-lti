@@ -36,9 +36,9 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 require_once ('includes' . DIRECTORY_SEPARATOR . 'lib.php');
 
 // check if data should be deleted on uninstall
-$options = get_site_option('lti_choices');
+$options = lti_get_options();
 
-if (!empty($options['uninstallblogs']) && ($options['uninstallblogs'] === '1')) {
+if (!empty($options['uninstallblogs'])) {
     $tool = new Tool($lti_db_connector);
     $platforms = $tool->getPlatforms();
     foreach ($platforms as $platform) {
@@ -46,7 +46,7 @@ if (!empty($options['uninstallblogs']) && ($options['uninstallblogs'] === '1')) 
     }
 }
 
-if (!empty($options['uninstalldb']) && ($options['uninstalldb'] === '1')) {
+if (!empty($options['uninstalldb'])) {
     // delete plugin options.
     delete_site_option('lti_choices');
 
