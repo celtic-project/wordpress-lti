@@ -254,16 +254,16 @@ function lti_add_platform()
             <?php } ?>
             <tr>
               <th scope="row">
-                <?php _e('Debug mode', 'lti-text'); ?>
+                <?php _e('Debug mode?', 'lti-text'); ?>
               </th>
               <td>
                 <fieldset>
                   <legend class="screen-reader-text">
-                    <span><?php _e('Debug mode', 'lti-text') ?></span>
+                    <span><?php _e('Debug mode?', 'lti-text') ?></span>
                   </legend>
                   <label for="lti_debug">
                     <input name="lti_debug" type="checkbox" id="lti_debug" value="true" <?php checked(true, $platform->debugMode); ?> />
-                    <?php _e('Enable debug-level logging for this platform', 'lti-text'); ?>
+                    <?php _e('Enable debug-level logging for this platform?', 'lti-text'); ?>
                   </label>
                 </fieldset>
               </td>
