@@ -22,10 +22,10 @@
 
 require_once(ABSPATH . '/wp-admin/includes/template.php');
 
-if (!current_user_can('manage_network_options')) {
+if (!current_user_can('edit_plugins')) {
     wp_die(
         '<h1>' . __('You need a higher level of permission.') . '</h1>' .
-        '<p>' . __('Sorry, you are not allowed to manage options for this site.') . '</p>', 403
+        '<p>' . __('Sorry, you are not allowed to edit plugins for this site.') . '</p>', 403
     );
 }
 

@@ -125,7 +125,7 @@ function lti_register_manage_submenu_page()
 
     $manage_lti_page = add_menu_page(__('LTI Platforms', 'lti-text'), // <title>...</title>
         __('LTI Platforms', 'lti-text'), // Menu title
-        'administrator', // Capability needed to see this page
+        'edit_plugins', // Capability needed to see this page
         __('lti_platforms', 'lti-text'), // admin.php?page=lti_platforms
         'lti_platforms', // Function to call
         plugin_dir_url(__FILE__) . 'IMS.png'); // Image for menu item
@@ -136,11 +136,11 @@ function lti_register_manage_submenu_page()
     add_submenu_page(__('lti_platforms', 'lti-text'), // Menu page for this submenu
         __('Add New', 'lti-text'), // <title>...</title>
         __('Add New', 'lti-text'), // Menu title
-        'administrator', // Capability needed to see this page
+        'edit_plugins', // Capability needed to see this page
         __('lti_add_platform', 'lti-text'), // The slug name for this menu
         'lti_add_platform');                // Function to call
 
-    add_submenu_page(__('lti_platforms', 'lti-text'), __('Options', 'lti-text'), __('Options', 'lti-text'), 'administrator',
+    add_submenu_page(__('lti_platforms', 'lti-text'), __('Options', 'lti-text'), __('Options', 'lti-text'), 'edit_plugins',
         __('lti_options', 'lti-text'), 'lti_options_page');
 }
 
@@ -190,7 +190,7 @@ function lti_register_user_submenu_page()
         // If there is a membership service then offer appropriate options
         if ($resource_link->hasMembershipsService()) {
             // Add a submenu to the users menu
-            $plugin_page = add_users_page(__('Sync Enrolments', 'lti-text'), __('Sync Enrolments', 'lti-text'), 'administrator',
+            $plugin_page = add_users_page(__('Sync Enrolments', 'lti-text'), __('Sync Enrolments', 'lti-text'), 'list_users',
                 __('lti_sync_enrolments', 'lti-text'), 'lti_sync_enrolments');
 
             // Called when lti_sync_enrolments page is called
@@ -204,7 +204,7 @@ function lti_register_user_submenu_page()
             $manage_share_keys_page = add_menu_page(
                 __('LTI Share Keys', 'lti-text'), // <title>...</title>
                 __('LTI Share Keys', 'lti-text'), // Menu title
-                'administrator', // Capability needed to see this page
+                'edit_others_posts', // Capability needed to see this page
                 __('lti_manage_share_keys', 'lti-text'), // admin.php?page=lti_manage_share_keys
                 'lti_manage_share_keys', // Function to call
                 plugin_dir_url(__FILE__) . 'IMS.png'); // Image for menu item
@@ -215,7 +215,7 @@ function lti_register_user_submenu_page()
             add_submenu_page(__('lti_manage_share_keys', 'lti-text'), // Menu page for this submenu
                 __('Add New', 'lti-text'), // <title>...</title>
                 __('Add New', 'lti-text'), // Menu title
-                'administrator', // Capability needed to see this page
+                'edit_others_posts', // Capability needed to see this page
                 __('lti_create_share_key', 'lti-text'), // The slug name for this menu
                 'lti_create_share_key');                 // Function to call
         }

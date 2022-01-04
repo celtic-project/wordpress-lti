@@ -24,8 +24,8 @@ use ceLTIc\LTI\Platform;
 
 require_once 'lib.php';
 
-if (!current_user_can('administrator')) {
-    http_response_code(404);
+if (!current_user_can('edit_plugins')) {
+    http_response_code(401);
     die;
 }
 
