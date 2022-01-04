@@ -451,43 +451,43 @@ function lti_options_section_info()
 
 function lti_uninstalldb_callback()
 {
-    $options = get_site_option('lti_choices');
+    $options = lti_get_options();
     printf(
         '<input type="checkbox" name="lti_options[uninstalldb]" id="uninstalldb" value="1"%s> <label for="uninstalldb">Check this box if you want to permanently delete the LTI tables from the database when the plugin is uninstalled</label>',
-        ( isset($options['uninstalldb']) && $options['uninstalldb'] === '1' ) ? ' checked' : ''
+        (!empty($options['uninstalldb'])) ? ' checked' : ''
     );
 }
 
 function lti_uninstallblogs_callback()
 {
-    $options = get_site_option('lti_choices');
+    $options = lti_get_options();
     printf(
         '<input type="checkbox" name="lti_options[uninstallblogs]" id="uninstallblogs" value="1"%s> <label for="uninstallblogs">Check this box if you want to permanently delete the LTI blogs when the plugin is uninstalled</label>',
-        ( isset($options['uninstallblogs']) && $options['uninstallblogs'] === '1' ) ? ' checked' : ''
+        (!empty($options['uninstallblogs'])) ? ' checked' : ''
     );
 }
 
 function lti_adduser_callback()
 {
-    $options = get_site_option('lti_choices');
+    $options = lti_get_options();
     printf(
         '<input type="checkbox" name="lti_options[adduser]" id="adduser" value="1"%s> <label for="adduser">Check this box if there is no need to invite external users into blogs; i.e. all users will come via an LTI connection</label>',
-        ( isset($options['adduser']) && $options['adduser'] === '1' ) ? ' checked' : ''
+        (!empty($options['adduser'])) ? ' checked' : ''
     );
 }
 
 function lti_mysites_callback()
 {
-    $options = get_site_option('lti_choices');
+    $options = lti_get_options();
     printf(
         '<input type="checkbox" name="lti_options[mysites]" id="mysites" value="1"%s> <label for="mysites">Check this box to prevent users from moving between their blogs in WordPress</label>',
-        ( isset($options['mysites']) && $options['mysites'] === '1' ) ? ' checked' : ''
+        (!empty($options['mysites'])) ? ' checked' : ''
     );
 }
 
 function lti_scope_callback()
 {
-    $options = get_site_option('lti_choices');
+    $options = lti_get_options();
     ?>
     <fieldset><?php $checked = ( isset($options['scope']) && $options['scope'] === '3' ) ? 'checked' : ''; ?>
       <label for="lti_scope3"><input type="radio" name="lti_options[scope]" id="lti_scope3" value="3"<?php echo $checked; ?>> Resource: Prefix the ID with the consumer key and resource link ID</label><br>
@@ -515,16 +515,6 @@ function lti_options_page()
       <form method="post" action="<?php echo get_option('siteurl') . '/?lti&options'; ?>">
         <?php
         settings_fields('lti_options_settings_group');
-        $options = get_site_option('lti_choices');
-        if (!$options) {
-            $options = get_option('lti_options');  // Check in deprecated location
-            if (!$options) {  // If no options set defaults
-                $options = array('adduser' => 0, 'mysites' => 0, 'scope' => LTI_ID_SCOPE_DEFAULT);
-            } else {
-                delete_option('lti_options');
-            }
-            add_site_option('lti_choices', $options);
-        }
         do_settings_sections('lti_options_admin');
         submit_button();
         ?>
@@ -552,8 +542,8 @@ function lti_remove_menus()
 {
     global $submenu;
 
-    $options = get_site_option('lti_choices');
-    if ($options['adduser'] == 1) {
+    $options = lti_get_options();
+    if (!empty($options['adduser'])) {
         unset($submenu['users.php'][10]);
     }
 
@@ -576,8 +566,8 @@ function lti_admin_bar_item_remove()
 
     /*     * *edit-profile is the ID** */
     $wp_admin_bar->remove_menu('edit-profile');
-    $options = get_site_option('lti_choices');
-    if ($options && $options['mysites'] == 1) {
+    $options = lti_get_options();
+    if (!empty($options['mysites'])) {
         $wp_admin_bar->remove_node('my-sites');
     }
 }

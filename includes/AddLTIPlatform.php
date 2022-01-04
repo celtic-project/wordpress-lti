@@ -30,7 +30,7 @@ function lti_add_platform()
 {
     global $lti_db_connector;
 
-    $options = get_site_option('lti_choices');
+    $options = lti_get_options();
 
     $editmode = isset($_REQUEST['action']) && ($_REQUEST['action'] == 'edit');
     if ($editmode) {

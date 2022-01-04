@@ -608,4 +608,27 @@ function lti_reset_session()
     }
 }
 
+/* -------------------------------------------------------------------
+ * Get the current option settings
+  ------------------------------------------------------------------ */
+
+function lti_get_options()
+{
+    $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => LTI_ID_SCOPE_DEFAULT,
+        'saveemail' => '0', 'homepage' => '', 'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber');
+    $options = get_site_option('lti_choices');
+    if ($options === false) {
+        $options = get_option('lti_options');  // Check in deprecated location
+        if ($options === false) {  // If no options set defaults
+            $options = $default_options;
+        } else {
+            delete_option('lti_options');
+        }
+        add_site_option('lti_choices', $options);
+    }
+    $options = array_merge($default_options, $options);
+
+    return $options;
+}
+
 ?>
