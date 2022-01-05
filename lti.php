@@ -5,14 +5,14 @@
   Description: This plugin allows WordPress to be integrated with on-line courses using the IMS Learning Tools Interoperability (LTI) specification.
   Version: 2.2
   Network: true
-  Author: Simon Booth, Stephen Vickers
+  Author: Simon Booth, Stephen P Vickers
   Author URI: http://www.celtic-project.org/
   License: GPL3
  */
 
 /*
  *  wordpress-lti - WordPress module to add LTI support
- *  Copyright (C) 2020  Simon Booth, Stephen P Vickers
+ *  Copyright (C) 2022  Simon Booth, Stephen P Vickers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -201,10 +201,10 @@ function lti_register_user_submenu_page()
     require_once('includes' . DIRECTORY_SEPARATOR . 'LTI_User_List_Table.php');
     require_once('includes' . DIRECTORY_SEPARATOR . 'LTI_List_Keys.php');
 
-// Sort out platform instance and membership service stuff
+    // Sort out platform instance and membership service stuff
     $platform = Platform::fromConsumerKey($lti_session['userkey'], $lti_db_connector);
     $resource_link = ResourceLink::fromPlatform($platform, $lti_session['userresourcelink']);
-// If there is a membership service then offer appropriate options
+    // If there is a membership service then offer appropriate options
     if ($resource_link->hasMembershipsService()) {
         // Add a user synchronisation menu option
         if (current_user_can('list_users')) {
@@ -219,8 +219,8 @@ function lti_register_user_submenu_page()
         add_action('load-' . $sync_page, 'lti_sync_admin_header');
     }
 
-// Add a submenu to the tool menu for sharing if sharing is enabled and this is
-// the platform from where the sharing was initiated.
+    // Add a submenu to the tool menu for sharing if sharing is enabled and this is
+    // the platform from where the sharing was initiated.
     if (is_multisite() && ($lti_session['key'] == $lti_session['userkey']) &&
         ($lti_session['resourceid'] == $lti_session['userresourcelink'])) {
         $manage_share_keys_page = add_menu_page(
@@ -254,7 +254,7 @@ add_action('admin_menu', 'lti_register_user_submenu_page');
 
 function lti_sync_admin_header()
 {
-// If we're doing updates
+    // If we're doing updates
     if (isset($_REQUEST['nodelete'])) {
         lti_update(false);
     } elseif (isset($_REQUEST['delete'])) {

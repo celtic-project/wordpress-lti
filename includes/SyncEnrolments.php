@@ -1,7 +1,7 @@
 <?php
 /*
  *  wordpress-lti - WordPress module to add LTI support
- *  Copyright (C) 2020  Simon Booth, Stephen P Vickers
+ *  Copyright (C) 2022  Simon Booth, Stephen P Vickers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -77,9 +77,9 @@ function lti_sync_enrolments()
             foreach ($lti_users as $lti_user) {
                 $scope_userid = lti_get_scope($lti_session['userkey']);
                 $user_login = $lti_user->getId($scope_userid);
-// Sanitize username stripping out unsafe characters
+                // Sanitize username stripping out unsafe characters
                 $user_login = sanitize_user($user_login);
-// Apply the function pre_user_login before saving to the DB.
+                // Apply the function pre_user_login before saving to the DB.
                 $user_login = apply_filters('pre_user_login', $user_login);
                 $user = get_user_by('login', $user_login);
 

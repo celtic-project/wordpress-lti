@@ -1,7 +1,7 @@
 <?php
 /*
  *  wordpress-lti - WordPress module to add LTI support
- *  Copyright (C) 2020  Simon Booth, Stephen P Vickers
+ *  Copyright (C) 2022  Simon Booth, Stephen P Vickers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
@@ -407,13 +407,13 @@ function lti_update($with_deletions)
 {
     global $blog_id, $lti_db_connector, $lti_session;
 
-// Get the platform
+    // Get the platform
     $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
     $resource_link = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
 
     $errors = array();
 
-// New users
+    // New users
     $users = $lti_session['sync']['new'];
     foreach ($users as $user) {
         $user_data = array(
@@ -435,7 +435,7 @@ function lti_update($with_deletions)
         }
     }
 
-// Add users to blog
+    // Add users to blog
     $users = $lti_session['sync']['add'];
     foreach ($users as $user) {
         if (is_multisite()) {
@@ -451,7 +451,7 @@ function lti_update($with_deletions)
         update_user_meta($user->id, 'lti_user_id', $user->ltiUserId);
     }
 
-// Changed users
+    // Changed users
     $users = $lti_session['sync']['change'];
     foreach ($users as $user) {
         $user_data = array
@@ -474,7 +474,7 @@ function lti_update($with_deletions)
         }
     }
 
-// Remove users from blog but not WP as could be members of other blogs.
+    // Remove users from blog but not WP as could be members of other blogs.
     if ($with_deletions) {
         $users = $lti_session['sync']['delete'];
         foreach ($users as $user) {
