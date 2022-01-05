@@ -580,16 +580,12 @@ function lti_get_scope($guid)
 function lti_get_user_login($guid, $lti_user)
 {
     $scope_userid = lti_get_scope($guid);
-    switch ($scope_userid) {
-        case LTI_WP_User::ID_SCOPE_USERNAME:
-            $user_login = $lti_user->username;
-            break;
-        case LTI_WP_User::ID_SCOPE_EMAIL:
-            $user_login = $lti_user->email;
-            break;
-        default:
-            $user_login = $lti_user->getId($scope_userid);
-            break;
+    if ($scope_userid === LTI_WP_User::ID_SCOPE_USERNAME) {
+        $user_login = $lti_user->username;
+    } elseif ($scope_userid === LTI_WP_User::ID_SCOPE_EMAIL) {
+        $user_login = $lti_user->email;
+    } else {
+        $user_login = $lti_user->getId($scope_userid);
     }
     // Sanitize username stripping out unsafe characters
     $user_login = sanitize_user($user_login);
