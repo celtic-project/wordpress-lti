@@ -267,7 +267,12 @@ class LTI_WPTool extends Tool
         }
 
         // Return URL for re-direction by Tool Provider class
-        $this->redirectUrl = get_bloginfo('url');
+        if (!empty($options['homepage'])) {
+            $this->redirectUrl = get_option('siteurl') . '/' . $options['homepage'];
+        } else {
+            $this->redirectUrl = get_bloginfo('url');
+        }
+
         lti_set_session($lti_session);
     }
 

@@ -32,6 +32,7 @@
  */
 
 use ceLTIc\LTI\Platform;
+use ceLTIc\LTI\Tool;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\Util;
 
@@ -443,29 +444,57 @@ function lti_options_init()
 {
     register_setting('lti_options_settings_group', 'lti_options');
     add_settings_section(
-        'lti_options_setting_section', '', 'lti_options_section_info', 'lti_options_admin'
+        'lti_options_general_section', '', 'lti_options_general_section_info', 'lti_options_admin'
     );
     add_settings_field(
-        'uninstalldb', 'Delete data on uninstall?', 'lti_uninstalldb_callback', 'lti_options_admin', 'lti_options_setting_section'
+        'uninstalldb', 'Delete data on uninstall?', 'lti_uninstalldb_callback', 'lti_options_admin', 'lti_options_general_section'
     );
     add_settings_field(
         'uninstallblogs', 'Delete LTI blogs on uninstall?', 'lti_uninstallblogs_callback', 'lti_options_admin',
-        'lti_options_setting_section'
+        'lti_options_general_section'
     );
     add_settings_field(
-        'adduser', 'Hide Add User Menu', 'lti_adduser_callback', 'lti_options_admin', 'lti_options_setting_section'
+        'adduser', 'Hide <em>Add User</em> menu?', 'lti_adduser_callback', 'lti_options_admin', 'lti_options_general_section'
+    );
+    if (is_multisite()) {
+        add_settings_field(
+            'mysites', 'Hide <em>My Sites</em> menu?', 'lti_mysites_callback', 'lti_options_admin', 'lti_options_general_section'
+        );
+    }
+    add_settings_field(
+        'scope', 'Default username format', 'lti_scope_callback', 'lti_options_admin', 'lti_options_general_section'
     );
     add_settings_field(
-        'mysites', 'Hide My Sites Menu', 'lti_mysites_callback', 'lti_options_admin', 'lti_options_setting_section'
+        'saveemail', 'Save email addresses?', 'lti_saveemail_callback', 'lti_options_admin', 'lti_options_general_section'
+    );
+    if (!is_multisite()) {
+        add_settings_field(
+            'homepage', 'Homepage', 'lti_homepage_callback', 'lti_options_admin', 'lti_options_general_section'
+        );
+    }
+    add_settings_section(
+        'lti_options_roles_section', '', 'lti_options_roles_section_info', 'lti_options_admin'
     );
     add_settings_field(
-        'scope', 'Default Username Format', 'lti_scope_callback', 'lti_options_admin', 'lti_options_setting_section'
+        'role_staff', 'Staff', 'lti_roles_callback', 'lti_options_admin', 'lti_options_roles_section', array('role' => 'staff')
+    );
+    add_settings_field(
+        'role_student', 'Student', 'lti_roles_callback', 'lti_options_admin', 'lti_options_roles_section',
+        array('role' => 'student')
+    );
+    add_settings_field(
+        'role_other', 'Other', 'lti_roles_callback', 'lti_options_admin', 'lti_options_roles_section', array('role' => 'other')
     );
 }
 
-function lti_options_section_info()
+function lti_options_general_section_info()
 {
+    echo('<h2>General</h2>');
+}
 
+function lti_options_roles_section_info()
+{
+    echo('<h2>Roles</h2>');
 }
 
 function lti_uninstalldb_callback()
@@ -492,6 +521,15 @@ function lti_adduser_callback()
     printf(
         '<input type="checkbox" name="lti_options[adduser]" id="adduser" value="1"%s> <label for="adduser">Check this box if there is no need to invite external users into blogs; i.e. all users will come via an LTI connection</label>',
         (!empty($options['adduser'])) ? ' checked' : ''
+    );
+}
+
+function lti_saveemail_callback()
+{
+    $options = lti_get_options();
+    printf(
+        '<input type="checkbox" name="lti_options[saveemail]" id="savemeail" value="1"%s> <label for="saveemail">Check this box if email addresses should be saved in WordPress (only applies when a platforms uses a platform or global username format)</label>',
+        (!empty($options['saveemail'])) ? ' checked' : ''
     );
 }
 
@@ -535,6 +573,28 @@ EOD;
     </fieldset>
 
 EOD;
+}
+
+function lti_homepage_callback()
+{
+    $options = lti_get_options();
+    printf(
+        '%s/<input type="text" name="lti_options[homepage]" id="homepage" value="%s">', get_option('siteurl'), $options['homepage']
+    );
+}
+
+function lti_roles_callback($args)
+{
+    $name = "role_{$args['role']}";
+    $options = lti_get_options();
+    $current = $options[$name];
+    echo("<select name=\"lti_options[{$name}]\" id=\"{$name}\">\n");
+    $roles = get_editable_roles();
+    foreach ($roles as $key => $role) {
+        $selected = ($key === $current) ? ' selected' : '';
+        echo("  <option value=\"{$key}\"{$selected}>{$role['name']}</option>\n");
+    }
+    echo ("</select>\n");
 }
 
 /* -------------------------------------------------------------------
