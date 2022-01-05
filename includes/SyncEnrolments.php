@@ -75,12 +75,12 @@ function lti_sync_enrolments()
             $membership_platform['delete'] = array();
 
             foreach ($lti_users as $lti_user) {
-                $scope_userid = lti_get_scope($lti_session['userkey']);
-                $user_login = $lti_user->getId($scope_userid);
-                // Sanitize username stripping out unsafe characters
-                $user_login = sanitize_user($user_login);
+                // Get what we are using as the username (unique_id-consumer_key, e.g. _21_1-stir.ac.uk)
+                $user_login = lti_get_user_login($lti_session['userkey'], $lti_user);
                 // Apply the function pre_user_login before saving to the DB.
                 $user_login = apply_filters('pre_user_login', $user_login);
+
+                // Check if this username, $user_login, is already defined
                 $user = get_user_by('login', $user_login);
 
                 $category = '';

@@ -569,7 +569,11 @@ EOD;
       <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(Tool::ID_SCOPE_GLOBAL)}" value="{$here(Tool::ID_SCOPE_GLOBAL)}"{$checked(Tool::ID_SCOPE_GLOBAL,
         $options['scope'])}> Platform: Prefix the ID with the consumer key</label><br>
       <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(Tool::ID_SCOPE_ID_ONLY)}" value="{$here(Tool::ID_SCOPE_ID_ONLY)}"{$checked(Tool::ID_SCOPE_ID_ONLY,
-        $options['scope'])}> Global: Use ID value only</label>
+        $options['scope'])}> Global: Use ID value only</label><br>
+      <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(LTI_WP_User::ID_SCOPE_USERNAME)}" value="{$here(LTI_WP_User::ID_SCOPE_USERNAME)}"{$checked(LTI_WP_User::ID_SCOPE_USERNAME,
+        $options['scope'])}> Username: Use platform username only</label><br>
+      <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(LTI_WP_User::ID_SCOPE_EMAIL)}" value="{$here(LTI_WP_User::ID_SCOPE_EMAIL)}"{$checked(LTI_WP_User::ID_SCOPE_EMAIL,
+        $options['scope'])}> Email: Use email address only</label>
     </fieldset>
 
 EOD;

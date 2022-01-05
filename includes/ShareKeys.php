@@ -99,10 +99,11 @@ function lti_create_share_key()
           <li><?php _e('send the share key to an instructor for the other link', 'lti-text') ?></li>
         </ul>
         <?php
-        if (lti_get_scope($lti_session['key']) === Tool::ID_SCOPE_ID_ONLY) {
+        $scope = lti_get_scope($lti_session['key']);
+        if (($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_WP_User::ID_SCOPE_EMAIL)) {
             echo
             '<p><strong>' .
-            __('The username format of this platform is set to global and it is NOT recommended to share your site when user accounts are being created using this option.',
+            __('A global username format has been selected for this platform so it is NOT recommended to share your site when user accounts are being created.',
                 'lti-text') .
             '</strong></p>';
         }

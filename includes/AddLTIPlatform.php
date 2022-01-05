@@ -210,6 +210,12 @@ function lti_add_platform()
                         case Tool::ID_SCOPE_ID_ONLY:
                             _e('Global: Use ID value only', 'lti-text');
                             break;
+                        case LTI_WP_User::ID_SCOPE_USERNAME:
+                            _e('Username: Use platform username only', 'lti-text');
+                            break;
+                        case LTI_WP_User::ID_SCOPE_EMAIL:
+                            _e('Email: Use email address only', 'lti-text');
+                            break;
                     }
                     ?>
                   </td>
@@ -250,6 +256,20 @@ function lti_add_platform()
                       <label for="lti_scope0">
                         <input name="lti_scope" type="radio" id="lti_scope0" value="0" <?php checked('0', $options['scope']); ?> />
                         <?php _e('Global: Use ID value only', 'lti-text'); ?>
+                      </label><br />
+                      <legend class="screen-reader-text">
+                        <span><?php _e('Email: Use email address only', 'lti-text') ?></span>
+                      </legend>
+                      <label for="lti_scopeu">
+                        <input name="lti_scope" type="radio" id="lti_scopeU" value="U" <?php checked('U', $options['scope']); ?> />
+                        <?php _e('Username: Use platform username only', 'lti-text'); ?>
+                      </label><br />
+                      <legend class="screen-reader-text">
+                        <span><?php _e('Email: Use email address only', 'lti-text') ?></span>
+                      </legend>
+                      <label for="lti_scopee">
+                        <input name="lti_scope" type="radio" id="lti_scopeE" value="E" <?php checked('E', $options['scope']); ?> />
+                        <?php _e('Email: Use email address only', 'lti-text'); ?>
                       </label>
                     </fieldset>
                   </td>

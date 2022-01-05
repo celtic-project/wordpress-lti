@@ -96,12 +96,8 @@ class LTI_WPTool extends Tool
             }
         }
 
-        // Get what we are using as the username (unique_id-consumer_key, i.e. _21_1-stir.ac.uk)
-        $scope_userid = lti_get_scope($this->platform->getKey());
-        $user_login = $this->userResult->getID($scope_userid);
-        // Sanitize username stripping out unsafe characters
-        $user_login = sanitize_user($user_login);
-
+        // Get what we are using as the username (unique_id-consumer_key, e.g. _21_1-stir.ac.uk)
+        $user_login = lti_get_user_login($this->platform->getKey(), $this->userResult);
         // Apply the function pre_user_login before saving to the DB.
         $user_login = apply_filters('pre_user_login', $user_login);
 
@@ -339,6 +335,14 @@ class LTI_WPTool extends Tool
         <label for="lti_scope0">
           <input name="lti_scope" type="radio" id="lti_scope0" value="0" />
           <em>Global:</em> Use ID value only
+        </label><br />
+        <label for="lti_scopeu">
+          <input name="lti_scope" type="radio" id="lti_scopeU" value="U" />
+          <em>Username:</em> Use platform username only
+        </label><br />
+        <label for="lti_scopee">
+          <input name="lti_scope" type="radio" id="lti_scopeE" value="E" />
+          <em>Email:</em> Use email address only
         </label>
       </div>
 

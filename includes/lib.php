@@ -58,6 +58,16 @@ $lti_db_connector = DataConnector::getDataConnector($wpdb->dbh, $wpdb->base_pref
 class LTI_WP_User
 {
 
+    /**
+     * Use username only.
+     */
+    const ID_SCOPE_USERNAME = 'U';
+
+    /**
+     * Use email address only.
+     */
+    const ID_SCOPE_EMAIL = 'E';
+
     public $id;
     public $username;
     public $firstname;
@@ -550,7 +560,36 @@ function lti_strip_magic_quotes()
 
 function lti_get_scope($guid)
 {
-    return intval(substr($guid, 2, 1));
+    $scope = substr($guid, 2, 1);
+    if (is_numeric($scope)) {
+        $scope = intval($scope);
+    }
+
+    return $scope;
+}
+
+/* -------------------------------------------------------------------
+ * Get the WordPress user login for a user based on the scope set for the platform
+  ------------------------------------------------------------------ */
+
+function lti_get_user_login($guid, $lti_user)
+{
+    $scope_userid = lti_get_scope($guid);
+    switch ($scope_userid) {
+        case LTI_WP_User::ID_SCOPE_USERNAME:
+            $user_login = $lti_user->username;
+            break;
+        case LTI_WP_User::ID_SCOPE_EMAIL:
+            $user_login = $lti_user->email;
+            break;
+        default:
+            $user_login = $lti_user->getId($scope_userid);
+            break;
+    }
+    // Sanitize username stripping out unsafe characters
+    $user_login = sanitize_user($user_login);
+
+    return $user_login;
 }
 
 /* -------------------------------------------------------------------
@@ -728,7 +767,7 @@ function lti_do_save_email($key = null)
         }
         if (!empty($key)) {
             $scope = lti_get_scope($key);
-            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY);
+            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope = LTI_WP_User::ID_SCOPE_EMAIL);
         }
     }
 
