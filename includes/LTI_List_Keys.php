@@ -209,7 +209,7 @@ class LTI_List_Keys extends WP_List_Table
 
     function prepare_items()
     {
-        global $lti_db_connector;
+        global $lti_db_connector, $lti_session;
 
         /**
          * REQUIRED. Now we need to define our column headers. This includes a complete
@@ -240,8 +240,8 @@ class LTI_List_Keys extends WP_List_Table
          * Get all the shares and convert in array for this class to process
          */
         // Get the context
-        $platform = Platform::fromConsumerKey($_SESSION[LTI_SESSION_PREFIX . 'key'], $lti_db_connector);
-        $resource = ResourceLink::fromPlatform($platform, $_SESSION[LTI_SESSION_PREFIX . 'resourceid']);
+        $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
+        $resource = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
 
         $lti_shares = $resource->getShares();
 

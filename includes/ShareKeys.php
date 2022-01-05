@@ -29,8 +29,8 @@ function lti_create_share_key()
     global $current_user, $lti_db_connector;
 
     // Get the context
-    $platform = Platform::fromConsumerKey($_SESSION[LTI_SESSION_PREFIX . 'key'], $lti_db_connector);
-    $resource = ResourceLink::fromPlatform($platform, $_SESSION[LTI_SESSION_PREFIX . 'resourceid']);
+    $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
+    $resource = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
 
     if (!empty($_POST['email'])) {
         $share_key = new ResourceLinkShareKey($resource);
@@ -98,7 +98,7 @@ function lti_create_share_key()
           <li><?php _e('send the share key to an instructor for the other link', 'lti-text') ?></li>
         </ul>
         <?php
-        if (lti_get_scope($_SESSION[LTI_SESSION_PREFIX . 'key']) == 0) {
+        if (lti_get_scope($lti_session['key']) === Tool::ID_SCOPE_ID_ONLY) {
             echo
             '<p><strong>' .
             __('The username format of this platform is set to global and it is NOT recommended to share your site when user accounts are being created using this option.',

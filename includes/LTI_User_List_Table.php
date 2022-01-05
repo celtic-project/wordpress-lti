@@ -91,18 +91,18 @@ class LTI_User_List_Table extends WP_List_Table
             $users_of_blog = count_users();
         }
 
-        $total_provision = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'provision']));
-        $total_new_to_blog = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog']));
-        $total_newadmins = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'newadmins']));
-        $total_changed = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'changed']));
-        $total_rchanged = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'role_changed']));
-        $total_remove = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'remove']));
+        $total_provision = sizeof(unserialize($lti_session['provision']));
+        $total_new_to_blog = sizeof(unserialize($lti_session['new_to_blog']));
+        $total_newadmins = sizeof(unserialize($lti_session['newadmins']));
+        $total_changed = sizeof(unserialize($lti_session['changed']));
+        $total_rchanged = sizeof(unserialize($lti_session['role_changed']));
+        $total_remove = sizeof(unserialize($lti_session['remove']));
         unset($users_of_blog);
 
         $role_links = array();
 
         /* Uncomment to see all members from platform
-          $total_users = sizeof(unserialize($_SESSION[LTI_SESSION_PREFIX . 'all']));
+          $total_users = sizeof(unserialize($lti_session['all']));
           if ($total_users != 0) {
           $class = ($_REQUEST['action'] == 'all') ? ' class="current"' : '';
           $role_links['all']  = "<a href='users.php?page=lti_sync_enrolments&action=all'$class>" .
@@ -117,7 +117,7 @@ class LTI_User_List_Table extends WP_List_Table
          */
 
         if ($total_provision != 0) {
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 1;
+            $lti_session['nochanges'] = 1;
         }
         /* Uncomment to see new wordpress & blog members
           if ($total_provision != 0) {
@@ -134,7 +134,7 @@ class LTI_User_List_Table extends WP_List_Table
          */
 
         if ($total_new_to_blog != 0) {
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 1;
+            $lti_session['nochanges'] = 1;
         }
         /* Uncomment to see new blog members
           if ($total_new_to_blog != 0) {
@@ -151,7 +151,7 @@ class LTI_User_List_Table extends WP_List_Table
          */
 
         if ($total_newadmins != 0) {
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 1;
+            $lti_session['nochanges'] = 1;
             $class = ($_REQUEST['action'] == 'newadmins') ? ' class="current"' : '';
             $role_links['newadmins'] = "<a href='users.php?page=lti_sync_enrolments&action=newadmins'$class>" .
                 sprintf(_nx('New Administrator <span class="count">(%s)</span>',
@@ -161,7 +161,7 @@ class LTI_User_List_Table extends WP_List_Table
         }
 
         if ($total_changed != 0) {
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 1;
+            $lti_session['nochanges'] = 1;
         }
         /* Uncomment to see name changes
           if ($total_changed != 0) {
@@ -178,7 +178,7 @@ class LTI_User_List_Table extends WP_List_Table
          */
 
         if ($total_rchanged != 0) {
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 1;
+            $lti_session['nochanges'] = 1;
             $class = ($_REQUEST['action'] == 'rchanged') ? ' class="current"' : '';
             $role_links['rchanged'] = "<a href='users.php?page=lti_sync_enrolments&action=rchanged'$class>" .
                 sprintf(_nx('Role Changed <span class="count">(%s)</span>', 'Role Changes <span class="count">(%s)</span>',
@@ -187,7 +187,7 @@ class LTI_User_List_Table extends WP_List_Table
         }
 
         if ($total_remove != 0) {
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 1;
+            $lti_session['nochanges'] = 1;
             $class = ($_REQUEST['action'] == 'remove') ? ' class="current"' : '';
             $role_links['remove'] = "<a href='users.php?page=lti_sync_enrolments&action=remove'$class>" .
                 sprintf(_nx('Not present in VLE/LMS - Delete? <span class="count">(%s)</span>',
@@ -196,7 +196,7 @@ class LTI_User_List_Table extends WP_List_Table
                 '</a>';
         }
 
-        if ($_SESSION[LTI_SESSION_PREFIX . 'nochanges'] == 0) {
+        if ($lti_session['nochanges'] == 0) {
             $role_links['none'] = '<h2>Up to date --- No changes</h2>';
         }
         return $role_links;

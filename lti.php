@@ -46,11 +46,6 @@ date_default_timezone_set($cfg_timezone);
 // include the Library functions & lib.php loads LTI library
 require_once ('includes' . DIRECTORY_SEPARATOR . 'lib.php');
 
-// Check if a session is in place, if not create.
-if (!session_id()) {
-    session_start();
-}
-
 /* -------------------------------------------------------------------
  * This is called by Wordpress when it parses a request. Therefore
  * need to be careful when the request isn't LTI.
@@ -96,7 +91,7 @@ function lti_parse_request($wp)
             return false;
         }
         // Clear any existing session variables for this plugin
-        lti_reset_session();
+        lti_reset_session(true);
 
         // Deal with magic quotes before they cause OAuth to fail
         lti_strip_magic_quotes();
@@ -168,7 +163,7 @@ add_action('admin_enqueue_scripts', 'lti_enqueue_scripts');
 
 function lti_register_user_submenu_page()
 {
-    global $lti_db_connector;
+    global $lti_db_connector, $lti_session;
 
     // Check this is an LTI site for which the following make sense
     if (is_null(get_option('ltisite'))) {
@@ -184,8 +179,8 @@ function lti_register_user_submenu_page()
     if (get_option('ltisite') == 1) {
 
         // Sort out platform instance and membership service stuff
-        $platform = Platform::fromConsumerKey($_SESSION[LTI_SESSION_PREFIX . 'userkey'], $lti_db_connector);
-        $resource_link = ResourceLink::fromPlatform($platform, $_SESSION[LTI_SESSION_PREFIX . 'userresourcelink']);
+        $platform = Platform::fromConsumerKey(lti_session['userkey'], $lti_db_connector);
+        $resource_link = ResourceLink::fromPlatform($platform, lti_session['userresourcelink']);
 
         // If there is a membership service then offer appropriate options
         if ($resource_link->hasMembershipsService()) {
@@ -199,8 +194,8 @@ function lti_register_user_submenu_page()
 
         // Add a submenu to the tool menu for sharing if sharing is enabled and this is
         // the platform from where the sharing was initiated.
-        if ($_SESSION[LTI_SESSION_PREFIX . 'key'] == $_SESSION[LTI_SESSION_PREFIX . 'userkey'] &&
-            $_SESSION[LTI_SESSION_PREFIX . 'resourceid'] == $_SESSION[LTI_SESSION_PREFIX . 'userresourcelink']) {
+        if ($lti_session['key'] == $lti_session['userkey'] &&
+            $lti_session['resourceid'] == $lti_session['userresourcelink']) {
             $manage_share_keys_page = add_menu_page(
                 __('LTI Share Keys', 'lti-text'), // <title>...</title>
                 __('LTI Share Keys', 'lti-text'), // Menu title
@@ -232,6 +227,8 @@ add_action('admin_menu', 'lti_register_user_submenu_page');
 
 function lti_sync_admin_header()
 {
+	global $lti_session;
+
     // If we're doing updates
     if (isset($_REQUEST['nodelete'])) {
         lti_update('nodelete');
@@ -241,7 +238,7 @@ function lti_sync_admin_header()
     }
 
     if (isset($_REQUEST['nodelete']) || isset($_REQUEST['delete'])) {
-        if (!empty($_SESSION[LTI_SESSION_PREFIX . 'error'])) {
+        if (!empty($lti_session['error'])) {
             wp_redirect(get_admin_url() . "users.php?page=lti_sync_enrolments&action=error");
             exit();
         }
@@ -359,8 +356,10 @@ add_filter('allowed_redirect_hosts', 'lti_allow_ms_parent_redirect');
 
 function lti_allow_ms_parent_redirect($allowed)
 {
-    if (isset($_SESSION[LTI_SESSION_PREFIX . 'return_url'])) {
-        $allowed[] = parse_url($_SESSION[LTI_SESSION_PREFIX . 'return_url'], PHP_URL_HOST);
+	global $lti_session;
+
+    if (isset($lti_session['return_url'])) {
+        $allowed[] = parse_url($lti_session['return_url'], PHP_URL_HOST);
     }
 
     return $allowed;
@@ -372,9 +371,10 @@ function lti_allow_ms_parent_redirect($allowed)
 
 function lti_set_logout_url($logout_url)
 {
+	global $lti_session;
 
-    if (isset($_SESSION[LTI_SESSION_PREFIX . 'key']) && !empty($_SESSION[LTI_SESSION_PREFIX . 'return_url'])) {
-        $urlencode = '&redirect_to=' . urlencode($_SESSION[LTI_SESSION_PREFIX . 'return_url'] .
+    if (isset($lti_session['key']) && !empty($lti_session['return_url'])) {
+        $urlencode = '&redirect_to=' . urlencode($lti_session['return_url'] .
                 'lti_msg=' . urlencode(__('You have been logged out of WordPress', 'lti-text')));
         $logout_url .= $urlencode;
     }
@@ -595,8 +595,41 @@ add_filter('pre_user_login', 'lti_remove_chars');
 
 function lti_end_session()
 {
+    global $lti_session;
+
+    // Avoid deleting the session if the user is in the process of being logged in
+    if (empty($lti_session['logging_in'])) {
     lti_reset_session();
+    }
 }
 
 add_action('wp_logout', 'lti_end_session');
+
+/* -------------------------------------------------------------------
+ * Keep the expiration time of the session the same as the logged-in cookie
+  ------------------------------------------------------------------ */
+
+function lti_cookie($logged_in_cookie, $expire, $expiration, $user_id, $scheme, $token)
+{
+    global $lti_session;
+
+    $expire = $expiration - time();
+    $lti_session['_session_token'] = $token;
+    set_site_transient("lti_{$token}", $lti_session, $expire);
+}
+
+add_action('set_logged_in_cookie', 'lti_cookie', 10, 6);
+
+/* -------------------------------------------------------------------
+ * Initialise the global session each time the current user is verified
+  ------------------------------------------------------------------ */
+
+function lti_init_session($cookie_elements, $user)
+{
+    global $lti_session;
+
+    $lti_session = lti_get_session();
+}
+
+add_action('auth_cookie_valid', 'lti_init_session', 10, 2);
 ?>

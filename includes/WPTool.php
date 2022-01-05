@@ -76,6 +76,8 @@ class WPTool extends Tool
 
     protected function onLaunch()
     {
+    	global $lti_session;
+    	
         // If multisite support isn't in play, go home
         if (!is_multisite()) {
             $this->message = __('The LTI Plugin requires a Multisite installation of WordPress', 'lti-text');
@@ -87,15 +89,15 @@ class WPTool extends Tool
         wp_logout();
 
         // Clear these before use
-        $_SESSION[LTI_SESSION_PREFIX . 'return_url'] = '';
-        $_SESSION[LTI_SESSION_PREFIX . 'return_name'] = '';
+        $lti_session['return_url'] = '';
+        $lti_session['return_name'] = '';
 
         // Store return URL for later use, if present
         if (!empty($this->returnUrl)) {
-            $_SESSION[LTI_SESSION_PREFIX . 'return_url'] = (strpos($this->returnUrl, '?') === false) ? $this->returnUrl . '?' : $this->returnUrl . '&';
-            $_SESSION[LTI_SESSION_PREFIX . 'return_name'] = 'Return to VLE';
+            $lti_session['return_url'] = (strpos($this->returnUrl, '?') === false) ? $this->returnUrl . '?' : $this->returnUrl . '&';
+            $lti_session['return_name'] = 'Return to VLE';
             if (!empty($this->platform->name)) {
-                $_SESSION[LTI_SESSION_PREFIX . 'return_name'] = 'Return to ' . $this->platform->name;
+                $lti_session['return_name'] = 'Return to ' . $this->platform->name;
             }
         }
 
@@ -232,14 +234,14 @@ class WPTool extends Tool
         // As this is an LTI provisioned Blog we store the consumer key and
         // context id as options with the session meaning we can access elsewhere
         // in the code.
-        // Store lti key & context id in $_SESSION variables
-        $_SESSION[LTI_SESSION_PREFIX . 'key'] = $key;
-        $_SESSION[LTI_SESSION_PREFIX . 'resourceid'] = $resource_id;
+        // Store lti key & context id in $lti_session variables
+        $lti_session['key'] = $key;
+        $lti_session['resourceid'] = $resource_id;
 
         // Store the key/context in case we need to sync shares --- this ensures we return
         // to the correct platform and not the primary platform
-        $_SESSION[LTI_SESSION_PREFIX . 'userkey'] = $this->userResult->getResourceLink()->getKey();
-        $_SESSION[LTI_SESSION_PREFIX . 'userresourcelink'] = $this->userResult->getResourceLink()->getId();
+        $lti_session['userkey'] = $this->userResult->getResourceLink()->getKey();
+        $lti_session['userresourcelink'] = $this->userResult->getResourceLink()->getId();
 
         // If users role in platform has changed (e.g. staff -> student),
         // then their role in the blog should change
@@ -280,6 +282,7 @@ class WPTool extends Tool
 
         // Return URL for re-direction by Tool Provider class
         $this->redirectUrl = get_bloginfo('url');
+        lti_set_session($lti_session);
     }
 
     protected function onRegistration()

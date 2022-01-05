@@ -144,7 +144,7 @@ function lti_deleted_members($membership_platform, $current_members)
     $currentmembers = array();
     foreach ($current_members as $blogmember) {
         $user_data = get_userdata($blogmember->ID);
-        $pattern = '/^' . $_SESSION[LTI_SESSION_PREFIX . 'userkey'] . '/i';
+        $pattern = '/^' . $lti_session['userkey'] . '/i';
         if (preg_match($pattern, strtolower($user_data->user_login))) {
             $currentmembers[] = $user_data->user_login;
         }
@@ -241,7 +241,7 @@ function lti_display($users, $ltiuser)
       <?php
       $ltiuser->views();
       $ltiuser->display();
-      if ($_SESSION[LTI_SESSION_PREFIX . 'nochanges'] == 1) {
+      if ($lti_session['nochanges'] == 1) {
           ?>
           <p class="submit">
             <input id="delete" class="button-primary" type="submit" value="<?php _e('Update with Deletions', 'lti-text'); ?>" name="delete">

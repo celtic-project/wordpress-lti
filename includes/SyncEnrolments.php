@@ -30,37 +30,37 @@ use ceLTIc\LTI\ResourceLink;
 
 function lti_sync_enrolments()
 {
-    global $blog_id, $lti_db_connector;
+    global $blog_id, $lti_db_connector, $lti_session;
 
     // Load class
     require_once('LTI_User_List_Table.php');
     // Load Membership Library functions
     require_once('MembershipLibrary.php');
 
-    // Create $_SESSION variables if not present
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'all'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'all'] = array();
+    // Create $lti_session variables if not present
+    if (empty($lti_session['all'])) {
+        $lti_session['all'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'provision'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'provision'] = array();
+    if (empty($lti_session['provision'])) {
+        $lti_session['provision'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'] = array();
+    if (empty($lti_session['new_to_blog'])) {
+        $lti_session['new_to_blog'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'newadmins'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'newadmins'] = array();
+    if (empty($lti_session['newadmins'])) {
+        $lti_session['newadmins'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'changed'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'changed'] = array();
+    if (empty($lti_session['changed'])) {
+        $lti_session['changed'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'role_changed'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'role_changed'] = array();
+    if (empty($lti_session['role_changed'])) {
+        $lti_session['role_changed'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'remove'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'remove'] = array();
+    if (empty($lti_session['remove'])) {
+        $lti_session['remove'] = array();
     }
-    if (empty($_SESSION[LTI_SESSION_PREFIX . 'nochanges'])) {
-        $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 0;
+    if (empty($lti_session['nochanges'])) {
+        $lti_session['nochanges'] = 0;
     }
 
     // Set up help tab
@@ -77,8 +77,8 @@ function lti_sync_enrolments()
     $ltiuser = new LTI_User_List_Table();
     $choice = $ltiuser->current_action();
 
-    $platform = Platform::fromConsumerKey($_SESSION[LTI_SESSION_PREFIX . 'userkey'], $lti_db_connector);
-    $resource_link = ResourceLink::fromPlatform($platform, $_SESSION[LTI_SESSION_PREFIX . 'userresourcelink']);
+    $platform = Platform::fromConsumerKey($lti_session['userkey'], $lti_db_connector);
+    $resource_link = ResourceLink::fromPlatform($platform, $lti_session['userresourcelink']);
 
     if (!$resource_link->hasMembershipsService()) {
         echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('No Memberships service', 'lti-text') . '</h1></div>';
@@ -109,76 +109,77 @@ function lti_sync_enrolments()
             // Create the various lists
             $membership_platform = lti_create_membership_lists($membership_platform);
 
-            // Assign list to $_SESSION variables
-            $_SESSION[LTI_SESSION_PREFIX . 'all'] = serialize($membership_platform);
-            $_SESSION[LTI_SESSION_PREFIX . 'provision'] = serialize(lti_get_members($_SESSION[LTI_SESSION_PREFIX . 'all'],
+            // Assign list to $lti_session variables
+            $lti_session['all'] = serialize($membership_platform);
+            $lti_session['provision'] = serialize(lti_get_members($lti_session['all'],
                     'provision'));
-            $_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'] = serialize(lti_get_members($_SESSION[LTI_SESSION_PREFIX . 'all'],
+            $lti_session['new_to_blog'] = serialize(lti_get_members($lti_session['all'],
                     'new_to_blog'));
-            $_SESSION[LTI_SESSION_PREFIX . 'newadmins'] = serialize(lti_get_members($_SESSION[LTI_SESSION_PREFIX . 'all'],
+            $lti_session['newadmins'] = serialize(lti_get_members($lti_session['all'],
                     'newadmins'));
-            $_SESSION[LTI_SESSION_PREFIX . 'changed'] = serialize(lti_get_members($_SESSION[LTI_SESSION_PREFIX . 'all'], 'changed'));
-            $_SESSION[LTI_SESSION_PREFIX . 'role_changed'] = serialize(lti_get_members($_SESSION[LTI_SESSION_PREFIX . 'all'],
+            $lti_session['changed'] = serialize(lti_get_members($lti_session['all'], 'changed'));
+            $lti_session['role_changed'] = serialize(lti_get_members($lti_session['all'],
                     'rchanged'));
 
             // Blog members for removal need to be handled differently
-            $_SESSION[LTI_SESSION_PREFIX . 'remove'] = serialize(lti_deleted_members($membership_platform, $current_members));
+            $lti_session['remove'] = serialize(lti_deleted_members($membership_platform, $current_members));
         case 'all': // Not currently used
             // Display all the members from the platform
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Synchronise Enrolments', 'lti-text') . '</h1>';
-            lti_display($_SESSION[LTI_SESSION_PREFIX . 'all'], $ltiuser);
+            lti_display($lti_session['all'], $ltiuser);
             echo '</div>';
             break;
         case 'provision': // Not currently used
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - New Members', 'lti-text') . '</h1>';
-            if (!empty($_SESSION[LTI_SESSION_PREFIX . 'provision'])) {
-                lti_display($_SESSION[LTI_SESSION_PREFIX . 'provision'], $ltiuser);
+            if (!empty($lti_session['provision'])) {
+                lti_display($lti_session['provision'], $ltiuser);
             }
             echo '</div>';
+            lti_set_session($lti_session);
             break;
         // Display the various lists
         case 'new_to_blog': // Not currently used
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - New Blog Members', 'lti-text') . '</h1>';
-            if (!empty($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'])) {
-                lti_display($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog'], $ltiuser);
+            if (!empty($lti_session['new_to_blog'])) {
+                lti_display($lti_session['new_to_blog'], $ltiuser);
             }
             echo '</div>';
             break;
         case 'newadmins':
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - New Administrators to Blog',
                 'lti-text') . '</h1>';
-            if (!empty($_SESSION[LTI_SESSION_PREFIX . 'newadmins'])) {
-                lti_display($_SESSION[LTI_SESSION_PREFIX . 'newadmins'], $ltiuser);
+            if (!empty($lti_session['newadmins'])) {
+                lti_display($lti_session['newadmins'], $ltiuser);
             }
             echo '</div>';
             break;
         case 'changed': // Not currently used
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - Changed Members', 'lti-text') . '</h1>';
-            if (!empty($_SESSION[LTI_SESSION_PREFIX . 'changed'])) {
-                lti_display($_SESSION[LTI_SESSION_PREFIX . 'changed'], $ltiuser);
+            if (!empty($lti_session['changed'])) {
+                lti_display($lti_session['changed'], $ltiuser);
             }
             echo '</div>';
             break;
         case 'rchanged':
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - Role Changed', 'lti-text') . '</h1>';
-            if (!empty($_SESSION[LTI_SESSION_PREFIX . 'role_changed'])) {
-                lti_display($_SESSION[LTI_SESSION_PREFIX . 'role_changed'], $ltiuser);
+            if (!empty($lti_session['role_changed'])) {
+                lti_display($lti_session['role_changed'], $ltiuser);
             }
             echo '</div>';
             break;
         case 'remove':
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Membership Synchronisation - Members for Removal from Blog',
                 'lti-text') . '</h1>';
-            if (!empty($_SESSION[LTI_SESSION_PREFIX . 'remove'])) {
-                lti_display($_SESSION[LTI_SESSION_PREFIX . 'remove'], $ltiuser);
+            if (!empty($lti_session['remove'])) {
+                lti_display($lti_session['remove'], $ltiuser);
             }
             echo '</div>';
             break;
         case 'error':
             echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('Synchronisation Errors', 'lti-text') . '</h1>';
-            echo "<p>" . $_SESSION[LTI_SESSION_PREFIX . 'error'] . "</p>";
+            echo "<p>" . $lti_session['error'] . "</p>";
             echo "<p>" . __('Remaining users from platform added', 'lti-text') . "</p>";
-            $_SESSION[LTI_SESSION_PREFIX . 'error'] = '';
+            $lti_session['error'] = '';
             echo '</div>';
             break;
         default:
@@ -218,7 +219,8 @@ function lti_sync_enrolments()
 
             <?php
             // Set sessions changes to 0
-            $_SESSION[LTI_SESSION_PREFIX . 'nochanges'] = 0;
+            $lti_session['nochanges'] = 0;
+            lti_set_session($lti_session);
     }
 }
 ?>

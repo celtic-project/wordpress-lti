@@ -35,8 +35,6 @@ require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
 
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WPTool.php');
 
-define('LTI_SESSION_PREFIX', 'lti_');
-
 // Set logging level
 if (defined('LTI_LOG_LEVEL')) {
     Util::$logLevel = LTI_LOG_LEVEL;
@@ -79,7 +77,7 @@ class LTI_WP_User
             $lti_user_from_platform = $args[0];
 
             // Sharing --- this is Stephen's preference.
-            $scope_userid = lti_get_scope($_SESSION[LTI_SESSION_PREFIX . 'userkey']);
+            $scope_userid = lti_get_scope($lti_session['userkey']);
             $user_login = $lti_user_from_platform->getID($scope_userid);
 
             // Sanitize username stripping out unsafe characters
@@ -422,12 +420,12 @@ function lti_create_db()
 
 function lti_update($choice)
 {
-    global $blog_id, $lti_db_connector;
+    global $blog_id, $lti_db_connector, $lti_session;
 
-    $_SESSION[LTI_SESSION_PREFIX . 'error'] = '';
+    $lti_session['error'] = '';
 
     // Add users
-    $add_users = unserialize($_SESSION[LTI_SESSION_PREFIX . 'provision']);
+    $add_users = unserialize($lti_session['provision']);
     foreach ($add_users as $new_u) {
 
         $result = wp_insert_user(
@@ -444,7 +442,7 @@ function lti_update($choice)
         );
 
         if (is_wp_error($result)) {
-            $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
+            $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
             continue;
         }
 
@@ -457,12 +455,12 @@ function lti_update($choice)
         // Add newly created users to blog and set role
         add_user_to_blog($blog_id, $result, $role);
         if (is_wp_error($result)) {
-            $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
+            $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
         }
     }
 
     // Existing users that require adding to blog
-    $add_to_blog = unserialize($_SESSION[LTI_SESSION_PREFIX . 'new_to_blog']);
+    $add_to_blog = unserialize($lti_session['new_to_blog']);
     foreach ($add_to_blog as $new_u) {
         $role = 'author';
         if ($new_u->staff === true) {
@@ -470,12 +468,12 @@ function lti_update($choice)
         }
         add_user_to_blog($blog_id, $new_u->id, $role);
         if (is_wp_error($result)) {
-            $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
+            $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
         }
     }
 
     // Changed name
-    $changed = unserialize($_SESSION[LTI_SESSION_PREFIX . 'changed']);
+    $changed = unserialize($lti_session['changed']);
     foreach ($changed as $change) {
         wp_update_user(array
             ('ID' => $change->id,
@@ -484,7 +482,7 @@ function lti_update($choice)
             'display_name' => $change->fullname));
     }
     // Changed role (most probably administrator -> author, author -> administrator)
-    $changed_role = unserialize($_SESSION[LTI_SESSION_PREFIX . 'role_changed']);
+    $changed_role = unserialize($lti_session['role_changed']);
     foreach ($changed_role as $changed) {
         $user = new WP_User($changed->id, '', $blog_id);
         $user->add_role($changed->role_changed);
@@ -505,23 +503,25 @@ function lti_update($choice)
     // Remove users from blog but not WP as could be members of
     // other blogs. Could check and handle?
     if ($choice == 'delete') {
-        $delete = unserialize($_SESSION[LTI_SESSION_PREFIX . 'remove']);
+        $delete = unserialize($lti_session['remove']);
         foreach ($delete as $del) {
             $user = get_user_by('login', $del->username);
             remove_user_from_blog($user->ID, $blog_id);
             if (is_wp_error($result)) {
-                $_SESSION[LTI_SESSION_PREFIX . 'error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
+                $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
             }
         }
     }
 
     // Get the platform
-    $platform = Platform::fromConsumerKey($_SESSION[LTI_SESSION_PREFIX . 'key'], $lti_db_connector);
-    $resource = ResourceLink::fromPlatform($platform, $_SESSION[LTI_SESSION_PREFIX . 'resourceid']);
+    $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
+    $resource = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
 
     if ($resource->hasSettingService()) {
         $resource->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
     }
+
+    lti_set_session($lti_session);
 }
 
 /* -------------------------------------------------------------------
@@ -594,17 +594,88 @@ function lti_get_guid()
 }
 
 /* -------------------------------------------------------------------
+ * Generate the key for the WordPress transient used to store the plugin session variables
+  ------------------------------------------------------------------ */
+
+function lti_session_key()
+{
+    global $lti_session;
+
+    $key = null;
+    $save = false;
+    $token = wp_get_session_token();
+    if (isset($lti_session['_session_token'])) {
+        if (empty($token) || ($token !== $lti_session['_session_token'])) {
+            delete_site_transient("lti_{$token}");
+            $token = $lti_session['_session_token'];
+        } else {
+            unset($lti_session['_session_token']);
+            $save = true;
+        }
+    }
+    if (!empty($token)) {
+        $key = "lti_{$token}";
+        if ($save) {
+            lti_set_session($lti_session, $key);
+        }
+    }
+
+    return $key;
+}
+
+/* -------------------------------------------------------------------
+ * Retrieve the plugin session variables from a WordPress transient
+  ------------------------------------------------------------------ */
+
+function lti_get_session()
+{
+    $data = array();
+    $key = lti_session_key();
+    if (!empty($key)) {
+        $data = get_site_transient($key);
+        if ($data === false) {
+            $data = array();
+        }
+    }
+
+    return $data;
+}
+
+/* -------------------------------------------------------------------
+ * Save the plugin session variables in a WordPress transient
+  ------------------------------------------------------------------ */
+
+function lti_set_session($data, $key = null)
+{
+    global $lti_session;
+
+    if (empty($key)) {
+        $key = lti_session_key();
+    }
+    if (!empty($key)) {
+        set_site_transient($key, $data);
+    }
+}
+
+/* -------------------------------------------------------------------
  * Clear the plugin session variables
   ------------------------------------------------------------------ */
 
-function lti_reset_session()
+function lti_reset_session($force = false)
 {
-    foreach ($_SESSION as $k => $v) {
-        $pos = strpos($k, LTI_SESSION_PREFIX);
-        if (($pos !== false) && ($pos == 0) && ($k != LTI_SESSION_PREFIX . 'return_url')) {
-            $_SESSION[$k] = '';
-            unset($_SESSION[$k]);
+	global $lti_session;
+
+    $data = array();
+    // Keep the return URL to enable its domain is allowed for redirects
+    if (!$force && isset($lti_session['return_url'])) {
+        $data['return_url'] = $lti_session['return_url'];
+        lti_set_session($data);
+    } else {
+        $key = lti_session_key();
+        if (!empty($key)) {
+            delete_site_transient($key);
         }
+        $lti_session = array();
     }
 }
 
