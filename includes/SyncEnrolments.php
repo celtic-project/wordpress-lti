@@ -118,7 +118,8 @@ function lti_sync_enrolments()
                         $lti_user->role = $options['role_other'];
                         $reasons[] = LTI_User_List_Table::REASON_CHANGE_ROLE;
                     }
-                    if (empty($user->lti_user_id) || ($user->lti_user_id !== $lti_user->ltiUserId)) {
+                    if (empty($user->lti_platform_key) || ($user->lti_platform_key !== $platform->getKey()) ||
+                        empty($user->lti_user_id) || ($user->lti_user_id !== $lti_user->ltiUserId)) {
                         $category = 'change';
                         $reasons[] = LTI_User_List_Table::REASON_CHANGE_ID;
                     }
@@ -134,7 +135,7 @@ function lti_sync_enrolments()
             }
             if (!empty($blog_users)) {
                 foreach ($blog_users as $blog_user) {
-                    if (!empty($blog_user->lti_user_id) && (intval($blog_user->lti_platform_pk) === $platform->getRecordId())) {
+                    if (!empty($blog_user->lti_user_id) && ($blog_user->lti_platform_key === $platform->getKey())) {
                         $lti_wp_user = LTI_WP_User::fromWPUser($blog_user);
                         $lti_wp_user->reasons = array(LTI_User_List_Table::REASON_DELETE);
                         $membership_platform['delete'][] = $lti_wp_user;

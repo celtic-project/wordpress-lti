@@ -112,7 +112,7 @@ class LTI_WPTool extends Tool
             if (lti_do_save_email($this->userResult->getResourceLink()->getKey())) {
                 $user->user_email = $this->userResult->email;
             }
-            $result = wp_insert_user($user);
+            $result = wp_update_user($user);
         } else {
             // Create username if user provisioning is on
             $user_data = array(

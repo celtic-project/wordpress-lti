@@ -458,30 +458,35 @@ function lti_update($with_deletions)
             $user->set_role($user->role);
         }
         // Save LTI user ID
-        update_user_meta($user->id, 'lti_platform_pk', $platform->getRecordId());
+        update_user_meta($user->id, 'lti_platform_key', $platform->getKey());
         update_user_meta($user->id, 'lti_user_id', $user->lti_user_id);
     }
 
     // Changed users
     $users = $lti_session['sync']['change'];
     foreach ($users as $user) {
-        $user_data = array
-            ('ID' => $user->id,
-            'first_name' => $user->firstname,
-            'last_name' => $user->lastname,
-            'display_name' => $user->name);
-        if (lti_do_save_email()) {
-            $user_data['user_email'] = $user->email;
+        if (in_array(LTI_User_List_Table::REASON_CHANGE_NAME, $user->reasons) ||
+            in_array(LTI_User_List_Table::REASON_CHANGE_EMAIL, $user->reasons)) {
+            $user_data = array
+                ('ID' => $user->id,
+                'first_name' => $user->firstname,
+                'last_name' => $user->lastname,
+                'display_name' => $user->name);
+            if (lti_do_save_email()) {
+                $user_data['user_email'] = $user->email;
+            }
+            $result = wp_update_user($user_data);
+            if (is_wp_error($result)) {
+                $errors[] = $user->username . ': ' . $result->get_error_message();
+            }
         }
-        $result = wp_update_user($user_data);
-        if (is_wp_error($result)) {
-            $errors[] = $user->username . ': ' . $result->get_error_message();
-        } else {
-            $wpuser = new WP_User($result, '', $blog_id);
+        if (in_array(LTI_User_List_Table::REASON_CHANGE_ROLE, $user->reasons)) {
+            $wpuser = new WP_User($user->id, '', $blog_id);
             $wpuser->set_role($user->role);
-            // Save LTI user ID
-            update_user_meta($result, 'lti_platform_pk', $platform->getRecordId());
-            update_user_meta($result, 'lti_user_id', $user->lti_user_id);
+        }
+        if (in_array(LTI_User_List_Table::REASON_CHANGE_ID, $user->reasons)) {
+            update_user_meta($user->id, 'lti_platform_key', $platform->getKey());
+            update_user_meta($user->id, 'lti_user_id', $user->lti_user_id);
         }
     }
 

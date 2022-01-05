@@ -132,7 +132,7 @@ class LTI_User_List_Table extends WP_List_Table
 
         if (is_multisite()) {
             $class = ($this->status === 'add') ? $class = 'current' : '';
-            $views['add'] = $this->get_edit_link(array('action' => 'add'), "New <span class=\"count\">({$num_add})</span>", $class);
+            $views['add'] = $this->get_edit_link(array('action' => 'add'), "Add <span class=\"count\">({$num_add})</span>", $class);
         }
 
         $class = ($this->status === 'change') ? $class = 'current' : '';
