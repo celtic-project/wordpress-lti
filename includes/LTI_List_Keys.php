@@ -51,7 +51,7 @@ class LTI_List_Keys extends WP_List_Table
     {
         switch ($column_name) {
             case 'name':
-            case 'consumer':
+            case 'platform':
             case 'approved':
                 return $item[$column_name];
             default:
@@ -61,7 +61,7 @@ class LTI_List_Keys extends WP_List_Table
 
     function column_name($item)
     {
-        // Show name in bold if consumer enabled
+        // Show name in bold if platform enabled
         $name = $item['name'];
         // Build row actions
         if ($item['approved'] == 'Yes') {
@@ -99,22 +99,28 @@ class LTI_List_Keys extends WP_List_Table
         );
     }
 
-    function get_columns()
+    public static function define_columns()
     {
         $columns = array(
             'cb' => '<input type="checkbox" />', //Render a checkbox instead of text
             'name' => _x('Name', 'column name', 'lti-text'),
-            'consumer' => _x('Consumer Name', 'column name', 'lti-text'),
+            'platform' => _x('Platform Name', 'column name', 'lti-text'),
             'approved' => _x('Approved', 'column name', 'lti-text')
         );
+
         return $columns;
+    }
+
+    public function get_columns()
+    {
+        return get_column_headers(get_current_screen());
     }
 
     function get_sortable_columns()
     {
         $sortable_columns = array(
             'name' => array('name', false), // true means its already sorted
-            'consumer' => array('consumer', false),
+            'platform' => array('platform', false),
             'approved' => array('approved', false)
         );
         return $sortable_columns;
@@ -212,25 +218,6 @@ class LTI_List_Keys extends WP_List_Table
         global $lti_db_connector, $lti_session;
 
         /**
-         * REQUIRED. Now we need to define our column headers. This includes a complete
-         * array of columns to be displayed (slugs & titles), a list of columns
-         * to keep hidden, and a list of columns that are sortable. Each of these
-         * can be defined in another method (as we've done here) before being
-         * used to build the value for our _column_headers property.
-         */
-        $columns = $this->get_columns();
-        $hidden = array();
-        $sortable = $this->get_sortable_columns();
-
-        /**
-         * REQUIRED. Finally, we build an array to be used by the class for column
-         * headers. The $this->_column_headers property takes an array which contains
-         * 3 other arrays. One for all columns, one for hidden columns, and one
-         * for sortable columns.
-         */
-        $this->_column_headers = array($columns, $hidden, $sortable);
-
-        /**
          * Optional. You can handle your bulk actions however you see fit. In this
          * case, we'll handle them within our package just to keep things clean.
          */
@@ -248,7 +235,7 @@ class LTI_List_Keys extends WP_List_Table
         for ($i = 0; $i < count($lti_shares); $i++) {
             $data[$i]['ID'] = $i;
             $data[$i]['name'] = $lti_shares[$i]->title;
-            $data[$i]['consumer'] = $lti_shares[$i]->consumerName;
+            $data[$i]['platform'] = $lti_shares[$i]->consumerName;
             $data[$i]['approved'] = ($lti_shares[$i]->approved) ? 'Yes' : 'No';
             $data[$i]['resource_link_pk'] = $lti_shares[$i]->resourceLinkId;
         }
