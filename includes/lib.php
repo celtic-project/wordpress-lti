@@ -63,6 +63,7 @@ class LTI_WP_User
     public $firstname;
     public $lastname;
     public $name;
+    public $email;
     public $role;
     public $lti_user_id;
     public $reasons = array();
@@ -75,6 +76,7 @@ class LTI_WP_User
         $user->firstname = $user_result->firstname;
         $user->lastname = $user_result->lastname;
         $user->name = $user_result->fullname;
+        $user->email = $user_result->email;
         $user->role = lti_user_role($user_result, $options);
         $user->lti_user_id = $user_result->ltiUserId;
 
@@ -89,6 +91,7 @@ class LTI_WP_User
         $user->firstname = $wp_user->first_name;
         $user->lastname = $wp_user->last_name;
         $user->name = $wp_user->display_name;
+        $user->email = $wp_user->user_email;
         $user->role = array_shift($wp_user->roles);
         $user->lti_user_id = $wp_user->lti_user_id;
 
@@ -421,6 +424,9 @@ function lti_update($with_deletions)
             'last_name' => $user->lastname,
             'display_name' => $user->name
         );
+        if (lti_do_save_email()) {
+            $user_data['user_email'] = $user->email;
+        }
         $result = wp_insert_user($user_data);
         if (is_wp_error($result)) {
             $errors[] = $user->username . ': ' . $result->get_error_message();
@@ -453,6 +459,9 @@ function lti_update($with_deletions)
             'first_name' => $user->firstname,
             'last_name' => $user->lastname,
             'display_name' => $user->name);
+        if (lti_do_save_email()) {
+            $user_data['user_email'] = $user->email;
+        }
         $result = wp_update_user($user_data);
         if (is_wp_error($result)) {
             $errors[] = $user->username . ': ' . $result->get_error_message();
@@ -700,6 +709,29 @@ function lti_user_role($lti_user, $options)
     }
 
     return $role;
+}
+
+/* -------------------------------------------------------------------
+ * Check if user email addresses should be saved
+  ------------------------------------------------------------------ */
+
+function lti_do_save_email($key = null)
+{
+    global $lti_session;
+
+    $saveemail = false;
+    $options = lti_get_options();
+    if (!empty($options['saveemail'])) {
+        if (empty($key)) {
+            $key = $lti_session['userkey'];
+        }
+        if (!empty($key)) {
+            $scope = lti_get_scope($key);
+            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY);
+        }
+    }
+
+    return $saveemail;
 }
 
 /* -------------------------------------------------------------------

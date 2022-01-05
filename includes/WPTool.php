@@ -108,35 +108,38 @@ class LTI_WPTool extends Tool
         // Check if this username, $user_login, is already defined
         $user = get_user_by('login', $user_login);
 
-        if ($user) {
+        if (!empty($user)) {
             // If user exists, simply save the current details
             $user->first_name = $this->userResult->firstname;
             $user->last_name = $this->userResult->lastname;
             $user->display_name = $this->userResult->fullname;
+            if (lti_do_save_email($this->userResult->getResourceLink()->getKey())) {
+                $user->user_email = $this->userResult->email;
+            }
             $result = wp_insert_user($user);
         } else {
             // Create username if user provisioning is on
-            $result = wp_insert_user(
-                array(
-                    'user_login' => $user_login,
-                    'user_pass' => wp_generate_password(),
-                    'user_nicename' => $user_login,
-                    'first_name' => $this->userResult->firstname,
-                    'last_name' => $this->userResult->lastname,
-                    //'user_email'=> $this->userResult->email,
-                    //'user_url' => 'http://',
-                    'display_name' => $this->userResult->fullname
-                )
+            $user_data = array(
+                'user_login' => $user_login,
+                'user_pass' => wp_generate_password(),
+                'user_nicename' => $user_login,
+                'first_name' => $this->userResult->firstname,
+                'last_name' => $this->userResult->lastname,
+                'display_name' => $this->userResult->fullname
             );
-            // Handle any errors by capturing and returning to the platform
-            if (is_wp_error($result)) {
-                $this->reason = $result->get_error_message();
-                $this->ok = false;
-                return;
-            } else {
-                // Get the new users details
-                $user = get_user_by('login', $user_login);
+            if (lti_do_save_email($this->userResult->getResourceLink()->getKey())) {
+                $user_data['user_email'] = $this->userResult->email;
             }
+            $result = wp_insert_user($user_data);
+        }
+        // Handle any errors by capturing and returning to the platform
+        if (is_wp_error($result)) {
+            $this->reason = $result->get_error_message();
+            $this->ok = false;
+            return;
+        } elseif (empty($user)) {
+            // Get the new users details
+            $user = get_user_by('login', $user_login);
         }
 
         // Get user ID
