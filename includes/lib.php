@@ -431,7 +431,8 @@ function lti_update($with_deletions)
         if (is_wp_error($result)) {
             $errors[] = $user->username . ': ' . $result->get_error_message();
         } else {
-            $lti_session['sync']['add'][] = LTI_WP_User::fromWPUser($result);
+            $user->id = $result;
+            $lti_session['sync']['add'][] = $user;
         }
     }
 
@@ -448,7 +449,7 @@ function lti_update($with_deletions)
         }
         // Save LTI user ID
         update_user_meta($user->id, 'lti_platform_pk', $platform->getRecordId());
-        update_user_meta($user->id, 'lti_user_id', $user->ltiUserId);
+        update_user_meta($user->id, 'lti_user_id', $user->lti_user_id);
     }
 
     // Changed users
