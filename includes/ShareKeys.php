@@ -21,12 +21,13 @@
  */
 
 use ceLTIc\LTI\Platform;
+use ceLTIc\LTI\Tool;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\ResourceLinkShareKey;
 
 function lti_create_share_key()
 {
-    global $current_user, $lti_db_connector;
+    global $lti_db_connector, $lti_session;
 
     // Get the context
     $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
@@ -42,7 +43,7 @@ function lti_create_share_key()
         }
         $share_key->save();
 
-        wp_get_current_user();
+        $current_user = wp_get_current_user();
         $senttext = __('Instructor: ', 'lti-text') . '<b>' . $current_user->display_name . '</b>' . __(' has shared', 'lti-text') . '<br /><br />' .
             __('Blog Name: ', 'lti-text') . '<b>' . get_bloginfo('name') . '</b>' . __(' with your module. To link up with this Blog:',
                 'lti-text') . '<br /><br />' .
@@ -66,7 +67,7 @@ function lti_create_share_key()
             $senttext .= '<br /><br />' . sprintf(__('The share key must be activated within %s.', 'lti-text'), $time);
         } else {
             $senttext .= '<br /><br />' .
-                sprintf(__('The share key must be activated within %s and will only work after then being approved by an administrator of the site being shared.',
+                sprintf(__('The share key must be activated within %s and will only work after then being approved by an administrator/editor of the site being shared.',
                         'lti-text'), $time);
         }
 
@@ -214,7 +215,7 @@ function lti_manage_share_keys()
 function lti_manage_share_keys_screen_options()
 {
     $screen = get_current_screen();
-    add_screen_option('per_page', array('label' => __('LTI Share Keys', 'lti-text'), 'default' => 5, 'option' => 'lti_per_page'));
+    add_screen_option('per_page', array('label' => __('LTI Share Keys', 'lti-text'), 'default' => 10, 'option' => 'lti_per_page'));
 
     $screen->add_help_tab(array(
         'id' => 'lti-display',

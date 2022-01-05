@@ -691,7 +691,12 @@ function lti_get_options()
 {
     $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => LTI_ID_SCOPE_DEFAULT,
         'saveemail' => '0', 'homepage' => '', 'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber');
-    $options = get_site_option('lti_choices');
+    if (is_multisite()) {
+        $options = get_site_option('lti_choices');
+    } else {
+        $default_options['role_staff'] = 'editor';
+        $options = get_option('lti_choices');
+    }
     if ($options === false) {
         $options = get_option('lti_options');  // Check in deprecated location
         if ($options === false) {  // If no options set defaults
@@ -699,7 +704,11 @@ function lti_get_options()
         } else {
             delete_option('lti_options');
         }
-        add_site_option('lti_choices', $options);
+        if (is_multisite()) {
+            add_site_option('lti_choices', $options);
+        } else {
+            add_option('lti_choices', $options);
+        }
     }
     $options = array_merge($default_options, $options);
 

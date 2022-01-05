@@ -35,6 +35,9 @@ use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\Util;
 
+// Prevent loading this file directly
+defined('ABSPATH') || exit;
+
 /* -------------------------------------------------------------------
  * This is where we do all the Wordpress set up.
   ------------------------------------------------------------------ */
@@ -90,6 +93,7 @@ function lti_parse_request($wp)
         } else if (($_SERVER['REQUEST_METHOD'] !== 'POST') && empty($_GET['iss']) && empty($_GET['openid_configuration'])) {
             return false;
         }
+
         // Clear any existing session variables for this plugin
         lti_reset_session(true);
 
@@ -115,9 +119,11 @@ add_action('parse_request', 'lti_parse_request');
 
 function lti_register_manage_submenu_page()
 {
+    require_once('includes' . DIRECTORY_SEPARATOR . 'LTI_List_Table.php');
 
     // If plugin not actve simply return
-    if (!is_plugin_active_for_network('lti/lti.php')) {
+    if ((is_multisite() && !is_plugin_active_for_network('lti/lti.php')) ||
+        (!is_multisite() && !is_plugin_active('lti/lti.php'))) {
         return;
     }
 
@@ -127,8 +133,11 @@ function lti_register_manage_submenu_page()
         __('lti_platforms', 'lti-text'), // admin.php?page=lti_platforms
         'lti_platforms', // Function to call
         plugin_dir_url(__FILE__) . 'IMS.png'); // Image for menu item
-
     add_action('load-' . $manage_lti_page, 'lti_manage_screen_options');
+    if (is_multisite()) {
+        $manage_lti_page .= '-network';
+    }
+    add_filter("manage_{$manage_lti_page}_columns", array('LTI_List_Table', 'define_columns'), 10, 0);
 
     // Add submenus to the Manage LTI menu
     add_submenu_page(__('lti_platforms', 'lti-text'), // Menu page for this submenu
@@ -143,7 +152,11 @@ function lti_register_manage_submenu_page()
 }
 
 // Add the Manage LTI option on the Network Admin page
-add_action('network_admin_menu', 'lti_register_manage_submenu_page');
+if (is_multisite()) {
+    add_action('network_admin_menu', 'lti_register_manage_submenu_page');
+} else {
+    add_action('admin_menu', 'lti_register_manage_submenu_page');
+}
 
 /* -------------------------------------------------------------------
  * Add script for input form pages to prompt before leaving changes unsaved
@@ -169,54 +182,64 @@ function lti_register_user_submenu_page()
     global $lti_db_connector, $lti_session;
 
     // Check this is an LTI site for which the following make sense
-    if (is_null(get_option('ltisite'))) {
+    if (is_multisite() && is_null(get_option('ltisite'))) {
         return;
     }
+
     // Not sure if this is strictly needed but it stops the LTI option
     // appearing on the main site (/)
-    if (is_main_site()) {
+    if (is_multisite() && is_main_site()) {
         return;
     }
 
-    // Check whether this blog is LTI, if not return
-    if (get_option('ltisite') == 1) {
+    // Check user is accessing via LTI
+    if (empty($lti_session['userkey'])) {
+        return;
+    }
 
-        // Sort out platform instance and membership service stuff
-        $platform = Platform::fromConsumerKey(lti_session['userkey'], $lti_db_connector);
-        $resource_link = ResourceLink::fromPlatform($platform, lti_session['userresourcelink']);
+    require_once('includes' . DIRECTORY_SEPARATOR . 'LTI_User_List_Table.php');
+    require_once('includes' . DIRECTORY_SEPARATOR . 'LTI_List_Keys.php');
 
-        // If there is a membership service then offer appropriate options
-        if ($resource_link->hasMembershipsService()) {
-            // Add a submenu to the users menu
-            $plugin_page = add_users_page(__('Sync Enrolments', 'lti-text'), __('Sync Enrolments', 'lti-text'), 'list_users',
+// Sort out platform instance and membership service stuff
+    $platform = Platform::fromConsumerKey($lti_session['userkey'], $lti_db_connector);
+    $resource_link = ResourceLink::fromPlatform($platform, $lti_session['userresourcelink']);
+// If there is a membership service then offer appropriate options
+    if ($resource_link->hasMembershipsService()) {
+        // Add a user synchronisation menu option
+        if (current_user_can('list_users')) {
+            $sync_page = add_users_page(__('LTI Users Sync', 'lti-text'), __('LTI Users Sync', 'lti-text'), 'list_users',
                 __('lti_sync_enrolments', 'lti-text'), 'lti_sync_enrolments');
-
-            // Called when lti_sync_enrolments page is called
-            add_action('load-' . $plugin_page, 'lti_sync_admin_header');
+        } else {
+            $sync_page = add_menu_page(
+                __('LTI Users Sync', 'lti-text'), __('LTI Users Sync', 'lti-text'), 'edit_others_posts',
+                __('lti_sync_enrolments', 'lti-text'), 'lti_sync_enrolments', plugin_dir_url(__FILE__) . 'IMS.png');
         }
+        add_filter("manage_{$sync_page}_columns", array('LTI_User_List_Table', 'define_columns'), 10, 0);
+        add_action('load-' . $sync_page, 'lti_sync_admin_header');
+    }
 
-        // Add a submenu to the tool menu for sharing if sharing is enabled and this is
-        // the platform from where the sharing was initiated.
-        if ($lti_session['key'] == $lti_session['userkey'] &&
-            $lti_session['resourceid'] == $lti_session['userresourcelink']) {
-            $manage_share_keys_page = add_menu_page(
-                __('LTI Share Keys', 'lti-text'), // <title>...</title>
-                __('LTI Share Keys', 'lti-text'), // Menu title
-                'edit_others_posts', // Capability needed to see this page
-                __('lti_manage_share_keys', 'lti-text'), // admin.php?page=lti_manage_share_keys
-                'lti_manage_share_keys', // Function to call
-                plugin_dir_url(__FILE__) . 'IMS.png'); // Image for menu item
+// Add a submenu to the tool menu for sharing if sharing is enabled and this is
+// the platform from where the sharing was initiated.
+    if (is_multisite() && ($lti_session['key'] == $lti_session['userkey']) &&
+        ($lti_session['resourceid'] == $lti_session['userresourcelink'])) {
+        $manage_share_keys_page = add_menu_page(
+            __('LTI Share Keys', 'lti-text'), // <title>...</title>
+            __('LTI Share Keys', 'lti-text'), // Menu title
+            'edit_others_posts', // Capability needed to see this page
+            __('lti_manage_share_keys', 'lti-text'), // admin.php?page=lti_manage_share_keys
+            'lti_manage_share_keys', // Function to call
+            plugin_dir_url(__FILE__) . 'IMS.png'); // Image for menu item
 
-            add_action('load-' . $manage_share_keys_page, 'lti_manage_share_keys_screen_options');
+        add_filter("manage_{$manage_share_keys_page}_columns", array('LTI_List_Keys', 'define_columns'), 10, 0);
+        add_action('load-' . $manage_share_keys_page, 'lti_manage_share_keys_screen_options');
 
-            // Add submenus to the Manage LTI menu
-            add_submenu_page(__('lti_manage_share_keys', 'lti-text'), // Menu page for this submenu
-                __('Add New', 'lti-text'), // <title>...</title>
-                __('Add New', 'lti-text'), // Menu title
-                'edit_others_posts', // Capability needed to see this page
-                __('lti_create_share_key', 'lti-text'), // The slug name for this menu
-                'lti_create_share_key');                 // Function to call
-        }
+        // Add submenus to the Manage LTI menu
+        add_submenu_page(__('lti_manage_share_keys', 'lti-text'), // Menu page for this submenu
+            __('Add New', 'lti-text'), // <title>...</title>
+            __('Add New', 'lti-text'), // Menu title
+            'edit_others_posts', // Capability needed to see this page
+            __('lti_create_share_key', 'lti-text'), // The slug name for this menu
+            'lti_create_share_key');                 // Function to call
     }
 }
 
@@ -230,9 +253,7 @@ add_action('admin_menu', 'lti_register_user_submenu_page');
 
 function lti_sync_admin_header()
 {
-	global $lti_session;
-
-    // If we're doing updates
+// If we're doing updates
     if (isset($_REQUEST['nodelete'])) {
         lti_update('nodelete');
     }
@@ -309,9 +330,13 @@ function lti_platforms()
     <div class="wrap">
 
       <h1 class="wp-heading-inline"><?php _e('Platforms', 'lti-text'); ?></h1>
-      <a href="<?php echo get_admin_url(); ?>network/admin.php?page=lti_add_platform" class="page-title-action"><?php
-        _e('Add New', 'lti-text');
-        ?></a>
+      <a href="<?php
+      echo get_admin_url();
+      if (is_multisite())
+          echo 'network/';
+      ?>admin.php?page=lti_add_platform" class="page-title-action"><?php
+         _e('Add New', 'lti-text');
+         ?></a>
       <hr class="wp-header-end">
       <p>
         <?php echo __('Launch URL, Initiate Login URL, Redirection URI: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti</b><br>'; ?>
@@ -359,7 +384,7 @@ add_filter('allowed_redirect_hosts', 'lti_allow_ms_parent_redirect');
 
 function lti_allow_ms_parent_redirect($allowed)
 {
-	global $lti_session;
+    global $lti_session;
 
     if (isset($lti_session['return_url'])) {
         $allowed[] = parse_url($lti_session['return_url'], PHP_URL_HOST);
@@ -374,7 +399,7 @@ function lti_allow_ms_parent_redirect($allowed)
 
 function lti_set_logout_url($logout_url)
 {
-	global $lti_session;
+    global $lti_session;
 
     if (isset($lti_session['key']) && !empty($lti_session['return_url'])) {
         $urlencode = '&redirect_to=' . urlencode($lti_session['return_url'] .
@@ -385,8 +410,7 @@ function lti_set_logout_url($logout_url)
     return $logout_url;
 }
 
-// Use our URL instead of usual. Not sure if this is ultimately much
-// use as WordPress opening in new window,
+// Use platform URL if provided instead of usual.
 add_filter('logout_url', 'lti_set_logout_url');
 
 /* -------------------------------------------------------------------
@@ -491,17 +515,34 @@ function lti_mysites_callback()
 function lti_scope_callback()
 {
     $options = lti_get_options();
-    ?>
-    <fieldset><?php $checked = ( isset($options['scope']) && $options['scope'] === '3' ) ? 'checked' : ''; ?>
-      <label for="lti_scope3"><input type="radio" name="lti_options[scope]" id="lti_scope3" value="3"<?php echo $checked; ?>> Resource: Prefix the ID with the consumer key and resource link ID</label><br>
-      <?php $checked = ( isset($options['scope']) && $options['scope'] === '2' ) ? ' checked' : ''; ?>
-      <label for="lti_scope2"><input type="radio" name="lti_options[scope]" id="lti_scope2" value="2"<?php echo $checked; ?>> Context: Prefix the ID with the consumer key and context ID</label><br>
-      <?php $checked = ( isset($options['scope']) && $options['scope'] === '1' ) ? ' checked' : ''; ?>
-      <label for="lti_scope1"><input type="radio" name="lti_options[scope]" id="lti_scope1" value="1"<?php echo $checked; ?>> Platform: Prefix the ID with the consumer key</label><br>
-      <?php $checked = ( isset($options['scope']) && $options['scope'] === '0' ) ? ' checked' : ''; ?>
-      <label for="lti_scope0"><input type="radio" name="lti_options[scope]" id="lti_scope0" value="0"<?php echo $checked; ?>> Global: Use ID value only</label>
+
+    $here = function($value) {
+        return $value;
+    };
+    $checked = function($value, $current) {
+        return checked($value, $current, false);
+    };
+    echo <<< EOD
+    <fieldset>
+
+EOD;
+    if (is_multisite()) {
+        echo <<< EOD
+      <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(Tool::ID_SCOPE_RESOURCE)}" value="{$here(Tool::ID_SCOPE_RESOURCE)}"{$checked(Tool::ID_SCOPE_RESOURCE,
+            $options['scope'])}> Resource: Prefix the ID with the consumer key and resource link ID</label><br>
+      <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(Tool::ID_SCOPE_CONTEXT)}" value="{$here(Tool::ID_SCOPE_CONTEXT)}"{$checked(Tool::ID_SCOPE_CONTEXT,
+            $options['scope'])}> Context: Prefix the ID with the consumer key and context ID</label><br>
+
+EOD;
+    }
+    echo <<< EOD
+      <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(Tool::ID_SCOPE_GLOBAL)}" value="{$here(Tool::ID_SCOPE_GLOBAL)}"{$checked(Tool::ID_SCOPE_GLOBAL,
+        $options['scope'])}> Platform: Prefix the ID with the consumer key</label><br>
+      <label><input type="radio" name="lti_options[scope]" id="lti_scope{$here(Tool::ID_SCOPE_ID_ONLY)}" value="{$here(Tool::ID_SCOPE_ID_ONLY)}"{$checked(Tool::ID_SCOPE_ID_ONLY,
+        $options['scope'])}> Global: Use ID value only</label>
     </fieldset>
-    <?php
+
+EOD;
 }
 
 /* -------------------------------------------------------------------
@@ -602,7 +643,7 @@ function lti_end_session()
 
     // Avoid deleting the session if the user is in the process of being logged in
     if (empty($lti_session['logging_in'])) {
-    lti_reset_session();
+        lti_reset_session();
     }
 }
 

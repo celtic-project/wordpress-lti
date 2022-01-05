@@ -218,23 +218,25 @@ function lti_add_platform()
                     <?php _e('Username format', 'lti-text') ?>
                   </th>
                   <td>
-                    <fieldset>
-                      <legend class="screen-reader-text">
-                        <span><?php _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text') ?></span>
-                      </legend>
-                      <label for="lti_scope3">
-                        <input name="lti_scope" type="radio" id="lti_scope3" value="3" <?php checked('3', $options['scope']); ?> />
-                        <?php
-                        _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text');
-                        ?>
-                      </label><br />
-                      <legend class="screen-reader-text">
-                        <span><?php _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text') ?></span>
-                      </legend>
-                      <label for="lti_scope2">
-                        <input name="lti_scope" type="radio" id="lti_scope2" value="2" <?php checked('2', $options['scope']); ?> />
-                        <?php _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text'); ?>
-                      </label><br />
+                    <fieldset><?php if (is_multisite()) { ?>
+                          <legend class="screen-reader-text">
+                            <span><?php _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text') ?></span>
+                          </legend>
+                          <label for="lti_scope3">
+                            <input name="lti_scope" type="radio" id="lti_scope3" value="3" <?php checked('3', $options['scope']); ?> />
+                            <?php
+                            _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text');
+                            ?>
+                          </label><br />
+                          <legend class="screen-reader-text">
+                            <span><?php _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text') ?></span>
+                          </legend>
+                          <label for="lti_scope2">
+                            <input name="lti_scope" type="radio" id="lti_scope2" value="2" <?php checked('2', $options['scope']); ?> />
+                            <?php
+                            _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text');
+                            ?>
+                          </label><br /><?php } ?>
                       <legend class="screen-reader-text">
                         <span><?php _e('Platform: Prefix an ID with the consumer key', 'lti-text') ?></span>
                       </legend>

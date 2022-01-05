@@ -76,17 +76,12 @@ class LTI_WPTool extends Tool
 
     protected function onLaunch()
     {
-    	global $lti_session;
-    	
-        // If multisite support isn't in play, go home
-        if (!is_multisite()) {
-            $this->message = __('The LTI Plugin requires a Multisite installation of WordPress', 'lti-text');
-            $this->ok = false;
-            return;
-        }
+        global $lti_session;
 
         // Clear any existing connections
+        $lti_session['logging_in'] = true;
         wp_logout();
+        unset($lti_session['logging_in']);
 
         // Clear these before use
         $lti_session['return_url'] = '';
@@ -147,9 +142,9 @@ class LTI_WPTool extends Tool
         // Get user ID
         $user_id = $user->ID;
 
-        // Staff or Learner
-        $staff = $this->userResult->isStaff() || $this->userResult->isAdmin();
-        $learner = $this->userResult->isLearner();
+        // Save LTI user ID
+        update_user_meta($user_id, 'lti_platform_pk', $this->platform->getRecordId());
+        update_user_meta($user_id, 'lti_user_id', $this->userResult->ltiUserId);
 
         // set up some useful variables
         $key = $this->resourceLink->getKey();
@@ -181,55 +176,56 @@ class LTI_WPTool extends Tool
             return;
         }
 
-        // Get any folder(s) that WordPress might be living in
-        $wppath = parse_url(get_option('siteurl'), PHP_URL_PATH);
-        $path = $wppath . '/' . trailingslashit($path);
+        if (is_multisite()) {
+            // Get any folder(s) that WordPress might be living in
+            $wppath = parse_url(get_option('siteurl'), PHP_URL_PATH);
+            $path = $wppath . '/' . trailingslashit($path);
 
-        // Get the id of the blog, if exists
-        $blog_id = domain_exists(DOMAIN_CURRENT_SITE, $path, 1);
-        // If Blog does not exist and this is a member of staff and blog provisioning is on, create blog
-        if (!$blog_id && $staff) {
-            $blog_id = wpmu_create_blog(DOMAIN_CURRENT_SITE, $path, $this->resourceLink->title, $user_id, '', '1');
-            update_blog_option($blog_id, 'blogdescription', __('Provisioned by LTI', 'lti-text'));
+            // Get the id of the blog, if exists
+            $blog_id = domain_exists(DOMAIN_CURRENT_SITE, $path, 1);
+            // If Blog does not exist and this is a member of staff and blog provisioning is on, create blog
+            if (!$blog_id && ($this->userResult->isStaff() || $this->userResult->isAdmin())) {
+                $blog_id = wpmu_create_blog(DOMAIN_CURRENT_SITE, $path, $this->resourceLink->title, $user_id, '', '1');
+                update_blog_option($blog_id, 'blogdescription', __('Provisioned by LTI', 'lti-text'));
+            }
+
+            // Blog will exist by this point unless this user is student/no role.
+            if (!$blog_id) {
+                $this->reason = __('No Blog has been created for this context', 'lti-text');
+                $this->ok = false;
+                return;
+            }
+
+            // Update/create blog name
+            update_blog_option($blog_id, 'blogname', $this->resourceLink->title);
+
+            // Users added via this route should only have access to this
+            // (path) site. Remove from the default blog.
+            remove_user_from_blog($user_id, 1);
+        } else {
+            $blog_id = get_current_blog_id();
         }
 
-        // Blog will exist by this point unless this user is student/no role.
-        if (!$blog_id) {
-            $this->reason = __('No Blog has been created for this context', 'lti-text');
-            $this->ok = false;
-            return;
-        }
-
-        // Update/create blog name
-        update_blog_option($blog_id, 'blogname', $this->resourceLink->title);
-
-        $role = 'subscriber';
-        if ($staff) {
-            $role = 'administrator';
-        }
-        if ($learner) {
-            $role = 'author';
-        }
+        $options = lti_get_options();
+        $role = lti_user_role($this->userResult, $options);
 
         // Add user to blog and set role
         if (!is_user_member_of_blog($user_id, $blog_id)) {
             add_user_to_blog($blog_id, $user_id, $role);
         }
 
-        // Users added via this route should only have access to this
-        // (path) site. Remove from the default blog.
-        remove_user_from_blog($user_id, 1);
-
         // Login the user
         wp_set_current_user($user_id, $user_login);
         wp_set_auth_cookie($user_id);
         do_action('wp_login', $user_login, $user);
 
-        // Switch to blog
-        switch_to_blog($blog_id);
+        if (is_multisite()) {
+            // Switch to blog
+            switch_to_blog($blog_id);
 
-        // Note this is an LTI provisioned Blog.
-        add_option('ltisite', true);
+            // Note this is an LTI provisioned Blog.
+            add_option('ltisite', true);
+        }
 
         // As this is an LTI provisioned Blog we store the consumer key and
         // context id as options with the session meaning we can access elsewhere
@@ -246,30 +242,17 @@ class LTI_WPTool extends Tool
         // If users role in platform has changed (e.g. staff -> student),
         // then their role in the blog should change
         $user = new WP_User($user_id);
-        if ($user->has_cap('administrator') && $role != 'administrator') {
-            $user->add_role($role);
-            $user->remove_role('administrator');
-        }
-
-        if ($user->has_cap('author') && $role != 'author') {
-            $user->add_role($role);
-            $user->remove_role('author');
-        }
-
-        if ($user->has_cap('subscriber') && $role != 'subscriber') {
-            $user->add_role($role);
-            $user->remove_role('subscriber');
-        }
+        $user->set_role($role);
 
         // Send login time to platform if has outcomes service and can handle freetext
-        $context = $this->resourceLink;
+        $resource_link = $this->resourceLink;
 
-        if ($context->hasOutcomesService()) {
+        if ($resource_link->hasOutcomesService()) {
 
             // Presently this is just a demo of the outcome services and updating the menu bar in WordPress
             $outcome = new Outcome();
             $outcome->type = ResourceLink::EXT_TYPE_TEXT;
-            $result = $context->doOutcomesService(ResourceLink::EXT_READ, $outcome, $this->userResult);
+            $result = $resource_link->doOutcomesService(ResourceLink::EXT_READ, $outcome, $this->userResult);
 
             // If we have successfully read then update the user metadata
             if ($result) {
@@ -277,7 +260,7 @@ class LTI_WPTool extends Tool
             }
 
             $outcome->setValue(date('d-F-Y G:i', time()));
-            $context->doOutcomesService(ResourceLink::EXT_WRITE, $outcome, $this->userResult);
+            $resource_link->doOutcomesService(ResourceLink::EXT_WRITE, $outcome, $this->userResult);
         }
 
         // Return URL for re-direction by Tool Provider class

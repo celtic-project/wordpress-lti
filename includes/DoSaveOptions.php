@@ -34,12 +34,20 @@ if (!wp_verify_nonce($nonce, 'lti_options_settings_group-options')) {
     add_settings_error('general', 'settings_updated', __('Unable to submit this form, please refresh and try again.'));
 } else {
     $options = wp_unslash($_POST['lti_options']);
-    update_site_option('lti_choices', $options);
+    if (is_multisite()) {
+        update_site_option('lti_choices', $options);
+    } else {
+        update_option('lti_choices', $options);
+    }
     add_settings_error('general', 'settings_updated', __('Settings saved.'), 'success');
 }
 set_transient('settings_errors', get_settings_errors(), 30);
 
-$path = add_query_arg(array('page' => 'lti_options', 'settings-updated' => 'true'), network_admin_url('admin.php'));
+if (is_multisite()) {
+    $path = add_query_arg(array('page' => 'lti_options', 'settings-updated' => 'true'), network_admin_url('admin.php'));
+} else {
+    $path = add_query_arg(array('page' => 'lti_options', 'settings-updated' => 'true'), admin_url('admin.php'));
+}
 
 wp_redirect($path);
 ?>

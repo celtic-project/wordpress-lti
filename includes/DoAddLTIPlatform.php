@@ -52,7 +52,11 @@ if (!empty($_POST) && check_admin_referer('add_lti', '_wpnonce_add_lti')) {
     $platform->save();
 
     if (isset($_GET['edit'])) {
-        wp_redirect(get_admin_url() . 'network/admin.php?page=lti_platforms');
+        if (is_multisite()) {
+            wp_redirect(get_admin_url() . 'network/admin.php?page=lti_platforms');
+        } else {
+            wp_redirect(get_admin_url() . 'admin.php?page=lti_platforms');
+        }
     }
 }
 ?>

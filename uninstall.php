@@ -48,7 +48,11 @@ if (!empty($options['uninstallblogs'])) {
 
 if (!empty($options['uninstalldb'])) {
     // delete plugin options.
-    delete_site_option('lti_choices');
+    if (is_multisite()) {
+        delete_site_option('lti_choices');
+    } else {
+        delete_option('lti_choices');
+    }
 
     // delete LTI tables.
     $wpdb->query("DROP TABLE {$wpdb->prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME);
