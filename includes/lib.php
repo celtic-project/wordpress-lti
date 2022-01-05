@@ -578,7 +578,7 @@ function lti_strip_magic_quotes()
 
 function lti_get_scope($guid)
 {
-    return substr($guid, 2, 1);
+    return intval(substr($guid, 2, 1));
 }
 
 /* -------------------------------------------------------------------

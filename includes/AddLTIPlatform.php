@@ -21,6 +21,7 @@
  */
 
 use ceLTIc\LTI\Platform;
+use ceLTIc\LTI\Tool;
 
 /* -------------------------------------------------------------------
  * lti_add_platform displays the page content for the custom menu
@@ -197,16 +198,16 @@ function lti_add_platform()
                   <td>
                     <?php
                     switch (lti_get_scope($platform->getKey())) {
-                        case '3' :
+                        case Tool::ID_SCOPE_RESOURCE:
                             _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text');
                             break;
-                        case '2' :
+                        case Tool::ID_SCOPE_CONTEXT:
                             _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text');
                             break;
-                        case '1' :
+                        case Tool::ID_SCOPE_GLOBAL:
                             _e('Platform: Prefix the ID with the consumer key', 'lti-text');
                             break;
-                        case '0' :
+                        case Tool::ID_SCOPE_ID_ONLY:
                             _e('Global: Use ID value only', 'lti-text');
                             break;
                     }
