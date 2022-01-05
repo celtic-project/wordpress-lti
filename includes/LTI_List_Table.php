@@ -98,7 +98,7 @@ class LTI_List_Table extends WP_List_Table
         );
     }
 
-    function get_columns()
+    public static function define_columns()
     {
         $columns = array(
             'cb' => '<input type="checkbox" />', //Render a checkbox instead of text
@@ -109,7 +109,13 @@ class LTI_List_Table extends WP_List_Table
             'debug' => _x('Debug?', 'column name', 'lti-text'),
             'last' => _x('Last Access', 'column name', 'lti-text')
         );
+
         return $columns;
+    }
+
+    public function get_columns()
+    {
+        return get_column_headers(get_current_screen());
     }
 
     function get_sortable_columns()
@@ -203,25 +209,6 @@ class LTI_List_Table extends WP_List_Table
     function prepare_items()
     {
         global $lti_db_connector;
-
-        /**
-         * REQUIRED. Now we need to define our column headers. This includes a complete
-         * array of columns to be displayed (slugs & titles), a list of columns
-         * to keep hidden, and a list of columns that are sortable. Each of these
-         * can be defined in another method (as we've done here) before being
-         * used to build the value for our _column_headers property.
-         */
-        $columns = $this->get_columns();
-        $hidden = array();
-        $sortable = $this->get_sortable_columns();
-
-        /**
-         * REQUIRED. Finally, we build an array to be used by the class for column
-         * headers. The $this->_column_headers property takes an array which contains
-         * 3 other arrays. One for all columns, one for hidden columns, and one
-         * for sortable columns.
-         */
-        $this->_column_headers = array($columns, $hidden, $sortable);
 
         /**
          * Optional. You can handle your bulk actions however you see fit. In this

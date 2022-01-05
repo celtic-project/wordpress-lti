@@ -284,7 +284,7 @@ function lti_sync_admin_header()
 function lti_manage_screen_options()
 {
     $screen = get_current_screen();
-    add_screen_option('per_page', array('label' => __('Platforms', 'lti-text'), 'default' => 5, 'option' => 'lti_per_page'));
+    add_screen_option('per_page', array('label' => __('Platforms', 'lti-text'), 'default' => 10, 'option' => 'lti_per_page'));
 
     $screen->add_help_tab(array(
         'id' => 'lti-display',
