@@ -62,64 +62,42 @@ class LTI_WP_User
     public $username;
     public $firstname;
     public $lastname;
-    public $fullname;
-    //public $email;
-    public $roles;
-    public $staff = false;
-    public $learner = false;
-    public $new_to_blog;
-    public $provision;
-    public $newadmin;
-    public $changed;
-    public $role_changed;
-    public $delete;
+    public $name;
+    public $role;
+    public $lti_user_id;
+    public $reasons = array();
 
-    function __construct()
+    public static function fromUserResult($user_result, $user_login, $options)
     {
-        if (func_num_args() == 1) {
-            $args = func_get_args();
-            $lti_user_from_platform = $args[0];
+        $user = new static();
+        $user->id = null;
+        $user->username = $user_login;
+        $user->firstname = $user_result->firstname;
+        $user->lastname = $user_result->lastname;
+        $user->name = $user_result->fullname;
+        $user->role = lti_user_role($user_result, $options);
+        $user->lti_user_id = $user_result->ltiUserId;
 
-            // Sharing --- this is Stephen's preference.
-            $scope_userid = lti_get_scope($lti_session['userkey']);
-            $user_login = $lti_user_from_platform->getID($scope_userid);
+        return $user;
+    }
 
-            // Sanitize username stripping out unsafe characters
-            $user_login = sanitize_user($user_login);
+    public static function fromWPUser($wp_user)
+    {
+        $user = new static();
+        $user->id = $wp_user->ID;
+        $user->username = $wp_user->user_login;
+        $user->firstname = $wp_user->first_name;
+        $user->lastname = $wp_user->last_name;
+        $user->name = $wp_user->display_name;
+        $user->role = array_shift($wp_user->roles);
+        $user->lti_user_id = $wp_user->lti_user_id;
 
-            // Apply the function pre_user_login before saving to the DB.
-            $user_login = apply_filters('pre_user_login', $user_login);
+        return $user;
+    }
 
-            $this->username = $user_login;
-            $this->firstname = $lti_user_from_platform->firstname;
-            $this->lastname = $lti_user_from_platform->lastname;
-            $this->fullname = $lti_user_from_platform->fullname;
-            //$this->email = $lti_user_from_platform->email;
-            $role_name = '';
-            if (!empty($lti_user_from_platform->roles)) {
-                foreach ($lti_user_from_platform->roles as $role) {
-                    $role_name .= $role . ',';
-                }
-                $this->roles = substr($role_name, 0, -1);
-            }
+    private function __construct()
+    {
 
-            // Need to ensure that user who is both staff/student is treated as student
-            $this->staff = $lti_user_from_platform->isStaff() || $lti_user_from_platform->isAdmin();
-            if ($lti_user_from_platform->isLearner()) {
-                $this->staff = false;
-                $this->learner = true;
-            }
-
-            $this->provision = false;
-            $this->new_to_blog = false;
-            $this->changed = false;
-            $this->role_changed = '';
-        }
-
-        if (func_num_args() == 0) {
-            $this->username = '';
-            $this->delete = true;
-        }
     }
 
 }
@@ -419,110 +397,94 @@ function lti_create_db()
  * generated --- see lti.php and sync_admin_header
  *
  * Parameters
- *  $choice - whether to run the update with/without deletions
+ *  $with_deletions - whether to run the update with deletions
   ------------------------------------------------------------------ */
 
-function lti_update($choice)
+function lti_update($with_deletions)
 {
     global $blog_id, $lti_db_connector, $lti_session;
 
-    $lti_session['error'] = '';
+// Get the platform
+    $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
+    $resource_link = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
 
-    // Add users
-    $add_users = unserialize($lti_session['provision']);
-    foreach ($add_users as $new_u) {
+    $errors = array();
 
-        $result = wp_insert_user(
-            array(
-                'user_login' => $new_u->username,
-                'user_nicename' => $new_u->username,
-                'user_pass' => wp_generate_password(),
-                'first_name' => $new_u->firstname,
-                'last_name' => $new_u->lastname,
-                //'user_email'=> $new_u->email,
-                //'user_url' => 'http://',
-                'display_name' => $new_u->fullname
-            )
+// New users
+    $users = $lti_session['sync']['new'];
+    foreach ($users as $user) {
+        $user_data = array(
+            'user_login' => $user->username,
+            'user_nicename' => $user->username,
+            'user_pass' => wp_generate_password(),
+            'first_name' => $user->firstname,
+            'last_name' => $user->lastname,
+            'display_name' => $user->name
         );
-
+        $result = wp_insert_user($user_data);
         if (is_wp_error($result)) {
-            $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
-            continue;
-        }
-
-        // Sort out role in blog
-        $role = 'author';
-        if ($new_u->staff === true) {
-            $role = 'administrator';
-        }
-
-        // Add newly created users to blog and set role
-        add_user_to_blog($blog_id, $result, $role);
-        if (is_wp_error($result)) {
-            $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
+            $errors[] = $user->username . ': ' . $result->get_error_message();
+        } else {
+            $lti_session['sync']['add'][] = LTI_WP_User::fromWPUser($result);
         }
     }
 
-    // Existing users that require adding to blog
-    $add_to_blog = unserialize($lti_session['new_to_blog']);
-    foreach ($add_to_blog as $new_u) {
-        $role = 'author';
-        if ($new_u->staff === true) {
-            $role = 'administrator';
-        }
-        add_user_to_blog($blog_id, $new_u->id, $role);
-        if (is_wp_error($result)) {
-            $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
-        }
-    }
-
-    // Changed name
-    $changed = unserialize($lti_session['changed']);
-    foreach ($changed as $change) {
-        wp_update_user(array
-            ('ID' => $change->id,
-            'first_name' => $change->firstname,
-            'last_name' => $change->lastname,
-            'display_name' => $change->fullname));
-    }
-    // Changed role (most probably administrator -> author, author -> administrator)
-    $changed_role = unserialize($lti_session['role_changed']);
-    foreach ($changed_role as $changed) {
-        $user = new WP_User($changed->id, '', $blog_id);
-        $user->add_role($changed->role_changed);
-        if ($changed->role_changed == 'administrator') {
-            $user->remove_role('author');
-            $user->remove_role('subscriber');
-        }
-        if ($changed->role_changed == 'author') {
-            $user->remove_role('administrator');
-            $user->remove_role('subscriber');
-        }
-        if ($changed->role_changed == 'subscriber') {
-            $user->remove_role('administrator');
-            $user->remove_role('author');
-        }
-    }
-
-    // Remove users from blog but not WP as could be members of
-    // other blogs. Could check and handle?
-    if ($choice == 'delete') {
-        $delete = unserialize($lti_session['remove']);
-        foreach ($delete as $del) {
-            $user = get_user_by('login', $del->username);
-            remove_user_from_blog($user->ID, $blog_id);
+// Add users to blog
+    $users = $lti_session['sync']['add'];
+    foreach ($users as $user) {
+        if (is_multisite()) {
+            $result = add_user_to_blog($blog_id, $user->id, $user->role);
             if (is_wp_error($result)) {
-                $lti_session['error'] .= $new_u->username . ":" . $result->get_error_message() . "<br />";
+                $errors[] = $user->username . ': ' . $result->get_error_message();
+            }
+        } else {
+            $user->set_role($user->role);
+        }
+        // Save LTI user ID
+        update_user_meta($user->id, 'lti_platform_pk', $platform->getRecordId());
+        update_user_meta($user->id, 'lti_user_id', $user->ltiUserId);
+    }
+
+// Changed users
+    $users = $lti_session['sync']['change'];
+    foreach ($users as $user) {
+        $user_data = array
+            ('ID' => $user->id,
+            'first_name' => $user->firstname,
+            'last_name' => $user->lastname,
+            'display_name' => $user->name);
+        $result = wp_update_user($user_data);
+        if (is_wp_error($result)) {
+            $errors[] = $user->username . ': ' . $result->get_error_message();
+        } else {
+            $wpuser = new WP_User($result, '', $blog_id);
+            $wpuser->set_role($user->role);
+            // Save LTI user ID
+            update_user_meta($result, 'lti_platform_pk', $platform->getRecordId());
+            update_user_meta($result, 'lti_user_id', $user->lti_user_id);
+        }
+    }
+
+// Remove users from blog but not WP as could be members of other blogs.
+    if ($with_deletions) {
+        $users = $lti_session['sync']['delete'];
+        foreach ($users as $user) {
+            $result = remove_user_from_blog($user->id, $blog_id);
+            if (is_wp_error($result)) {
+                $errors[] = $user->username . ': ' . $result->get_error_message();
             }
         }
     }
 
-    // Get the platform
-    $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
-    $resource = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
+    if (empty($errors)) {
+        add_action('admin_notices', 'lti_update_success');
+    } else {
+        $lti_session['sync']['errors'] = $errors;
+        add_action('admin_notices', 'lti_update_error');
+    }
 
-    if ($resource->hasSettingService()) {
-        $resource->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
+    if ($resource_link->hasSettingService()) {
+        $resource_link->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
     }
 
     lti_set_session($lti_session);
@@ -667,7 +629,7 @@ function lti_set_session($data, $key = null)
 
 function lti_reset_session($force = false)
 {
-	global $lti_session;
+    global $lti_session;
 
     $data = array();
     // Keep the return URL to enable its domain is allowed for redirects
@@ -713,6 +675,64 @@ function lti_get_options()
     $options = array_merge($default_options, $options);
 
     return $options;
+}
+
+/* -------------------------------------------------------------------
+ * Check if a user has a specified role
+  ------------------------------------------------------------------ */
+
+function lti_user_has_role($user, $role)
+{
+    return in_array($role, $user->roles);
+}
+
+/* -------------------------------------------------------------------
+ * Get role based on user type
+  ------------------------------------------------------------------ */
+
+function lti_user_role($lti_user, $options)
+{
+    $role = $options['role_other'];
+    if ($lti_user->isLearner()) {
+        $role = $options['role_student'];
+    } elseif ($lti_user->isStaff()) {
+        $role = $options['role_staff'];
+    }
+
+    return $role;
+}
+
+/* -------------------------------------------------------------------
+ * Display success message on completion of user sync
+  ------------------------------------------------------------------ */
+
+function lti_update_success()
+{
+    $message = __('Updating of LTI users completed successfully.', 'lti-text');
+    echo <<< EOD
+    <div class="notice notice-success is-dismissible">
+        <p>{$message}</p>
+    </div>
+
+EOD;
+}
+
+/* -------------------------------------------------------------------
+ * Display error message on completion of user sync
+  ------------------------------------------------------------------ */
+
+function lti_update_error()
+{
+    global $lti_session;
+
+    $message = __('An error occurred when synchronising users:', 'lti-text') . '<br>&nbsp;&nbsp;&nbsp;' . implode('<br>&nbsp;&nbsp;&nbsp;',
+            $lti_session['sync']['errors']);
+    echo <<< EOD
+    <div class="notice notice-error is-dismissible">
+        <p>{$message}</p>
+    </div>
+
+EOD;
 }
 
 ?>

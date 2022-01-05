@@ -255,21 +255,13 @@ function lti_sync_admin_header()
 {
 // If we're doing updates
     if (isset($_REQUEST['nodelete'])) {
-        lti_update('nodelete');
-    }
-    if (isset($_REQUEST['delete'])) {
-        lti_update('delete');
+        lti_update(false);
+    } elseif (isset($_REQUEST['delete'])) {
+        lti_update(true);
     }
 
-    if (isset($_REQUEST['nodelete']) || isset($_REQUEST['delete'])) {
-        if (!empty($lti_session['error'])) {
-            wp_redirect(get_admin_url() . "users.php?page=lti_sync_enrolments&action=error");
-            exit();
-        }
-        wp_redirect('users.php');
-    }
     $screen = get_current_screen();
-    add_screen_option('per_page', array('label' => __('Users', 'lti-text'), 'default' => 5, 'option' => 'users_per_page'));
+    add_screen_option('per_page', array('label' => __('Users', 'lti-text'), 'option' => 'users_per_page'));
     $screen->add_help_tab(array(
         'id' => 'lti-text-display',
         'title' => __('Screen Display', 'lti-text'),

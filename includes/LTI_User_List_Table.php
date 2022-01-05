@@ -23,321 +23,172 @@
 class LTI_User_List_Table extends WP_List_Table
 {
 
-    public $users = array();
-    private $site_id;
-    private $is_site_users;
+    const REASON_NEW = 'New to WordPress';
+    const REASON_ADD = 'New to this site';
+    const REASON_CHANGE_NAME = 'Name change';
+    const REASON_CHANGE_EMAIL = 'Email change';
+    const REASON_CHANGE_ROLE = 'Role change';
+    const REASON_CHANGE_ID = 'LTI User ID changed';
+    const REASON_DELETE = 'No longer in platform';
+
+    public $status;
 
     function __construct()
     {
-        $screen = get_current_screen();
-        $this->is_site_users = 'site-users-network' == $screen->id;
-
-        if ($this->is_site_users) {
-            $this->site_id = isset($_REQUEST['id']) ? intval($_REQUEST['id']) : 0;
-        }
-
         parent::__construct(array(
             'singular' => __('User', 'lti-text'),
-            'plural' => __('Users', 'lti-text')
+            'plural' => __('Users', 'lti-text'),
+            'ajax' => false
             )
         );
+        $this->status = 'new';
     }
 
-    function ajax_user_can()
+    public static function set_primary_column()
     {
-        if ($this->is_site_users) {
-            return current_user_can('manage_sites');
-        } else {
-            return current_user_can('list_users');
+        return 'name';
+    }
+
+    public static function define_columns()
+    {
+        $columns = array(
+            'username' => __('Username', 'lti-text'),
+            'name' => __('Name', 'lti-text')
+        );
+        if (lti_do_save_email()) {
+            $columns['email'] = __('Email', 'lti-text');
         }
+        $columns['role'] = __('Role', 'lti-text');
+        $columns['reasons'] = __('Reasons', 'lti-text');
+
+        return $columns;
+    }
+
+    protected function get_sortable_columns()
+    {
+        $columns = array(
+            'username' => array('username', false),
+            'name' => array('name', true)
+        );
+        if (lti_do_save_email()) {
+            $columns['email'] = array('name', false);
+        }
+        $columns['role'] = array('role', false);
+        $columns['reasons'] = array('reasons', false);
+
+        return $columns;
     }
 
     function prepare_items()
     {
-        global $role, $usersearch;
+        global $lti_session;
 
-        $usersearch = isset($_REQUEST['s']) ? $_REQUEST['s'] : '';
-        $role = isset($_REQUEST['role']) ? $_REQUEST['role'] : '';
-        $per_page = ( $this->is_site_users ) ? 'site_users_network_per_page' : 'users_per_page';
-        $users_per_page = $this->get_items_per_page($per_page);
+        function usort_reorder($a, $b)
+        {
+            $orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'name';
+            $order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc';
+            if (is_array($a->$orderby)) {
+                $result = strcmp(implode($a->$orderby), implode($b->$orderby));
+            } else {
+                $result = strcmp($a->$orderby, $b->$orderby);
+            }
+            return ($order === 'asc') ? $result : -$result;
+        }
+
+        $per_page = $this->get_items_per_page('users_per_page');
         $current_page = $this->get_pagenum();
-        $this->items = array_slice($this->users, (($current_page - 1) * $users_per_page), $users_per_page);
+        $this->items = $lti_session['sync'][$this->status];
+        $num_items = count($this->items);
+        $num_pages = ceil($num_items / $per_page);
+        if (!empty($this->items)) {
+            usort($this->items, 'usort_reorder');
+        }
+        $this->items = array_slice($this->items, (($current_page - 1) * $per_page), $per_page);
 
         $this->set_pagination_args(array(
-            'total_items' => sizeof($this->users), //$wp_user_search->get_total(),
-            'per_page' => $users_per_page,
+            'total_items' => $num_items,
+            'total_pages' => $num_pages,
+            'per_page' => $per_page,
         ));
-
-        $columns = $this->get_columns();
-        $hidden = array();
-        $sortable = $this->get_sortable_columns();
-        $this->_column_headers = array($columns, $hidden, $sortable);
     }
 
     function no_items()
     {
-        _e('No matching users were found.');
+        _e('No users.');
     }
 
     function get_views()
     {
-        if ($this->is_site_users) {
-            $url = 'site-users.php?id=' . $this->site_id;
-            switch_to_blog($this->site_id);
-            $users_of_blog = count_users();
-            restore_current_blog();
-        } else {
-            $url = 'users.php';
-            $users_of_blog = count_users();
+        global $lti_session;
+
+        $views = array();
+        $num_new = count($lti_session['sync']['new']);
+        $num_add = count($lti_session['sync']['add']);
+        $num_change = count($lti_session['sync']['change']);
+        $num_delete = count($lti_session['sync']['delete']);
+
+        $class = ($this->status === 'new') ? $class = 'current' : '';
+        $views['new'] = $this->get_edit_link(array('action' => 'new'), "New <span class=\"count\">({$num_new})</span>", $class);
+
+        if (is_multisite()) {
+            $class = ($this->status === 'add') ? $class = 'current' : '';
+            $views['add'] = $this->get_edit_link(array('action' => 'add'), "New <span class=\"count\">({$num_add})</span>", $class);
         }
 
-        $total_provision = sizeof(unserialize($lti_session['provision']));
-        $total_new_to_blog = sizeof(unserialize($lti_session['new_to_blog']));
-        $total_newadmins = sizeof(unserialize($lti_session['newadmins']));
-        $total_changed = sizeof(unserialize($lti_session['changed']));
-        $total_rchanged = sizeof(unserialize($lti_session['role_changed']));
-        $total_remove = sizeof(unserialize($lti_session['remove']));
-        unset($users_of_blog);
+        $class = ($this->status === 'change') ? $class = 'current' : '';
+        $views['change'] = $this->get_edit_link(array('action' => 'change'), "Changed <span class=\"count\">({$num_change})</span>",
+            $class);
 
-        $role_links = array();
+        $class = ($this->status === 'delete') ? $class = 'current' : '';
+        $views['delete'] = $this->get_edit_link(array('action' => 'delete'), "Delete <span class=\"count\">({$num_delete})</span>",
+            $class);
 
-        /* Uncomment to see all members from platform
-          $total_users = sizeof(unserialize($lti_session['all']));
-          if ($total_users != 0) {
-          $class = ($_REQUEST['action'] == 'all') ? ' class="current"' : '';
-          $role_links['all']  = "<a href='users.php?page=lti_sync_enrolments&action=all'$class>" .
-          sprintf(_nx('Member from Platform <span class="count">(%s)</span>',
-          'All Members from Platform <span class="count">(%s)</span>',
-          $total_users,
-          'users',
-          'lti-text'),
-          number_format_i18n($total_users)) .
-          '</a>';
-          }
-         */
-
-        if ($total_provision != 0) {
-            $lti_session['nochanges'] = 1;
-        }
-        /* Uncomment to see new wordpress & blog members
-          if ($total_provision != 0) {
-          $class = ($_REQUEST['action'] == 'provision') ? ' class="current"' : '';
-          $role_links['provision'] = "<a href='users.php?page=lti_sync_enrolments&action=provision'$class>" .
-          sprintf(_nx('New WordPress & Blog Member <span class="count">(%s)</span>',
-          'New WordPress & Blog Members <span class="count">(%s)</span>',
-          $total_provision,
-          'users',
-          'lti-text'),
-          number_format_i18n($total_provision)) .
-          '</a>';
-          }
-         */
-
-        if ($total_new_to_blog != 0) {
-            $lti_session['nochanges'] = 1;
-        }
-        /* Uncomment to see new blog members
-          if ($total_new_to_blog != 0) {
-          $class = ($_REQUEST['action'] == 'new_to_blog') ? ' class="current"' : '';
-          $role_links['new_to_blog'] = "<a href='users.php?page=lti_sync_enrolments&action=new_to_blog'$class>" .
-          sprintf(_nx('New Blog Member <span class="count">(%s)</span>',
-          'New Blog Members <span class="count">(%s)</span>',
-          $total_new_to_blog,
-          'users',
-          'lti-text'),
-          number_format_i18n($total_new_to_blog)) .
-          '</a>';
-          }
-         */
-
-        if ($total_newadmins != 0) {
-            $lti_session['nochanges'] = 1;
-            $class = ($_REQUEST['action'] == 'newadmins') ? ' class="current"' : '';
-            $role_links['newadmins'] = "<a href='users.php?page=lti_sync_enrolments&action=newadmins'$class>" .
-                sprintf(_nx('New Administrator <span class="count">(%s)</span>',
-                        'New Administrators<span class="count">(%s)</span>', $total_newadmins, 'users', 'lti-text'),
-                    number_format_i18n($total_newadmins)) .
-                '</a>';
-        }
-
-        if ($total_changed != 0) {
-            $lti_session['nochanges'] = 1;
-        }
-        /* Uncomment to see name changes
-          if ($total_changed != 0) {
-          $class = ($_REQUEST['action'] == 'changed') ? ' class="current"' : '';
-          $role_links['changed'] = "<a href='users.php?page=lti_sync_enrolments&action=changed'$class>" .
-          sprintf(_nx('Changed <span class="count">(%s)</span>',
-          'Changes <span class="count">(%s)</span>',
-          $total_changed,
-          'users',
-          'lti-text'),
-          number_format_i18n($total_changed)) .
-          '</a>';
-          }
-         */
-
-        if ($total_rchanged != 0) {
-            $lti_session['nochanges'] = 1;
-            $class = ($_REQUEST['action'] == 'rchanged') ? ' class="current"' : '';
-            $role_links['rchanged'] = "<a href='users.php?page=lti_sync_enrolments&action=rchanged'$class>" .
-                sprintf(_nx('Role Changed <span class="count">(%s)</span>', 'Role Changes <span class="count">(%s)</span>',
-                        $total_rchanged, 'users', 'lti-text'), number_format_i18n($total_rchanged)) .
-                '</a>';
-        }
-
-        if ($total_remove != 0) {
-            $lti_session['nochanges'] = 1;
-            $class = ($_REQUEST['action'] == 'remove') ? ' class="current"' : '';
-            $role_links['remove'] = "<a href='users.php?page=lti_sync_enrolments&action=remove'$class>" .
-                sprintf(_nx('Not present in VLE/LMS - Delete? <span class="count">(%s)</span>',
-                        'Not present in VLE/LMS - Delete? <span class="count">(%s)</span>', $total_remove, 'users', 'lti-text'),
-                    number_format_i18n($total_remove)) .
-                '</a>';
-        }
-
-        if ($lti_session['nochanges'] == 0) {
-            $role_links['none'] = '<h2>Up to date --- No changes</h2>';
-        }
-        return $role_links;
+        return $views;
     }
 
-    /**
-     * Display the bulk actions dropdown.
-     *
-     * @since 3.1.0
-     * @access public
-     */
-    function bulk_actions($which = '')
+    public function get_columns()
     {
-        $screen = get_current_screen();
-
-        if (is_null($this->_actions)) {
-            $no_new_actions = $this->_actions = $this->get_bulk_actions();
-            // This filter can currently only be used to remove actions.
-            $this->_actions = apply_filters('bulk_actions-' . $screen->id, $this->_actions);
-            $this->_actions = array_intersect_assoc($this->_actions, $no_new_actions);
-            $two = '';
-        } else {
-            $two = '2';
-        }
-
-        if (empty($this->_actions)) {
-            return;
-        }
-
-        echo "<select name='action$two'>\n";
-        echo "<option value='-1' selected='selected'>" . __('Display Actions', 'lti-text') . "</option>\n";
-
-        foreach ($this->_actions as $name => $title) {
-            $class = 'edit' == $name ? ' class="hide-if-no-js"' : '';
-            echo "\t<option value='$name'$class>$title</option>\n";
-        }
-
-        echo "</select>\n";
-
-        submit_button(__('Show', 'lti-text'), 'button-secondary action', false, false, array('id' => "doaction$two"));
-        echo "\n";
+        return get_column_headers(get_current_screen());
     }
 
-    function get_bulk_actions()
+    public function column_username($item)
     {
-        $actions = array();
-
-        return $actions;
+        return esc_html($item->username);
     }
 
-    function current_action()
+    public function column_name($item)
     {
-        if (isset($_REQUEST['changeit']) && !empty($_REQUEST['new_role'])) {
-            return 'promote';
-        }
-
-        return parent::current_action();
+        return esc_html($item->name);
     }
 
-    function get_columns()
+    public function column_email($item)
     {
-        $c = array(
-            'cb' => '<input type="checkbox" />',
-            'username' => __('Username', 'column name', 'lti-text'),
-            'name' => __('Name', 'column name', 'lti-text'),
-            'role' => __('VLE/LMS Role', 'column name', 'lti-text'),
-        );
-
-        return $c;
+        return esc_html($item->email);
     }
 
-    function get_sortable_columns()
+    public function column_role($item)
     {
-        $c = array(
-            'username' => 'login',
-            'name' => 'name',
-            'role' => 'role'
-        );
-
-        return $c;
+        return esc_html($item->role);
     }
 
-    function display_rows()
+    public function column_reasons($item)
     {
-        // Query the post counts for this page
-        $style = '';
-        foreach ($this->items as $lti_user) {
-            $style = ( ' class="alternate"' == $style ) ? '' : ' class="alternate"';
-            echo "\n\t", $this->single_row($lti_user, $style);
-        }
+        return __(implode('<br>', $item->reasons));
     }
 
-    /**
-     * Generate HTML for a single row on the users.php admin panel.
-     *
-     * @since 2.1.0
-     *
-     * @param object $user_object
-     * @param string $style Optional. Attributes added to the TR element.  Must be sanitized.
-     * @param string $role Key for the $wp_roles array.
-     * @param int $numposts Optional. Post count to display for this user.  Defaults to zero, as in, a new user has made zero posts.
-     * @return string
-     */
-    function single_row($lti_user, $style = '')
+    private function get_edit_link($args, $label, $class = '')
     {
-        $checkbox = '';
-
-        // Check if the user for this row is editable
-        if (current_user_can('list_users')) {
-            // Set up the checkbox ( because the user is editable, otherwise its empty )
-            $checkbox = "<input type='checkbox' name='users[]' id='user_{$lti_user->id}'  value='{$lti_user->id}' />";
-        }
-
-        $r = "<tr id='user-$lti_user->id'$style>";
-        $r = "<tr $style>";
-
-        foreach ($this->get_columns() as $column_name => $key) {
-            $class = "class=\"$column_name column-$column_name\"";
-            $style = '';
-            $attributes = "$class$style";
-            switch ($column_name) {
-                case 'cb':
-                    $r .= "<th scope='row' class='check-column'>$checkbox</th>";
-                    break;
-                case 'username':
-                    $r .= "<td $attributes>" . $lti_user->username . "</td>";
-                    break;
-                case 'name':
-                    $r .= "<td $attributes>$lti_user->fullname</td>";
-                    break;
-                case 'role':
-                    $r .= "<td $attributes>$lti_user->roles</td>";
-                    break;
-                default:
-                    $r .= "<td $attributes>";
-                    $r .= apply_filters('manage_users_custom_column', '', $column_name, $lti_user->ltiUserId);
-                    $r .= "</td>";
+        $url = add_query_arg($args, menu_page_url('lti_sync_enrolments', false));
+        $class_html = '';
+        $aria_current = '';
+        if (!empty($class)) {
+            $class_html = ' class="' . esc_attr($class) . '"';
+            if ($class === 'current') {
+                $aria_current = ' aria-current="page"';
             }
         }
-        $r .= '</tr>';
-        return $r;
+
+        return '<a href="' . esc_url($url) . "\"{$class_html}{$aria_current}>{$label}</a>";
     }
 
 }
