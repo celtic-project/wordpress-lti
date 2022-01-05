@@ -37,7 +37,7 @@ use ceLTIc\LTI\Util;
  *  tool_provider - intance of of BasicLTI_Tool_Provider
  * ----------------------------------------------------------------- */
 
-class WPTool extends Tool
+class LTI_WPTool extends Tool
 {
 
     public function __construct($data_connector)

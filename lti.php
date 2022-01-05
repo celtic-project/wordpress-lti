@@ -97,7 +97,10 @@ function lti_parse_request($wp)
         lti_strip_magic_quotes();
 
         // Do the necessary
-        $tool = new WPTool($lti_db_connector);
+        $tool = apply_filters('lti-tool', null, $lti_db_connector);
+        if (empty($tool)) {
+            $tool = new LTI_WPTool($lti_db_connector);
+        }
         $tool->handleRequest();
         exit();
     }

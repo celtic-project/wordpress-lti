@@ -41,7 +41,11 @@ if (defined('LTI_LOG_LEVEL')) {
 }
 
 // Set the default tool
-Tool::$defaultTool = new WPTool(null);
+$tool = apply_filters('lti-tool', null, null);
+if (empty($tool)) {
+    $tool = new LTI_WPTool(null);
+}
+Tool::$defaultTool = $tool;
 
 $lti_db_connector = DataConnector::getDataConnector($wpdb->dbh, $wpdb->base_prefix);
 

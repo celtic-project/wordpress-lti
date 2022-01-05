@@ -21,7 +21,10 @@
  */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tool = new WPTool($lti_db_connector);
+    $tool = apply_filters('lti-tool', null, $lti_db_connector);
+    if (empty($tool)) {
+        $tool = new LTI_WPTool($lti_db_connector);
+    }
     $tool->doRegistration();
     $ok = $tool->ok;
     $message = $tool->reason;
