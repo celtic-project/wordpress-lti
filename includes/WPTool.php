@@ -59,8 +59,7 @@ class LTI_WPTool extends Tool
         $this->setParameterConstraint('resource_link_id', true, 40, array('basic-lti-launch-request'));
         $this->setParameterConstraint('user_id', true);
 
-        // Get settings and check whether sharing is enabled.
-        $this->allowSharing = true;
+        $this->allowSharing = is_multisite();
 
         $this->signatureMethod = LTI_SIGNATURE_METHOD;
         $this->jku = $this->baseUrl . '?lti&keys';
