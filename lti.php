@@ -407,6 +407,23 @@ function lti_set_logout_url($logout_url)
 add_filter('logout_url', 'lti_set_logout_url');
 
 /* -------------------------------------------------------------------
+ * Update the logout link name.
+  ------------------------------------------------------------------ */
+
+function lti_loginout($link)
+{
+    global $lti_session;
+
+    if (!empty($lti_session['return_name']) && (strpos($link, 'action=logout') !== false)) {
+        $link = preg_replace('/>.*<\/a>/', '>' . esc_html($lti_session['return_name']) . '</a>', $link);
+    }
+
+    return $link;
+}
+
+add_filter('loginout', 'lti_loginout');
+
+/* -------------------------------------------------------------------
  * Function to add the last login on the home page
   ------------------------------------------------------------------ */
 
