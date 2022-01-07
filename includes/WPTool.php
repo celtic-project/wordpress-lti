@@ -144,7 +144,7 @@ class LTI_WPTool extends Tool
         $user_id = $user->ID;
 
         // Save LTI user ID
-        update_user_meta($user_id, 'lti_platform_pk', $this->platform->getRecordId());
+        update_user_meta($user_id, 'lti_platform_key', $this->platform->getKey());
         update_user_meta($user_id, 'lti_user_id', $this->userResult->ltiUserId);
 
         // set up some useful variables
@@ -152,32 +152,32 @@ class LTI_WPTool extends Tool
         $context_id = $this->context->getId();
         $resource_id = $this->resourceLink->getId();
 
-        // Create blog
-        $use_context = false;
-        if (!empty($context_id)) {
-            $use_context = ($this->resourceLink->getSetting('custom_use_context') == 'true') ? true : false;
-        }
+        if (is_multisite()) {  // Create blog
+            $use_context = false;
+            if (!empty($context_id)) {
+                $use_context = ($this->resourceLink->getSetting('custom_use_context') == 'true') ? true : false;
+            }
 
-        if ($use_context) {
-            // Create new blog, if does not exist. Note this gives one blog per context, the platform supplies a context_id
-            // otherwise it creates a blog per resource_id
-            $path = $key . '_' . $context_id;
-        } else {
-            // Create new blog, if does not exist. Note this gives one blog per resource_id
-            $path = $key . $resource_id;
-        }
+            if ($use_context) {
+                // Create new blog, if does not exist. Note this gives one blog per context, the platform supplies a context_id
+                // otherwise it creates a blog per resource_id
+                $path = $key . '_' . $context_id;
+            } else {
+                // Create new blog, if does not exist. Note this gives one blog per resource_id
+                $path = $key . $resource_id;
+            }
 
-        // Replace any non-allowed characters in WordPress with -
-        $path = preg_replace('/[^_0-9a-zA-Z-]+/', '-', $path);
+            // Replace any non-allowed characters in WordPress with -
+            $path = preg_replace('/[^_0-9a-zA-Z-]+/', '-', $path);
 
-        // Sanity Check: Ensure that path is only _A-Za-z0-9- --- the above should stop this.
-        if (preg_match('/[^_0-9a-zA-Z-]+/', $path) == 1) {
-            $this->reason = __('No Blog has been created as the name contains non-alphanumeric: (_a-zA-Z0-9-) allowed', 'lti-text');
-            $this->ok = false;
-            return;
-        }
+            // Sanity Check: Ensure that path is only _A-Za-z0-9- --- the above should stop this.
+            if (preg_match('/[^_0-9a-zA-Z-]+/', $path) == 1) {
+                $this->reason = __('No Blog has been created as the name contains non-alphanumeric: (_a-zA-Z0-9-) allowed',
+                    'lti-text');
+                $this->ok = false;
+                return;
+            }
 
-        if (is_multisite()) {
             // Get any folder(s) that WordPress might be living in
             $wppath = parse_url(get_option('siteurl'), PHP_URL_PATH);
             $path = $wppath . '/' . trailingslashit($path);
@@ -242,7 +242,6 @@ class LTI_WPTool extends Tool
 
         // If users role in platform has changed (e.g. staff -> student),
         // then their role in the blog should change
-        $user = new WP_User($user_id);
         $user->set_role($role);
 
         // Send login time to platform if has outcomes service and can handle freetext
