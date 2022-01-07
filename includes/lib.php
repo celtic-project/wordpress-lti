@@ -685,6 +685,9 @@ function lti_reset_session($force = false)
     // Keep the return URL to enable its domain is allowed for redirects
     if (!$force && isset($lti_session['return_url'])) {
         $data['return_url'] = $lti_session['return_url'];
+        if (!empty($lti_session['tool_name'])) {
+            $data['tool_name'] = $lti_session['tool_name'];
+        }
         lti_set_session($data);
     } else {
         $key = lti_session_key();

@@ -395,8 +395,9 @@ function lti_set_logout_url($logout_url)
     global $lti_session;
 
     if (isset($lti_session['key']) && !empty($lti_session['return_url'])) {
+        $tool_name = (!empty($lti_session['tool_name'])) ? $lti_session['tool_name'] : 'WordPress';
         $urlencode = '&redirect_to=' . urlencode($lti_session['return_url'] .
-                'lti_msg=' . urlencode(__('You have been logged out of WordPress', 'lti-text')));
+                'lti_msg=' . urlencode(__("You have been logged out of {$tool_name}", 'lti-text')));
         $logout_url .= $urlencode;
     }
 

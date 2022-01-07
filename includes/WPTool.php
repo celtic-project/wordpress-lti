@@ -94,6 +94,9 @@ class LTI_WPTool extends Tool
                 $lti_session['return_name'] = 'Return to ' . $this->platform->name;
             }
         }
+        if (!empty($this->messageParameters['custom_tool_name'])) {
+            $lti_session['tool_name'] = $this->messageParameters['custom_tool_name'];
+        }
 
         // Get what we are using as the username (unique_id-consumer_key, e.g. _21_1-stir.ac.uk)
         $user_login = lti_get_user_login($this->platform->getKey(), $this->userResult);
