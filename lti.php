@@ -277,7 +277,7 @@ function lti_sync_admin_header()
 function lti_manage_screen_options()
 {
     $screen = get_current_screen();
-    add_screen_option('per_page', array('label' => __('Platforms', 'lti-text'), 'default' => 10, 'option' => 'lti_per_page'));
+    add_screen_option('per_page', array('label' => __('LTI Platforms', 'lti-text'), 'default' => 10, 'option' => 'lti_per_page'));
 
     $screen->add_help_tab(array(
         'id' => 'lti-display',
@@ -322,7 +322,7 @@ function lti_platforms()
     ?>
     <div class="wrap">
 
-      <h1 class="wp-heading-inline"><?php _e('Platforms', 'lti-text'); ?></h1>
+      <h1 class="wp-heading-inline"><?php _e('LTI Platforms', 'lti-text'); ?></h1>
       <a href="<?php
       echo get_admin_url();
       if (is_multisite())

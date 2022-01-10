@@ -43,7 +43,7 @@ function lti_add_platform()
     <script src="<?php echo plugins_url() . '/lti/js/GenKey.js' ?>" language="javascript" type="text/javascript" >
     </script>
     <div id="form" class="wrap">
-      <h1 class="wp-heading-inline"><?php echo $verb . __(' Platform', 'lti-text'); ?></h1>
+      <h1 class="wp-heading-inline"><?php echo $verb . __(' LTI Platform', 'lti-text'); ?></h1>
       <p><?php echo $verb . __(' a platform connecting to this server.', 'lti-text'); ?></p>
 
       <form id="addlti" name="addlti" method="post"
@@ -59,7 +59,7 @@ function lti_add_platform()
 
         wp_nonce_field('add_lti', '_wpnonce_add_lti');
 
-        $button_text = __("{$verb} Platform", 'lti-text');
+        $button_text = __("{$verb} LTI Platform", 'lti-text');
 
         if ($editmode) {
             $platform = Platform::fromConsumerKey($_REQUEST['lti'], $lti_db_connector);
