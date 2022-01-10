@@ -467,10 +467,12 @@ function lti_options_init()
     add_settings_field(
         'uninstalldb', 'Delete data on uninstall?', 'lti_uninstalldb_callback', 'lti_options_admin', 'lti_options_general_section'
     );
-    add_settings_field(
-        'uninstallblogs', 'Delete LTI blogs on uninstall?', 'lti_uninstallblogs_callback', 'lti_options_admin',
-        'lti_options_general_section'
-    );
+    if (is_multisite()) {
+        add_settings_field(
+            'uninstallblogs', 'Delete LTI blogs on uninstall?', 'lti_uninstallblogs_callback', 'lti_options_admin',
+            'lti_options_general_section'
+        );
+    }
     add_settings_field(
         'adduser', 'Hide <em>Add User</em> menu?', 'lti_adduser_callback', 'lti_options_admin', 'lti_options_general_section'
     );

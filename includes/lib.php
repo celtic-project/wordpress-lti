@@ -129,15 +129,17 @@ function lti_delete($key)
     $platform = Platform::fromConsumerKey($key, $lti_db_connector);
     $platform->delete();
 
-    // Now delete the blogs associated with this key. The WP function that lists all
-    // blog is deprecated and so we'll do a direct DB access (look the other way)
-    $search_str = '%/' . str_replace('.', '', $key) . '%';
-    $sites = $wpdb->get_col($wpdb->prepare(
-            "SELECT blog_id FROM {$wpdb->prefix}blogs WHERE path LIKE '%s'", $search_str));
+    if (is_multisite() && !empty($options['uninstallblogs'])) {
+        // Now delete the blogs associated with this key. The WP function that lists all
+        // blog is deprecated and so we'll do a direct DB access (look the other way)
+        $search_str = '%/' . str_replace('.', '', $key) . '%';
+        $sites = $wpdb->get_col($wpdb->prepare(
+                "SELECT blog_id FROM {$wpdb->prefix}blogs WHERE path LIKE '%s'", $search_str));
 
-    // Delete the blog
-    foreach ($sites as $site) {
-        wpmu_delete_blog($site, true);
+        // Delete the blog
+        foreach ($sites as $site) {
+            wpmu_delete_blog($site, true);
+        }
     }
 }
 

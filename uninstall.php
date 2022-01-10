@@ -38,12 +38,10 @@ require_once ('includes' . DIRECTORY_SEPARATOR . 'lib.php');
 // check if data should be deleted on uninstall
 $options = lti_get_options();
 
-if (!empty($options['uninstallblogs'])) {
-    $tool = new Tool($lti_db_connector);
-    $platforms = $tool->getPlatforms();
-    foreach ($platforms as $platform) {
-        lti_delete($platform->getKey());
-    }
+$tool = new Tool($lti_db_connector);
+$platforms = $tool->getPlatforms();
+foreach ($platforms as $platform) {
+    lti_delete($platform->getKey());
 }
 
 if (!empty($options['uninstalldb'])) {
