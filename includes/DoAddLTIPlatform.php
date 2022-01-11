@@ -31,7 +31,7 @@ global $lti_db_connector;
 require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php';
 
 if (!empty($_POST) && check_admin_referer('add_lti', '_wpnonce_add_lti')) {
-
+    $options = lti_get_options();
     $platform = Platform::fromConsumerKey($_POST['lti_key'], $lti_db_connector);
     $platform->name = $_POST['lti_name'];
     $platform->enabled = (isset($_POST['lti_enabled']) && ($_POST['lti_enabled'] == 'true')) ? true : false;
@@ -39,7 +39,7 @@ if (!empty($_POST) && check_admin_referer('add_lti', '_wpnonce_add_lti')) {
     $platform->protected = (isset($_POST['lti_protected']) && ($_POST['lti_protected'] == 'true')) ? true : false;
     $platform->enableFrom = (!empty($_POST['lti_enable_from'])) ? strtotime($_POST['lti_enable_from']) : null;
     $platform->enableUntil = (!empty($_POST['lti_enable_until'])) ? strtotime($_POST['lti_enable_until']) : null;
-    $platform->idScope = (!empty($_POST['lti_scope'])) ? $_POST['lti_scope'] : LTI_ID_SCOPE_DEFAULT;
+    $platform->idScope = (!empty($_POST['lti_scope'])) ? $_POST['lti_scope'] : $options['scope'];
     $platform->debugMode = (isset($_POST['lti_debug']) && ($_POST['lti_debug'] == 'true')) ? true : false;
     $platform->platformId = (!empty($_POST['lti_platformid'])) ? $_POST['lti_platformid'] : null;
     $platform->clientId = (!empty($_POST['lti_clientid'])) ? $_POST['lti_clientid'] : null;

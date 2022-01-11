@@ -20,22 +20,7 @@
  *  Contact: s.p.booth@stir.ac.uk
  */
 
-use ceLTIc\LTI\Util;
-
-define('LTI_ID_SCOPE_DEFAULT', '3');
-define('LTI_LOG_LEVEL', Util::LOGLEVEL_ERROR);
-define('LTI_SIGNATURE_METHOD', 'RS256');
-define('LTI_KID', '');  // A random string to identify the key value
-define('LTI_PRIVATE_KEY', <<< EOD
------BEGIN RSA PRIVATE KEY-----
-...
------END RSA PRIVATE KEY-----
-EOD
-);
-
-###
-###  Registration settings
-###
-define('AUTO_ENABLE', false);
-define('ENABLE_FOR_DAYS', 0);
+/*
+ * The use of this file has been deprecated; all configuration settings can be managed using the Options page.
+ */
 ?>

@@ -22,8 +22,10 @@
 
 use ceLTIc\LTI\Jwt\Jwt;
 
+$options = lti_get_options();
+
 $jwt = Jwt::getJwtClient();
-$keys = $jwt::getJWKS(LTI_PRIVATE_KEY, LTI_SIGNATURE_METHOD, LTI_KID);
+$keys = $jwt::getJWKS($options['lti13_privatekey'], $options['lti13_signaturemethod'], $options['lti13_kid']);
 
 header('Content-type: application/json');
 echo json_encode($keys);

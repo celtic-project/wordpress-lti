@@ -31,7 +31,9 @@ global $wpdb;
 // include the LTI library classes
 require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 
-require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
+if (file_exists(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php')) {
+    include_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
+}
 
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WPTool.php');
 
@@ -706,11 +708,36 @@ function lti_reset_session($force = false)
 
 function lti_get_options()
 {
-    $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => LTI_ID_SCOPE_DEFAULT,
-        'saveemail' => '0', 'homepage' => '', 'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber');
+    $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => strval(Tool::ID_SCOPE_RESOURCE),
+        'saveemail' => '0', 'homepage' => '', 'loglevel' => strval(Util::LOGLEVEL_NONE),
+        'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber',
+        'lti13_signaturemethod' => 'RS256', 'lti13_kid' => Util::getRandomString(), 'lti13_privatekey' => '',
+        'registration_autoenable' => '0', 'registration_enablefordays' => '0');
+
+    // Check for any default settings from deprecated config.php file
+    if (defined('LTI_LOG_LEVEL')) {
+        $default_options['loglevel'] = strval(LTI_LOG_LEVEL);
+    }
+    if (defined('LTI_SIGNATURE_METHOD')) {
+        $default_options['lti13_signaturemethod'] = LTI_SIGNATURE_METHOD;
+    }
+    if (defined('LTI_KID')) {
+        $default_options['lti13_kid'] = LTI_KID;
+    }
+    if (defined('LTI_PRIVATE_KEY')) {
+        $default_options['lti13_privatekey'] = LTI_PRIVATE_KEY;
+    }
+    if (defined('AUTO_ENABLE')) {
+        $default_options['registration_autoenable'] = strval(AUTO_ENABLE);
+    }
+    if (defined('ENABLE_FOR_DAYS')) {
+        $default_options['registration_enablefordays'] = strval(ENABLE_FOR_DAYS);
+    }
+
     if (is_multisite()) {
         $options = get_site_option('lti_choices');
     } else {
+        $default_options['scope'] = strval(Tool::ID_SCOPE_GLOBAL);
         $default_options['role_staff'] = 'editor';
         $options = get_option('lti_choices');
     }

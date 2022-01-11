@@ -44,6 +44,8 @@ class LTI_WPTool extends Tool
     {
         parent::__construct($data_connector);
 
+        $options = lti_get_options();
+
         $this->baseUrl = get_bloginfo('url') . '/';
 
         $this->vendor = new Profile\Item('celtic', 'ceLTIc Project', 'ceLTIc Project', 'https://www.celtic-project.org/');
@@ -61,10 +63,10 @@ class LTI_WPTool extends Tool
 
         $this->allowSharing = is_multisite();
 
-        $this->signatureMethod = LTI_SIGNATURE_METHOD;
+        $this->signatureMethod = $options['lti13_signaturemethod'];
         $this->jku = $this->baseUrl . '?lti&keys';
-        $this->kid = LTI_KID;
-        $this->rsaKey = LTI_PRIVATE_KEY;
+        $this->kid = $options['lti13_kid'];
+        $this->rsaKey = $options['lti13_privatekey'];
         $this->requiredScopes = array(
             LTI\Service\Membership::$SCOPE,
             LTI\Service\Result::$SCOPE,
@@ -281,13 +283,14 @@ class LTI_WPTool extends Tool
 
         get_header();
 
-        if (!defined('AUTO_ENABLE') || !AUTO_ENABLE) {
+        $options = lti_get_options();
+        if (empty($options['registration_autoenable'])) {
             $successMessage = 'Note that the tool must be enabled by the tool provider before it can be used.';
-        } else if (!defined('ENABLE_FOR_DAYS') || (ENABLE_FOR_DAYS <= 0)) {
+        } else if (empty($options['registration_enablefordays'])) {
             $successMessage = 'The tool has been automatically enabled by the tool provider for immediate use.';
         } else {
-            $successMessage = 'The tool has been enabled for you to use for the next ' . ENABLE_FOR_DAYS . ' day';
-            if (ENABLE_FOR_DAYS > 1) {
+            $successMessage = "The tool has been enabled for you to use for the next {$options['registration_enablefordays']} day";
+            if (intval($options['registration_enablefordays']) > 1) {
                 $successMessage .= 's';
             }
             $successMessage .= '.';
@@ -385,6 +388,7 @@ EOD;
 
     public function doRegistration()
     {
+        $options = lti_get_options();
         $platformConfig = $this->getPlatformConfiguration();
         if ($this->ok) {
             $toolConfig = $this->getConfiguration($platformConfig);
@@ -400,12 +404,12 @@ EOD;
                 $this->platform->secret = Util::getRandomString(32);
                 $this->platform->name = 'Trial (' . date('Y-m-d H:i:s', $now) . ')';
                 $this->platform->protected = true;
-                if (defined('AUTO_ENABLE') && AUTO_ENABLE) {
+                if (!empty($options['registration_autoenable'])) {
                     $this->platform->enabled = true;
                 }
-                if (defined('ENABLE_FOR_DAYS') && (ENABLE_FOR_DAYS > 0)) {
+                if (!empty($options['registration_enablefordays'])) {
                     $this->platform->enableFrom = $now;
-                    $this->platform->enableUntil = $now + (ENABLE_FOR_DAYS * 24 * 60 * 60);
+                    $this->platform->enableUntil = $now + (intval($options['registration_enablefordays']) * 24 * 60 * 60);
                 }
                 $this->ok = $this->platform->save();
                 if (!$this->ok) {

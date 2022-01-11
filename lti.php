@@ -35,6 +35,7 @@ use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\Tool;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\Util;
+use ceLTIc\LTI\Jwt\Jwt;
 
 // Prevent loading this file directly
 defined('ABSPATH') || exit;
@@ -492,6 +493,10 @@ function lti_options_init()
             'homepage', 'Homepage', 'lti_homepage_callback', 'lti_options_admin', 'lti_options_general_section'
         );
     }
+    add_settings_field(
+        'loglevel', 'Default logging level', 'lti_loglevel_callback', 'lti_options_admin', 'lti_options_general_section'
+    );
+
     add_settings_section(
         'lti_options_roles_section', '', 'lti_options_roles_section_info', 'lti_options_admin'
     );
@@ -505,6 +510,32 @@ function lti_options_init()
     add_settings_field(
         'role_other', 'Other', 'lti_roles_callback', 'lti_options_admin', 'lti_options_roles_section', array('role' => 'other')
     );
+
+    add_settings_section(
+        'lti_options_lti13_section', '', 'lti_options_lti13_section_info', 'lti_options_admin'
+    );
+    add_settings_field(
+        'lti13_signaturemethod', 'Signature method', 'lti_lti13_signaturemethod_callback', 'lti_options_admin',
+        'lti_options_lti13_section'
+    );
+    add_settings_field(
+        'lti13_kid', 'Key ID', 'lti_lti13_kid_callback', 'lti_options_admin', 'lti_options_lti13_section'
+    );
+    add_settings_field(
+        'lti13_privatekey', 'Private key', 'lti_lti13_privatekey_callback', 'lti_options_admin', 'lti_options_lti13_section'
+    );
+
+    add_settings_section(
+        'lti_options_registration_section', '', 'lti_options_registration_section_info', 'lti_options_admin'
+    );
+    add_settings_field(
+        'registration_autoenable', 'Auto enable', 'lti_registration_autoenable_callback', 'lti_options_admin',
+        'lti_options_registration_section'
+    );
+    add_settings_field(
+        'registration_enablefordays', 'Days to auto enable for', 'lti_registration_enablefordays_callback', 'lti_options_admin',
+        'lti_options_registration_section'
+    );
 }
 
 function lti_options_general_section_info()
@@ -517,6 +548,16 @@ function lti_options_roles_section_info()
     echo('<h2>Roles</h2>');
 }
 
+function lti_options_lti13_section_info()
+{
+    echo('<h2>LTI 1.3 configuration</h2>');
+}
+
+function lti_options_registration_section_info()
+{
+    echo('<h2>Dynamic registration settings</h2>');
+}
+
 function lti_uninstalldb_callback()
 {
     $options = lti_get_options();
@@ -524,6 +565,7 @@ function lti_uninstalldb_callback()
         '<input type="checkbox" name="lti_options[uninstalldb]" id="uninstalldb" value="1"%s> <label for="uninstalldb">Check this box if you want to permanently delete the LTI tables from the database when the plugin is uninstalled</label>',
         (!empty($options['uninstalldb'])) ? ' checked' : ''
     );
+    echo "\n";
 }
 
 function lti_uninstallblogs_callback()
@@ -533,6 +575,7 @@ function lti_uninstallblogs_callback()
         '<input type="checkbox" name="lti_options[uninstallblogs]" id="uninstallblogs" value="1"%s> <label for="uninstallblogs">Check this box if you want to permanently delete the LTI blogs when the plugin is uninstalled</label>',
         (!empty($options['uninstallblogs'])) ? ' checked' : ''
     );
+    echo "\n";
 }
 
 function lti_adduser_callback()
@@ -542,6 +585,7 @@ function lti_adduser_callback()
         '<input type="checkbox" name="lti_options[adduser]" id="adduser" value="1"%s> <label for="adduser">Check this box if there is no need to invite external users into blogs; i.e. all users will come via an LTI connection</label>',
         (!empty($options['adduser'])) ? ' checked' : ''
     );
+    echo "\n";
 }
 
 function lti_saveemail_callback()
@@ -551,6 +595,7 @@ function lti_saveemail_callback()
         '<input type="checkbox" name="lti_options[saveemail]" id="savemeail" value="1"%s> <label for="saveemail">Check this box if email addresses should be saved in WordPress (only applies when a platforms uses a platform or global username format)</label>',
         (!empty($options['saveemail'])) ? ' checked' : ''
     );
+    echo "\n";
 }
 
 function lti_mysites_callback()
@@ -560,6 +605,7 @@ function lti_mysites_callback()
         '<input type="checkbox" name="lti_options[mysites]" id="mysites" value="1"%s> <label for="mysites">Check this box to prevent users from moving between their blogs in WordPress</label>',
         (!empty($options['mysites'])) ? ' checked' : ''
     );
+    echo "\n";
 }
 
 function lti_scope_callback()
@@ -605,6 +651,22 @@ function lti_homepage_callback()
     printf(
         '%s/<input type="text" name="lti_options[homepage]" id="homepage" value="%s">', get_option('siteurl'), $options['homepage']
     );
+    echo "\n";
+}
+
+function lti_loglevel_callback()
+{
+    $name = 'loglevel';
+    $options = lti_get_options();
+    $current = $options[$name];
+    echo("<select name=\"lti_options[{$name}]\" id=\"{$name}\">\n");
+    $loglevels = array('No logging' => strval(Util::LOGLEVEL_NONE), 'Log errors only' => strval(Util::LOGLEVEL_ERROR),
+        'Log error and information messages' => strval(Util::LOGLEVEL_INFO), 'Log all messages' => strval(Util::LOGLEVEL_DEBUG));
+    foreach ($loglevels as $key => $value) {
+        $selected = ($value === $current) ? ' selected' : '';
+        echo("  <option value=\"{$value}\"{$selected}>{$key}</option>\n");
+    }
+    echo ("</select>\n");
 }
 
 function lti_roles_callback($args)
@@ -617,6 +679,63 @@ function lti_roles_callback($args)
     foreach ($roles as $key => $role) {
         $selected = ($key === $current) ? ' selected' : '';
         echo("  <option value=\"{$key}\"{$selected}>{$role['name']}</option>\n");
+    }
+    echo ("</select>\n");
+}
+
+function lti_lti13_signaturemethod_callback()
+{
+    $name = 'lti13_signaturemethod';
+    $options = lti_get_options();
+    $current = $options[$name];
+    echo("<select name=\"lti_options[{$name}]\" id=\"{$name}\">\n");
+    $signaturemethods = Jwt::getJwtClient()->getSupportedAlgorithms();
+    foreach ($signaturemethods as $signaturemethod) {
+        $selected = ($signaturemethod === $current) ? ' selected' : '';
+        echo("  <option value=\"{$signaturemethod}\"{$selected}>{$signaturemethod}</option>\n");
+    }
+    echo ("</select>\n");
+}
+
+function lti_lti13_kid_callback()
+{
+    $options = lti_get_options();
+    printf(
+        '<input type = "text" name = "lti_options[lti13_kid]" id = "lti13_kid" value = "%s">', $options['lti13_kid']
+    );
+    echo "\n";
+}
+
+function lti_lti13_privatekey_callback()
+{
+    $options = lti_get_options();
+    printf(
+        '<textarea name = "lti_options[lti13_privatekey]" id = "lti13_privatekey" rows = "10" cols = "70" class = "code">%s</textarea>',
+        $options['lti13_privatekey']
+    );
+    echo "\n";
+}
+
+function lti_registration_autoenable_callback()
+{
+    $options = lti_get_options();
+    printf(
+        '<input type = "checkbox" name = "lti_options[registration_autoenable]" id = "registration_autoenable" value = "1"%s> <label for = "registration_autoenable">Check this box if platform registrations should be autoatically enabled</label>',
+        (!empty($options['registration_autoenable'])) ? ' checked' : ''
+    );
+    echo "\n";
+}
+
+function lti_registration_enablefordays_callback()
+{
+    $name = 'registration_enablefordays';
+    $options = lti_get_options();
+    $current = $options[$name];
+    echo("<select name=\"lti_options[{$name}]\" id=\"{$name}\">\n");
+    $days = array('Unlimited' => '0', '1' => '1', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '10' => '10', '15' => '15', '20' => '20', '30' => '30', '40' => '40', '50' => '50');
+    foreach ($days as $key => $value) {
+        $selected = ($value === $current) ? ' selected' : '';
+        echo("  <option value=\"{$value}\"{$selected}>{$key}</option>\n");
     }
     echo ("</select>\n");
 }
