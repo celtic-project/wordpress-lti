@@ -272,7 +272,7 @@ class LTI_WPTool extends Tool
             $this->redirectUrl = get_bloginfo('url');
         }
 
-        lti_set_session($lti_session);
+        lti_set_session();
     }
 
     protected function onRegistration()

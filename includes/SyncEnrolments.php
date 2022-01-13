@@ -153,7 +153,7 @@ function lti_sync_enrolments()
                     $action = 'delete';
                 }
             }
-            lti_set_session($lti_session);
+            lti_set_session();
         // Display the various lists
         case 'new':
         case 'add':
@@ -189,7 +189,7 @@ function lti_sync_enrolments()
             break;
         default:
             unset($lti_session['sync']);
-            lti_set_session($lti_session);
+            lti_set_session();
 
             // If platform has setting service then get date/time of last synchronisation
             $last_sync = '';

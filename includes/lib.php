@@ -516,7 +516,7 @@ function lti_update($with_deletions)
         $resource_link->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
     }
 
-    lti_set_session($lti_session);
+    lti_set_session();
 }
 
 /* -------------------------------------------------------------------
@@ -636,7 +636,7 @@ function lti_session_key()
     if (!empty($token)) {
         $key = "lti_{$token}";
         if ($save) {
-            lti_set_session($lti_session, $key);
+            lti_set_session($key);
         }
     }
 
@@ -665,7 +665,7 @@ function lti_get_session()
  * Save the plugin session variables in a WordPress transient
   ------------------------------------------------------------------ */
 
-function lti_set_session($data, $key = null)
+function lti_set_session($key = null)
 {
     global $lti_session;
 
@@ -673,7 +673,7 @@ function lti_set_session($data, $key = null)
         $key = lti_session_key();
     }
     if (!empty($key)) {
-        set_site_transient($key, $data);
+        set_site_transient($key, $lti_session);
     }
 }
 
@@ -692,7 +692,8 @@ function lti_reset_session($force = false)
         if (!empty($lti_session['tool_name'])) {
             $data['tool_name'] = $lti_session['tool_name'];
         }
-        lti_set_session($data);
+        $lti_session = $data;
+        lti_set_session();
     } else {
         $key = lti_session_key();
         if (!empty($key)) {
