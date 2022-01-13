@@ -34,6 +34,7 @@
 use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\Tool;
 use ceLTIc\LTI\ResourceLink;
+use ceLTIc\LTI\DataConnector\DataConnector;
 use ceLTIc\LTI\Util;
 use ceLTIc\LTI\Jwt\Jwt;
 
@@ -50,6 +51,50 @@ date_default_timezone_set($cfg_timezone);
 
 // include the Library functions & lib.php loads LTI library
 require_once ('includes' . DIRECTORY_SEPARATOR . 'lib.php');
+
+/* -------------------------------------------------------------------
+ * Initialisation once WordPress is loaded
+  ------------------------------------------------------------------ */
+
+function lti_once_wp_loaded()
+{
+    global $wpdb, $lti_db_connector;
+
+    if (lti_check_lti_library()) {
+        require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes/WPTool.php');
+
+        // Set logging level
+        $options = lti_get_options();
+        Util::$logLevel = intval($options['loglevel']);
+
+        // Set the default tool
+        $tool = apply_filters('lti-tool', null, null);
+        if (empty($tool)) {
+            $tool = new LTI_WPTool(null);
+        }
+        Tool::$defaultTool = $tool;
+
+        $lti_db_connector = DataConnector::getDataConnector($wpdb->dbh, $wpdb->base_prefix);
+    } else {
+        add_action('admin_notices', 'lti_error_deactivate');
+        deactivate_plugins(plugin_basename(__FILE__));
+        if (isset($_GET['activate'])) {
+            unset($_GET['activate']);
+        }
+    }
+}
+
+add_action('wp_loaded', 'lti_once_wp_loaded');
+
+function lti_error_deactivate()
+{
+    echo <<< EOD
+  <div class="notice notice-error">
+  <p>The LTI plugin has been deactivated because a dependency is missing; either use composer to install the dependent libraries or activate the ceLTIc LTI Library plugin.</p>
+  </div>
+
+  EOD;
+}
 
 /* -------------------------------------------------------------------
  * This is called by Wordpress when it parses a request. Therefore
@@ -768,7 +813,9 @@ function lti_options_page()
 
 function lti_create_db_tables()
 {
-    lti_create_db();
+    if (lti_check_lti_library()) {
+        lti_create_db();
+    }
 }
 
 register_activation_hook(__FILE__, 'lti_create_db_tables');
@@ -781,9 +828,11 @@ function lti_remove_menus()
 {
     global $submenu;
 
-    $options = lti_get_options();
-    if (!empty($options['adduser'])) {
-        unset($submenu['users.php'][10]);
+    if (lti_check_lti_library()) {
+        $options = lti_get_options();
+        if (!empty($options['adduser'])) {
+            unset($submenu['users.php'][10]);
+        }
     }
 
     unset($submenu['users.php'][15]);

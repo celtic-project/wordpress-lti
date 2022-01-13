@@ -29,27 +29,13 @@ use ceLTIc\LTI\Util;
 global $wpdb;
 
 // include the LTI library classes
-require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
+if (!lti_check_lti_library()) {
+    require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
+}
 
 if (file_exists(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php')) {
     include_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
 }
-
-require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'WPTool.php');
-
-// Set logging level
-if (defined('LTI_LOG_LEVEL')) {
-    Util::$logLevel = LTI_LOG_LEVEL;
-}
-
-// Set the default tool
-$tool = apply_filters('lti-tool', null, null);
-if (empty($tool)) {
-    $tool = new LTI_WPTool(null);
-}
-Tool::$defaultTool = $tool;
-
-$lti_db_connector = DataConnector::getDataConnector($wpdb->dbh, $wpdb->base_prefix);
 
 /* -------------------------------------------------------------------
  * LTI_WP_User - a local smaller definition of the LTI_User that
@@ -787,6 +773,15 @@ function lti_user_role($lti_user, $options)
     }
 
     return $role;
+}
+
+/* -------------------------------------------------------------------
+ * Check that the LTI class library is available
+  ------------------------------------------------------------------ */
+
+function lti_check_lti_library()
+{
+    return class_exists('ceLTIc\LTI\Platform');
 }
 
 /* -------------------------------------------------------------------
