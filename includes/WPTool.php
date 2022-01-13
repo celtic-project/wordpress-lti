@@ -305,7 +305,7 @@ class LTI_WPTool extends Tool
     <div class="entry-content">
 
       <p>
-        This page allows you to complete a registration with a Moodle LTI 1.3 platform (other platforms will be supported once they offer this facility).
+        This page allows you to complete a dynamic tool registration with your platform.
       </p>
 
       <p class="tbc">
@@ -315,43 +315,57 @@ class LTI_WPTool extends Tool
         <legend class="screen-reader-text">
           <span>Resource-specific: Prefix the ID with the consumer key and resource link ID</span>
         </legend>
+
+EOD;
+        if (is_multisite()) {
+            $checked3 = ($options['scope'] === strval(Tool::ID_SCOPE_RESOURCE)) ? ' checked' : '';
+            $checked2 = ($options['scope'] === strval(Tool::ID_SCOPE_CONTEXT)) ? ' checked' : '';
+            echo <<< EOD
         <label for="lti_scope3">
-          <input name="lti_scope" type="radio" id="lti_scope3" value="3" />
+          <input name="lti_scope" type="radio" id="lti_scope3" value="3"{$checked3} />
           <em>Resource-specific:</em> Prefix the ID with the consumer key and resource link ID
         </label><br />
         <legend class="screen-reader-text">
           <span>Context-specific: Prefix the ID with the consumer key and context ID</span>
         </legend>
         <label for="lti_scope2">
-          <input name="lti_scope" type="radio" id="lti_scope2" value="2" />
+          <input name="lti_scope" type="radio" id="lti_scope2" value="2"{$checked2} />
           <em>Context-specific:</em> Prefix the ID with the consumer key and context ID
         </label><br />
+
+EOD;
+        }
+        $checked1 = ($options['scope'] === strval(Tool::ID_SCOPE_GLOBAL)) ? ' checked' : '';
+        $checked0 = ($options['scope'] === strval(Tool::ID_SCOPE_ID_ONLY)) ? ' checked' : '';
+        $checkedU = ($options['scope'] === LTI_WP_User::ID_SCOPE_USERNAME) ? ' checked' : '';
+        $checkedE = ($options['scope'] === LTI_WP_User::ID_SCOPE_EMAIL) ? ' checked' : '';
+        echo <<< EOD
         <legend class="screen-reader-text">
           <span>Platform-specific: Prefix an ID with the consumer key</span>
         </legend>
         <label for="lti_scope1">
-          <input name="lti_scope" type="radio" id="lti_scope1" value="1" />
+          <input name="lti_scope" type="radio" id="lti_scope1" value="1"{$checked1} />
           <em>Platform-specific:</em> Prefix the ID with the consumer key
         </label><br />
         <legend class="screen-reader-text">
           <span>Global: Use ID value only</span>
         </legend>
         <label for="lti_scope0">
-          <input name="lti_scope" type="radio" id="lti_scope0" value="0" />
+          <input name="lti_scope" type="radio" id="lti_scope0" value="0"{$checked0} />
           <em>Global:</em> Use ID value only
         </label><br />
         <label for="lti_scopeu">
-          <input name="lti_scope" type="radio" id="lti_scopeU" value="U" />
+          <input name="lti_scope" type="radio" id="lti_scopeU" value="U"{$checkedU} />
           <em>Username:</em> Use platform username only
         </label><br />
         <label for="lti_scopee">
-          <input name="lti_scope" type="radio" id="lti_scopeE" value="E" />
+          <input name="lti_scope" type="radio" id="lti_scopeE" value="E"{$checkedE} />
           <em>Email:</em> Use email address only
         </label>
       </div>
 
       <p id="id_continue" class="aligncentre">
-        <button type="button" id="id_continuebutton" class="disabled" onclick="return doRegister();" disabled>Register</button>
+        <button type="button" id="id_continuebutton" onclick="return doRegister();">Register</button>
       </p>
       <p id="id_loading" class="aligncentre hide">
         <img src="?lti&loading">
@@ -413,7 +427,7 @@ EOD;
                 }
                 $this->ok = $this->platform->save();
                 if (!$this->ok) {
-                    $this->reason = 'Sorry, an error occurred when saving the platform details.';
+                    $this->reason = 'Sorry, an error occurred when saving the platform details, perhaps a configuration already exists for this platform.';
                 }
             }
         }

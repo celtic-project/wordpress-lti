@@ -333,7 +333,7 @@ function lti_platforms()
          ?></a>
       <hr class="wp-header-end">
       <p>
-        <?php echo __('Launch URL, Initiate Login URL, Redirection URI: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti</b><br>'; ?>
+        <?php echo __('Launch URL, Initiate Login URL, Redirection URI, Dynamic Registration URL: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti</b><br>'; ?>
         <?php echo __('Public Keyset URL: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti&keys</b><br>'; ?>
         <?php
         echo __('Canvas configuration URLs: ', 'lti-text') . '<b>' . get_option('siteurl') . '/?lti&amp;configure</b>' . __(' (XML) and ',
@@ -470,7 +470,7 @@ function lti_options_init()
     );
     if (is_multisite()) {
         add_settings_field(
-            'uninstallblogs', 'Delete LTI blogs on uninstall?', 'lti_uninstallblogs_callback', 'lti_options_admin',
+            'uninstallblogs', 'Delete LTI blogs on platform delete?', 'lti_uninstallblogs_callback', 'lti_options_admin',
             'lti_options_general_section'
         );
     }
@@ -529,33 +529,33 @@ function lti_options_init()
         'lti_options_registration_section', '', 'lti_options_registration_section_info', 'lti_options_admin'
     );
     add_settings_field(
-        'registration_autoenable', 'Auto enable', 'lti_registration_autoenable_callback', 'lti_options_admin',
+        'registration_autoenable', 'Auto enable?', 'lti_registration_autoenable_callback', 'lti_options_admin',
         'lti_options_registration_section'
     );
     add_settings_field(
-        'registration_enablefordays', 'Days to auto enable for', 'lti_registration_enablefordays_callback', 'lti_options_admin',
+        'registration_enablefordays', 'Period to auto enable for', 'lti_registration_enablefordays_callback', 'lti_options_admin',
         'lti_options_registration_section'
     );
 }
 
 function lti_options_general_section_info()
 {
-    echo('<h2>General</h2>');
+    echo("<h2>General</h2>\n");
 }
 
 function lti_options_roles_section_info()
 {
-    echo('<h2>Roles</h2>');
+    echo("<h2>Roles</h2>\n");
 }
 
 function lti_options_lti13_section_info()
 {
-    echo('<h2>LTI 1.3 configuration</h2>');
+    echo("<h2>LTI 1.3 Configuration</h2>\n");
 }
 
 function lti_options_registration_section_info()
 {
-    echo('<h2>Dynamic registration settings</h2>');
+    echo("<h2>Dynamic Registration</h2>\n");
 }
 
 function lti_uninstalldb_callback()
@@ -572,7 +572,7 @@ function lti_uninstallblogs_callback()
 {
     $options = lti_get_options();
     printf(
-        '<input type="checkbox" name="lti_options[uninstallblogs]" id="uninstallblogs" value="1"%s> <label for="uninstallblogs">Check this box if you want to permanently delete the LTI blogs when the plugin is uninstalled</label>',
+        '<input type="checkbox" name="lti_options[uninstallblogs]" id="uninstallblogs" value="1"%s> <label for="uninstallblogs">Check this box if you want to permanently delete the LTI blogs when the assoociated platform is deleted</label>',
         (!empty($options['uninstallblogs'])) ? ' checked' : ''
     );
     echo "\n";
@@ -701,7 +701,7 @@ function lti_lti13_kid_callback()
 {
     $options = lti_get_options();
     printf(
-        '<input type = "text" name = "lti_options[lti13_kid]" id = "lti13_kid" value = "%s">', $options['lti13_kid']
+        '<input type="text" name="lti_options[lti13_kid]" id="lti13_kid" value="%s">', $options['lti13_kid']
     );
     echo "\n";
 }
@@ -710,7 +710,7 @@ function lti_lti13_privatekey_callback()
 {
     $options = lti_get_options();
     printf(
-        '<textarea name = "lti_options[lti13_privatekey]" id = "lti13_privatekey" rows = "10" cols = "70" class = "code">%s</textarea>',
+        '<textarea name="lti_options[lti13_privatekey]" id="lti13_privatekey" rows="10" cols="70" class="code">%s</textarea>',
         $options['lti13_privatekey']
     );
     echo "\n";
@@ -720,7 +720,7 @@ function lti_registration_autoenable_callback()
 {
     $options = lti_get_options();
     printf(
-        '<input type = "checkbox" name = "lti_options[registration_autoenable]" id = "registration_autoenable" value = "1"%s> <label for = "registration_autoenable">Check this box if platform registrations should be autoatically enabled</label>',
+        '<input type="checkbox" name="lti_options[registration_autoenable]" id="registration_autoenable" value="1"%s> <label for="registration_autoenable">Check this box if platform registrations should be automatically enabled</label>',
         (!empty($options['registration_autoenable'])) ? ' checked' : ''
     );
     echo "\n";
@@ -732,7 +732,7 @@ function lti_registration_enablefordays_callback()
     $options = lti_get_options();
     $current = $options[$name];
     echo("<select name=\"lti_options[{$name}]\" id=\"{$name}\">\n");
-    $days = array('Unlimited' => '0', '1' => '1', '2' => '2', '3' => '3', '4' => '4', '5' => '5', '10' => '10', '15' => '15', '20' => '20', '30' => '30', '40' => '40', '50' => '50');
+    $days = array('Unlimited' => '0', '1 day' => '1', '2 days' => '2', '3 days' => '3', '4 days' => '4', '5 days' => '5', '1 week' => '7', '2 weeks' => '14', '3 weeks' => '21', '4 weeks' => '28', '6 months' => '183', '1 year' => '365');
     foreach ($days as $key => $value) {
         $selected = ($value === $current) ? ' selected' : '';
         echo("  <option value=\"{$value}\"{$selected}>{$key}</option>\n");

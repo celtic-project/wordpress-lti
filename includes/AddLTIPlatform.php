@@ -375,7 +375,7 @@ function lti_add_platform()
                 </label>
               </th>
               <td>
-                <textarea id="lti_rsakey" type="text" aria-required="true" name="lti_rsakey" class="regular-text"><?php echo esc_attr($platform->rsaKey); ?></textarea>
+                <textarea id="lti_rsakey" aria-required="true" name="lti_rsakey" rows="10" class="code"><?php echo esc_attr($platform->rsaKey); ?></textarea>
                 <p class="description">The public key may be specified in PEM format or in JSON (JWKS).  This may be omitted if a public keyset URL is specified.</p>
               </td>
             </tr>

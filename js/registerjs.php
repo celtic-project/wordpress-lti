@@ -55,19 +55,10 @@ function doRegister() {
     });
 }
 
-function onRadioChange() {
-    jQuery('#id_continuebutton').attr('disabled', false);
-    jQuery('#id_continuebutton').removeClass('disabled');
-}
-
 function doClose(el) {
     (window.opener || window.parent).postMessage({subject:'org.imsglobal.lti.close'}, '*');
     return true;
 }
-
-jQuery(document).ready(function () {
-    jQuery('input[type="radio"]').on('change', onRadioChange);
-});
 
 EOD;
 ?>
