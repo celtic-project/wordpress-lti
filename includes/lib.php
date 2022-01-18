@@ -567,7 +567,7 @@ function lti_get_scope($guid)
  * Get the WordPress user login for a user based on the scope set for the platform
   ------------------------------------------------------------------ */
 
-function lti_get_user_login($guid, $lti_user)
+function lti_get_user_login($guid, $lti_user, $platform = null)
 {
     $scope_userid = lti_get_scope($guid);
     if ($scope_userid === LTI_WP_User::ID_SCOPE_USERNAME) {
@@ -575,7 +575,7 @@ function lti_get_user_login($guid, $lti_user)
     } elseif ($scope_userid === LTI_WP_User::ID_SCOPE_EMAIL) {
         $user_login = $lti_user->email;
     } else {
-        $user_login = $lti_user->getId($scope_userid);
+        $user_login = $lti_user->getId($scope_userid, $platform);
     }
     // Sanitize username stripping out unsafe characters
     $user_login = sanitize_user($user_login);
