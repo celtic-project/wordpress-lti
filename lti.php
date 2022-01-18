@@ -93,7 +93,7 @@ function lti_error_deactivate()
   <p>The LTI plugin has been deactivated because a dependency is missing; either use composer to install the dependent libraries or activate the ceLTIc LTI Library plugin.</p>
   </div>
 
-  EOD;
+EOD;
 }
 
 /* -------------------------------------------------------------------
