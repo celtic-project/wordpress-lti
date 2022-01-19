@@ -22,6 +22,65 @@
 
 require_once 'lib.php';
 
+global $lti_namespaces, $lti_schemas;
+
+$lti_namespaces = array(
+    'xmlns' => 'http://www.imsglobal.org/xsd/imslticc_v1p0',
+    'blti' => 'http://www.imsglobal.org/xsd/imsbasiclti_v1p0',
+    'lticm' => 'http://www.imsglobal.org/xsd/imslticm_v1p0',
+    'lticp' => 'http://www.imsglobal.org/xsd/imslticp_v1p0',
+    'xsi' => 'http://www.w3.org/2001/XMLSchema-instance'
+);
+$lti_schemas = array(
+    'http://www.imsglobal.org/xsd/imslticc_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticc_v1p0.xsd',
+    'http://www.imsglobal.org/xsd/imsbasiclti_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd',
+    'http://www.imsglobal.org/xsd/imslticm_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd',
+    'http://www.imsglobal.org/xsd/imslticp_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd'
+);
+
+function lti_create_xml_root($dom, $name)
+{
+    global $lti_namespaces, $lti_schemas;
+
+    $root = $dom->createElementNS($lti_namespaces['xmlns'], $name);
+    foreach ($lti_namespaces as $name => $uri) {
+        if ($name === 'xmlns') {
+            continue;
+        }
+        $root->setAttributeNS('http://www.w3.org/2000/xmlns/', "xmlns:{$name}", $uri);
+    }
+    $locations = '';
+    foreach ($lti_schemas as $uri => $xsd) {
+        $locations .= "{$uri} {$xsd} ";
+    }
+    $attr = $dom->createAttribute('xsi:schemaLocation');
+    $attr->value = trim($locations);
+    $root->appendChild($attr);
+
+    return $root;
+}
+
+function lti_add_xml_element($dom, $parent, $namespace, $name, $value = null, $attributes = array())
+{
+    global $lti_namespaces, $lti_schemas;
+
+    if (!empty($namespace)) {
+        $element = $dom->createElementNS($lti_namespaces[$namespace], "{$namespace}:{$name}", $value);
+    } else {
+        $element = $dom->createElement($name, $value);
+    }
+    if (!empty($attributes)) {
+        foreach ($attributes as $name => $value) {
+            $attribute = $dom->createAttribute($name);
+            $attribute->value = $value;
+            $element->appendChild($attribute);
+        }
+    }
+    $parent->appendChild($element);
+
+    return $element;
+}
+
 $siteurl = get_bloginfo('url') . '/?lti=';
 $iconurl = get_bloginfo('url') . '/?lti&amp;icon';
 $domain = get_bloginfo('url');
@@ -34,40 +93,40 @@ if ($pos !== false) {
     $domain = substr($domain, 0, $pos);
 }
 
-$xml = <<< EOD
-<?xml version="1.0" encoding="UTF-8"?>
-<cartridge_basiclti_link xmlns="http://www.imsglobal.org/xsd/imslticc_v1p0"
-                         xmlns:blti = "http://www.imsglobal.org/xsd/imsbasiclti_v1p0"
-                         xmlns:lticm ="http://www.imsglobal.org/xsd/imslticm_v1p0"
-                         xmlns:lticp ="http://www.imsglobal.org/xsd/imslticp_v1p0"
-                         xmlns:xsi = "http://www.w3.org/2001/XMLSchema-instance"
-                         xsi:schemaLocation = "http://www.imsglobal.org/xsd/imslticc_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticc_v1p0.xsd
-    http://www.imsglobal.org/xsd/imsbasiclti_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd
-    http://www.imsglobal.org/xsd/imslticm_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd
-    http://www.imsglobal.org/xsd/imslticp_v1p0 http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd">
-  <blti:title>WordPress</blti:title>
-  <blti:description>Access to WordPress Blogs using LTI</blti:description>
-  <blti:icon>{$iconurl}</blti:icon>
-  <blti:launch_url>{$siteurl}</blti:launch_url>
-  <blti:extensions platform="canvas.instructure.com">
-    <lticm:property name="tool_id">wordpress</lticm:property>
-    <lticm:property name="privacy_level">public</lticm:property>
-    <lticm:property name="domain">{$domain}</lticm:property>
-    <lticm:property name="oauth_compliant">true</lticm:property>
-  </blti:extensions>
-  <blti:vendor>
-    <lticp:code>spvsp</lticp:code>
-    <lticp:name>SPV Software Products</lticp:name>
-    <lticp:description>Provider of open source educational tools.</lticp:description>
-    <lticp:url>http://www.spvsoftwareproducts.com/</lticp:url>
-    <lticp:contact>
-      <lticp:email>stephen@spvsoftwareproducts.com</lticp:email>
-    </lticp:contact>
-  </blti:vendor>
-</cartridge_basiclti_link>
-EOD;
+$dom = new DOMDocument('1.0', 'UTF-8');
+
+$root = lti_create_xml_root($dom, 'cartridge_basiclti_link');
+
+lti_add_xml_element($dom, $root, 'blti', 'title', 'WordPress');
+lti_add_xml_element($dom, $root, 'blti', 'description', 'Access to WordPress Blogs using LTI');
+lti_add_xml_element($dom, $root, 'blti', 'icon', $iconurl);
+lti_add_xml_element($dom, $root, 'blti', 'launch_url', $siteurl);
+
+$custom = lti_add_xml_element($dom, $root, 'blti', 'custom');
+lti_add_xml_element($dom, $custom, 'lticm', 'property', '$User.username', array('name' => 'username'));
+
+$extensions = lti_add_xml_element($dom, $root, 'blti', 'extensions', null, array('platform' => 'canvas.instructure.com'));
+lti_add_xml_element($dom, $extensions, 'lticm', 'property', 'wordpress', array('name' => 'tool_id'));
+lti_add_xml_element($dom, $extensions, 'lticm', 'property', 'public', array('name' => 'privacy_level'));
+lti_add_xml_element($dom, $extensions, 'lticm', 'property', $domain, array('name' => 'domain'));
+lti_add_xml_element($dom, $extensions, 'lticm', 'property', 'true', array('name' => 'oauth_compliant'));
+
+$vendor = lti_add_xml_element($dom, $root, 'blti', 'vendor');
+lti_add_xml_element($dom, $vendor, 'lticp', 'code', 'spvsp');
+lti_add_xml_element($dom, $vendor, 'lticp', 'name', 'SPV Software Products');
+lti_add_xml_element($dom, $vendor, 'lticp', 'description', 'Provider of open source educational tools.');
+lti_add_xml_element($dom, $vendor, 'lticp', 'url', 'http://www.spvsoftwareproducts.com/');
+$contact = lti_add_xml_element($dom, $vendor, 'lticp', 'contact');
+lti_add_xml_element($dom, $contact, 'lticp', 'email', 'stephen@spvsoftwareproducts.com');
+
+$dom->appendChild($root);
+
+$dom = apply_filters('lti-configure-xml', $dom);
+
+$dom->formatOutput = true;
+$dom->normalizeDocument();
 
 header("Content-Type: application/xml; ");
 
-echo $xml;
+echo $dom->saveXML();
 ?>

@@ -35,39 +35,37 @@ if ($pos !== false) {
     $domain = substr($domain, 0, $pos);
 }
 
-$json = <<< EOD
-{
-  "title": "WordPress",
-  "description": "Access to WordPress Blogs using LTI",
-  "privacy_level": "public",
-  "oidc_initiation_url": "{$siteurl}",
-  "target_link_uri": "{$siteurl}",
-  "scopes": [
-    "https://purl.imsglobal.org/spec/lti-ags/scope/score",
-    "https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly"
-  ],
-  "extensions": [
-    {
-      "domain": "{$domain}",
-      "tool_id": "wordpress",
-      "platform": "canvas.instructure.com",
-      "privacy_level": "public",
-      "settings": {
-        "text": "WordPress",
-        "icon_url": "{$iconurl}",
-        "placements": [
-        ]
-      }
-    }
-  ],
-  "public_jwk_url": "{$jwksurl}",
-  "custom_fields": {
-    "canvas_user_login_id": "\$User.username"
-  }
-}
-EOD;
+$configuration = (object) array(
+        'title' => 'WordPress',
+        'description' => 'Access to WordPress Blogs using LTI',
+        'privacy_level' => 'public',
+        'oidc_initiation_url' => $siteurl,
+        'target_link_uri' => $siteurl,
+        'scopes' => array(
+            'https://purl.imsglobal.org/spec/lti-ags/scope/score',
+            'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'
+        ),
+        'extensions' => array((object) array(
+                'domain' => $domain,
+                'tool_id' => 'wordpress',
+                'platform' => 'canvas.instructure.com',
+                'privacy_level' => 'public',
+                'settings' => (object) array(
+                    'platform' => 'canvas.instructure.com',
+                    'text' => 'WordPress',
+                    'icon_url' => $iconurl,
+                    'placements' => array()
+                )
+            )),
+        'public_jwk_url' => $jwksurl,
+        'custom_fields' => (object) array(
+            'username' => '\$User.username'
+        )
+);
+
+$configuration = apply_filters('lti-configure-json', $configuration);
 
 header("Content-Type: application/json; ");
 
-echo $json;
+echo json_encode($configuration, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
 ?>
