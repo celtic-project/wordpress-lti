@@ -581,6 +581,8 @@ function lti_options_init()
         'registration_enablefordays', 'Period to auto enable for', 'lti_registration_enablefordays_callback', 'lti_options_admin',
         'lti_options_registration_section'
     );
+
+    do_action('lti_init_options');
 }
 
 function lti_options_general_section_info()

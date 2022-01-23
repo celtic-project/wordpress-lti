@@ -34,6 +34,7 @@ if (!wp_verify_nonce($nonce, 'lti_options_settings_group-options')) {
     add_settings_error('general', 'settings_updated', __('Unable to submit this form, please refresh and try again.'));
 } else {
     $options = wp_unslash($_POST['lti_options']);
+    do_action('lti_save_options', $options, lti_get_options());
     if (is_multisite()) {
         update_site_option('lti_choices', $options);
     } else {
