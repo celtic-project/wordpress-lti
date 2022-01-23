@@ -203,21 +203,21 @@ function lti_create_db()
             'PRIMARY KEY (consumer_pk)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' ' .
             "ADD UNIQUE INDEX {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . '_' .
             'consumer_key_UNIQUE (consumer_key ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' ' .
             "ADD UNIQUE INDEX {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . '_' .
             'platform_UNIQUE (platform_id ASC, client_id ASC, deployment_id ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::NONCE_TABLE_NAME . ' (' .
@@ -227,7 +227,7 @@ function lti_create_db()
             'PRIMARY KEY (consumer_pk, value)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::NONCE_TABLE_NAME . ' ' .
@@ -235,7 +235,7 @@ function lti_create_db()
             DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . ' (' .
@@ -248,7 +248,7 @@ function lti_create_db()
             'PRIMARY KEY (consumer_pk)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::ACCESS_TOKEN_TABLE_NAME . ' ' .
@@ -256,7 +256,7 @@ function lti_create_db()
             DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' (' .
@@ -271,7 +271,7 @@ function lti_create_db()
             'PRIMARY KEY (context_pk)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' ' .
@@ -279,14 +279,14 @@ function lti_create_db()
             DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' ' .
             "ADD INDEX {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . '_' .
             'consumer_id_IDX (consumer_pk ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (' .
@@ -303,7 +303,7 @@ function lti_create_db()
             'PRIMARY KEY (resource_link_pk)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
@@ -311,7 +311,7 @@ function lti_create_db()
             DataConnector::PLATFORM_TABLE_NAME . '_FK1 FOREIGN KEY (consumer_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::PLATFORM_TABLE_NAME . ' (consumer_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
@@ -319,26 +319,26 @@ function lti_create_db()
             DataConnector::CONTEXT_TABLE_NAME . '_FK1 FOREIGN KEY (context_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::CONTEXT_TABLE_NAME . ' (context_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
             "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
             DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (primary_resource_link_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
             "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
             'consumer_pk_IDX (consumer_pk ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' ' .
             "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . '_' .
             'context_pk_IDX (context_pk ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' (' .
@@ -351,20 +351,20 @@ function lti_create_db()
             'PRIMARY KEY (user_result_pk)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' ' .
             "ADD CONSTRAINT {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . '_' .
             DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (resource_link_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . ' ' .
             "ADD INDEX {$prefix}" . DataConnector::USER_RESULT_TABLE_NAME . '_' .
             'resource_link_pk_IDX (resource_link_pk ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
 
         $sql = "CREATE TABLE IF NOT EXISTS {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' (' .
@@ -375,20 +375,20 @@ function lti_create_db()
             'PRIMARY KEY (share_key_id)' .
             ') ENGINE=InnoDB ' . $charset_collate;
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' ' .
             "ADD CONSTRAINT {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . '_' .
             DataConnector::RESOURCE_LINK_TABLE_NAME . '_FK1 FOREIGN KEY (resource_link_pk) ' .
             "REFERENCES {$prefix}" . DataConnector::RESOURCE_LINK_TABLE_NAME . ' (resource_link_pk)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
         $sql = "ALTER TABLE {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . ' ' .
             "ADD INDEX {$prefix}" . DataConnector::RESOURCE_LINK_SHARE_KEY_TABLE_NAME . '_' .
             'resource_link_pk_IDX (resource_link_pk ASC)';
         if (!$wpdb->query($sql)) {
-            error_log($wpdb->print_error());
+            Util::logError($wpdb->print_error());
         }
     }
 
