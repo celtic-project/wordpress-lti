@@ -17,13 +17,13 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 if ($_SERVER['REQUEST_METHOD'] === 'POST') {
-    $tool = apply_filters('lti-tool', null, $lti_db_connector);
+    $tool = apply_filters('lti_tool_tool', null, $lti_tool_data_connector);
     if (empty($tool)) {
-        $tool = new LTI_WPTool($lti_db_connector);
+        $tool = new LTI_Tool_WPTool($lti_tool_data_connector);
     }
     $tool->doRegistration();
     $ok = $tool->ok;
@@ -36,4 +36,3 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     header('Content-type: application/json');
     echo json_encode($response);
 }
-?>

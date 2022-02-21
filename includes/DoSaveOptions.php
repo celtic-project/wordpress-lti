@@ -17,38 +17,49 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
-require_once(ABSPATH . '/wp-admin/includes/template.php');
+require_once(ABSPATH . 'wp-admin/includes/template.php');
 
 if (!current_user_can('edit_plugins')) {
     wp_die(
-        '<h1>' . __('You need a higher level of permission.') . '</h1>' .
-        '<p>' . __('Sorry, you are not allowed to edit plugins for this site.') . '</p>', 403
+        '<h1>' . __('You need a higher level of permission.', 'lti-tool') . '</h1>' .
+        '<p>' . __('Sorry, you are not allowed to edit plugins for this site.', 'lti-tool') . '</p>', 403
     );
 }
 
-$nonce = $_REQUEST['_wpnonce'];
-if (!wp_verify_nonce($nonce, 'lti_options_settings_group-options')) {
-    add_settings_error('general', 'settings_updated', __('Unable to submit this form, please refresh and try again.'));
+$nonce = sanitize_text_field($_REQUEST['_wpnonce']);
+if (!wp_verify_nonce($nonce, 'lti_tool_options_settings_group-options')) {
+    add_settings_error('general', 'settings_updated', __('Unable to submit this form, please refresh and try again.', 'lti-tool'));
 } else {
-    $options = wp_unslash($_POST['lti_options']);
-    do_action('lti_save_options', $options, lti_get_options());
+    $rawoptions = $_POST['lti_tool_options'];
+    $options = array();
+    foreach ($rawoptions as $option => $value) {
+        switch ($option) {
+            case 'lti13_privatekey':
+                $value = sanitize_textarea_field($value);
+                break;
+            default:
+                $value = sanitize_text_field($value);
+                break;
+        }
+        $options[$option] = $value;
+    }
+    do_action('lti_tool_save_options', $options, lti_tool_get_options());
     if (is_multisite()) {
-        update_site_option('lti_choices', $options);
+        update_site_option('lti_tool_options', $options);
     } else {
-        update_option('lti_choices', $options);
+        update_option('lti_tool_options', $options);
     }
     add_settings_error('general', 'settings_updated', __('Settings saved.'), 'success');
 }
 set_transient('settings_errors', get_settings_errors(), 30);
 
 if (is_multisite()) {
-    $path = add_query_arg(array('page' => 'lti_options', 'settings-updated' => 'true'), network_admin_url('admin.php'));
+    $path = add_query_arg(array('page' => 'lti_tool_options', 'settings-updated' => 'true'), network_admin_url('admin.php'));
 } else {
-    $path = add_query_arg(array('page' => 'lti_options', 'settings-updated' => 'true'), admin_url('admin.php'));
+    $path = add_query_arg(array('page' => 'lti_tool_options', 'settings-updated' => 'true'), admin_url('admin.php'));
 }
 
 wp_redirect($path);
-?>

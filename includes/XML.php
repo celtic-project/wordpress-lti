@@ -17,25 +17,25 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Platform;
 
-require_once 'lib.php';
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
 if (!current_user_can('edit_plugins')) {
     http_response_code(401);
     die;
 }
 
-$key = $_REQUEST['key'];
-$platform = Platform::fromConsumerKey($key, $lti_db_connector);
+$key = sanitize_text_field($_REQUEST['key']);
+$platform = Platform::fromConsumerKey($key, $lti_tool_data_connector);
 
 $filename = $platform->name;
 $sanitised = preg_replace('/[^_a-zA-Z0-9-]/', '', $filename) . '.xml';
 
-$siteurl = get_bloginfo('url') . '/?lti';
+$siteurl = get_bloginfo('url') . '/?lti-tool';
 $iconurl = "{$siteurl}&amp;icon";
 
 $xml = <<< EOD
@@ -79,4 +79,3 @@ header("Content-Type: application/octet-stream; ");
 header("Content-Transfer-Encoding: binary");
 
 echo $xml;
-?>

@@ -17,10 +17,10 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
-class LTI_User_List_Table extends WP_List_Table
+class LTI_Tool_User_List_Table extends WP_List_Table
 {
 
     const REASON_NEW = 'New to WordPress';
@@ -36,8 +36,8 @@ class LTI_User_List_Table extends WP_List_Table
     function __construct()
     {
         parent::__construct(array(
-            'singular' => __('User', 'lti-text'),
-            'plural' => __('Users', 'lti-text'),
+            'singular' => __('User', 'lti-tool'),
+            'plural' => __('Users', 'lti-tool'),
             'ajax' => false
             )
         );
@@ -52,14 +52,14 @@ class LTI_User_List_Table extends WP_List_Table
     public static function define_columns()
     {
         $columns = array(
-            'username' => __('Username', 'lti-text'),
-            'name' => __('Name', 'lti-text')
+            'username' => __('Username', 'lti-tool'),
+            'name' => __('Name', 'lti-tool')
         );
-        if (lti_do_save_email()) {
-            $columns['email'] = __('Email', 'lti-text');
+        if (lti_tool_do_save_email()) {
+            $columns['email'] = __('Email', 'lti-tool');
         }
-        $columns['role'] = __('Role', 'lti-text');
-        $columns['reasons'] = __('Reasons', 'lti-text');
+        $columns['role'] = __('Role', 'lti-tool');
+        $columns['reasons'] = __('Reasons', 'lti-tool');
 
         return $columns;
     }
@@ -70,8 +70,8 @@ class LTI_User_List_Table extends WP_List_Table
             'username' => array('username', false),
             'name' => array('name', true)
         );
-        if (lti_do_save_email()) {
-            $columns['email'] = array('name', false);
+        if (lti_tool_do_save_email()) {
+            $columns['email'] = array('email', false);
         }
         $columns['role'] = array('role', false);
         $columns['reasons'] = array('reasons', false);
@@ -81,12 +81,12 @@ class LTI_User_List_Table extends WP_List_Table
 
     function prepare_items()
     {
-        global $lti_session;
+        global $lti_tool_session;
 
         function usort_reorder($a, $b)
         {
-            $orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'name';
-            $order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc';
+            $orderby = (!empty($_REQUEST['orderby'])) ? sanitize_text_field($_REQUEST['orderby']) : 'name';
+            $order = (!empty($_REQUEST['order'])) ? sanitize_text_field($_REQUEST['order']) : 'asc';
             if (is_array($a->$orderby)) {
                 $result = strcmp(implode($a->$orderby), implode($b->$orderby));
             } else {
@@ -97,7 +97,7 @@ class LTI_User_List_Table extends WP_List_Table
 
         $per_page = $this->get_items_per_page('users_per_page');
         $current_page = $this->get_pagenum();
-        $this->items = $lti_session['sync'][$this->status];
+        $this->items = $lti_tool_session['sync'][$this->status];
         $num_items = count($this->items);
         $num_pages = ceil($num_items / $per_page);
         if (!empty($this->items)) {
@@ -114,34 +114,36 @@ class LTI_User_List_Table extends WP_List_Table
 
     function no_items()
     {
-        _e('No users.');
+        _e('No users.', 'lti-tool');
     }
 
     function get_views()
     {
-        global $lti_session;
+        global $lti_tool_session;
 
         $views = array();
-        $num_new = count($lti_session['sync']['new']);
-        $num_add = count($lti_session['sync']['add']);
-        $num_change = count($lti_session['sync']['change']);
-        $num_delete = count($lti_session['sync']['delete']);
+        $num_new = count($lti_tool_session['sync']['new']);
+        $num_add = count($lti_tool_session['sync']['add']);
+        $num_change = count($lti_tool_session['sync']['change']);
+        $num_delete = count($lti_tool_session['sync']['delete']);
 
         $class = ($this->status === 'new') ? $class = 'current' : '';
-        $views['new'] = $this->get_edit_link(array('action' => 'new'), "New <span class=\"count\">({$num_new})</span>", $class);
+        $views['new'] = $this->get_edit_link(array('action' => 'new'),
+            __('New', 'lti-tool') . " <span class=\"count\">({$num_new})</span>", $class);
 
         if (is_multisite()) {
             $class = ($this->status === 'add') ? $class = 'current' : '';
-            $views['add'] = $this->get_edit_link(array('action' => 'add'), "Add <span class=\"count\">({$num_add})</span>", $class);
+            $views['add'] = $this->get_edit_link(array('action' => 'add'),
+                __('Add', 'lti-tool') . " <span class=\"count\">({$num_add})</span>", $class);
         }
 
         $class = ($this->status === 'change') ? $class = 'current' : '';
-        $views['change'] = $this->get_edit_link(array('action' => 'change'), "Changed <span class=\"count\">({$num_change})</span>",
-            $class);
+        $views['change'] = $this->get_edit_link(array('action' => 'change'),
+            __('Changed', 'lti-tool') . " <span class=\"count\">({$num_change})</span>", $class);
 
         $class = ($this->status === 'delete') ? $class = 'current' : '';
-        $views['delete'] = $this->get_edit_link(array('action' => 'delete'), "Delete <span class=\"count\">({$num_delete})</span>",
-            $class);
+        $views['delete'] = $this->get_edit_link(array('action' => 'delete'),
+            __('Delete', 'lti-tool') . " <span class=\"count\">({$num_delete})</span>", $class);
 
         return $views;
     }
@@ -178,7 +180,7 @@ class LTI_User_List_Table extends WP_List_Table
 
     private function get_edit_link($args, $label, $class = '')
     {
-        $url = add_query_arg($args, menu_page_url('lti_sync_enrolments', false));
+        $url = add_query_arg($args, menu_page_url('lti_tool_sync_enrolments', false));
         $class_html = '';
         $aria_current = '';
         if (!empty($class)) {
@@ -192,5 +194,3 @@ class LTI_User_List_Table extends WP_List_Table
     }
 
 }
-
-?>

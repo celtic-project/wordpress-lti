@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 /* -------------------------------------------------------------------
@@ -33,23 +33,23 @@ if (!defined('WP_UNINSTALL_PLUGIN')) {
 }
 
 // include the Library functions & lib.php loads LTI library
-require_once ('includes' . DIRECTORY_SEPARATOR . 'lib.php');
+require_once (dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'lib.php');
 
 // check if data should be deleted on uninstall
-$options = lti_get_options();
+$options = lti_tool_get_options();
 
-$tool = new Tool($lti_db_connector);
+$tool = new Tool($lti_tool_data_connector);
 $platforms = $tool->getPlatforms();
 foreach ($platforms as $platform) {
-    lti_delete($platform->getKey());
+    lti_tool_delete($platform->getKey());
 }
 
 if (!empty($options['uninstalldb'])) {
     // delete plugin options.
     if (is_multisite()) {
-        delete_site_option('lti_choices');
+        delete_site_option('lti_tool_options');
     } else {
-        delete_option('lti_choices');
+        delete_option('lti_tool_options');
     }
 
     // delete LTI tables.

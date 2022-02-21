@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI;
@@ -37,14 +37,14 @@ use ceLTIc\LTI\Util;
  *  tool_provider - intance of of BasicLTI_Tool_Provider
  * ----------------------------------------------------------------- */
 
-class LTI_WPTool extends Tool
+class LTI_Tool_WPTool extends Tool
 {
 
     public function __construct($data_connector)
     {
         parent::__construct($data_connector);
 
-        $options = lti_get_options();
+        $options = lti_tool_get_options();
 
         $this->baseUrl = get_bloginfo('url') . '/';
 
@@ -52,11 +52,11 @@ class LTI_WPTool extends Tool
         $this->product = new Profile\Item('687e09a3-4845-4581-9ca4-6845b8728a79', 'WordPress',
             'Open source software for creating beautiful blogs.', 'https://wordpress.org');
 
-        $requiredMessages = array(new Profile\Message('basic-lti-launch-request', '?lti',
+        $requiredMessages = array(new Profile\Message('basic-lti-launch-request', '?lti-tool',
                 array('User.id', 'Membership.role', 'Person.name.full', 'Person.name.family', 'Person.name.given')));
 
         $this->resourceHandlers[] = new Profile\ResourceHandler(
-            new Profile\Item('wp', 'WordPress', 'Create a beautiful blog.'), '?lti&icon', $requiredMessages, array());
+            new Profile\Item('wp', 'WordPress', 'Create a beautiful blog.'), '?lti-tool&icon', $requiredMessages, array());
 
         $this->setParameterConstraint('resource_link_id', true, 40, array('basic-lti-launch-request'));
         $this->setParameterConstraint('user_id', true);
@@ -64,7 +64,7 @@ class LTI_WPTool extends Tool
         $this->allowSharing = is_multisite();
 
         $this->signatureMethod = $options['lti13_signaturemethod'];
-        $this->jku = $this->baseUrl . '?lti&keys';
+        $this->jku = $this->baseUrl . '?lti-tool&keys';
         $this->kid = $options['lti13_kid'];
         $this->rsaKey = $options['lti13_privatekey'];
         $this->requiredScopes = array(
@@ -77,60 +77,62 @@ class LTI_WPTool extends Tool
 
     protected function onLaunch()
     {
-        global $lti_session;
+        global $lti_tool_session;
 
         // Clear any existing connections
-        $lti_session['logging_in'] = true;
+        $lti_tool_session['logging_in'] = true;
         wp_logout();
-        unset($lti_session['logging_in']);
+        unset($lti_tool_session['logging_in']);
 
         // Clear these before use
-        $lti_session['return_url'] = '';
-        $lti_session['return_name'] = '';
+        $lti_tool_session['return_url'] = '';
+        $lti_tool_session['return_name'] = '';
 
         // Store return URL for later use, if present
         if (!empty($this->returnUrl)) {
-            $lti_session['return_url'] = (strpos($this->returnUrl, '?') === false) ? $this->returnUrl . '?' : $this->returnUrl . '&';
-            $lti_session['return_name'] = 'Return to VLE';
+            $lti_tool_session['return_url'] = (strpos($this->returnUrl, '?') === false) ? $this->returnUrl . '?' : $this->returnUrl . '&';
+            $lti_tool_session['return_name'] = 'Return to VLE';
             if (!empty($this->platform->name)) {
-                $lti_session['return_name'] = 'Return to ' . $this->platform->name;
+                $lti_tool_session['return_name'] = 'Return to ' . $this->platform->name;
             }
         }
         if (!empty($this->messageParameters['custom_tool_name'])) {
-            $lti_session['tool_name'] = $this->messageParameters['custom_tool_name'];
+            $lti_tool_session['tool_name'] = $this->messageParameters['custom_tool_name'];
         }
 
         // Get what we are using as the username (unique_id-consumer_key, e.g. _21_1-stir.ac.uk)
-        $user_login = lti_get_user_login($this->platform->getKey(), $this->userResult);
+        $user_login = lti_tool_get_user_login($this->platform->getKey(), $this->userResult);
         // Apply the function pre_user_login before saving to the DB.
         $user_login = apply_filters('pre_user_login', $user_login);
 
         // Check if this username, $user_login, is already defined
         $user = get_user_by('login', $user_login);
 
-        if (!empty($user)) {
-            // If user exists, simply save the current details
-            $user->first_name = $this->userResult->firstname;
-            $user->last_name = $this->userResult->lastname;
-            $user->display_name = $this->userResult->fullname;
-            if (lti_do_save_email($this->userResult->getResourceLink()->getKey())) {
-                $user->user_email = $this->userResult->email;
-            }
-            $result = wp_update_user($user);
-        } else {
+        if (empty($user)) {
             // Create username if user provisioning is on
+            $date = current_time('Y-m-d h:i:s');
             $user_data = array(
                 'user_login' => $user_login,
                 'user_pass' => wp_generate_password(),
-                'user_nicename' => $user_login,
                 'first_name' => $this->userResult->firstname,
                 'last_name' => $this->userResult->lastname,
-                'display_name' => $this->userResult->fullname
+                'display_name' => trim("{$this->userResult->firstname} {$this->userResult->lastname}"),
+                'user_registered' => $date
             );
-            if (lti_do_save_email($this->userResult->getResourceLink()->getKey())) {
+            if (lti_tool_do_save_email($this->userResult->getResourceLink()->getKey())) {
                 $user_data['user_email'] = $this->userResult->email;
             }
             $result = wp_insert_user($user_data);
+        } elseif (($user->first_name !== $this->userResult->firstname) || ($user->last_name = $this->userResult->lastname) ||
+            (lti_tool_do_save_email($this->userResult->getResourceLink()->getKey()) && ($user->user_email !== $this->userResult->email))) {
+            // If user exists, simply save the current details if changed
+            $user->first_name = $this->userResult->firstname;
+            $user->last_name = $this->userResult->lastname;
+            $user->display_name = trim("{$this->userResult->firstname} {$this->userResult->lastname}");
+            if (lti_tool_do_save_email($this->userResult->getResourceLink()->getKey())) {
+                $user->user_email = $this->userResult->email;
+            }
+            $result = wp_update_user($user);
         }
         // Handle any errors by capturing and returning to the platform
         if (is_wp_error($result)) {
@@ -146,8 +148,8 @@ class LTI_WPTool extends Tool
         $user_id = $user->ID;
 
         // Save LTI user ID
-        update_user_meta($user_id, 'lti_platform_key', $this->platform->getKey());
-        update_user_meta($user_id, 'lti_user_id', $this->userResult->ltiUserId);
+        update_user_meta($user_id, 'lti_tool_platform_key', $this->platform->getKey());
+        update_user_meta($user_id, 'lti_tool_user_id', $this->userResult->ltiUserId);
 
         // set up some useful variables
         $key = $this->resourceLink->getKey();
@@ -175,7 +177,7 @@ class LTI_WPTool extends Tool
             // Sanity Check: Ensure that path is only _A-Za-z0-9- --- the above should stop this.
             if (preg_match('/[^_0-9a-zA-Z-]+/', $path) == 1) {
                 $this->reason = __('No Blog has been created as the name contains non-alphanumeric: (_a-zA-Z0-9-) allowed',
-                    'lti-text');
+                    'lti-tool');
                 $this->ok = false;
                 return;
             }
@@ -189,12 +191,12 @@ class LTI_WPTool extends Tool
             // If Blog does not exist and this is a member of staff and blog provisioning is on, create blog
             if (!$blog_id && ($this->userResult->isStaff() || $this->userResult->isAdmin())) {
                 $blog_id = wpmu_create_blog(DOMAIN_CURRENT_SITE, $path, $this->resourceLink->title, $user_id, '', '1');
-                update_blog_option($blog_id, 'blogdescription', __('Provisioned by LTI', 'lti-text'));
+                update_blog_option($blog_id, 'blogdescription', __('Provisioned by LTI', 'lti-tool'));
             }
 
             // Blog will exist by this point unless this user is student/no role.
             if (!$blog_id) {
-                $this->reason = __('No Blog has been created for this context', 'lti-text');
+                $this->reason = __('No Blog has been created for this context', 'lti-tool');
                 $this->ok = false;
                 return;
             }
@@ -209,8 +211,8 @@ class LTI_WPTool extends Tool
             $blog_id = get_current_blog_id();
         }
 
-        $options = lti_get_options();
-        $role = lti_user_role($this->userResult, $options);
+        $options = lti_tool_get_options();
+        $role = lti_tool_user_role($this->userResult, $options);
 
         // Add user to blog and set role
         if (!is_user_member_of_blog($user_id, $blog_id)) {
@@ -227,20 +229,20 @@ class LTI_WPTool extends Tool
             switch_to_blog($blog_id);
 
             // Note this is an LTI provisioned Blog.
-            add_option('ltisite', true);
+            add_option('lti_tool_site', true);
         }
 
         // As this is an LTI provisioned Blog we store the consumer key and
         // context id as options with the session meaning we can access elsewhere
         // in the code.
-        // Store lti key & context id in $lti_session variables
-        $lti_session['key'] = $key;
-        $lti_session['resourceid'] = $resource_id;
+        // Store lti key & context id in $lti_tool_session variables
+        $lti_tool_session['key'] = $key;
+        $lti_tool_session['resourceid'] = $resource_id;
 
         // Store the key/context in case we need to sync shares --- this ensures we return
         // to the correct platform and not the primary platform
-        $lti_session['userkey'] = $this->userResult->getResourceLink()->getKey();
-        $lti_session['userresourcelink'] = $this->userResult->getResourceLink()->getId();
+        $lti_tool_session['userkey'] = $this->userResult->getResourceLink()->getKey();
+        $lti_tool_session['userresourcelink'] = $this->userResult->getResourceLink()->getId();
 
         // If users role in platform has changed (e.g. staff -> student),
         // then their role in the blog should change
@@ -266,24 +268,32 @@ class LTI_WPTool extends Tool
         }
 
         // Return URL for re-direction by Tool Provider class
-        if (!empty($options['homepage'])) {
-            $this->redirectUrl = get_option('siteurl') . '/' . $options['homepage'];
+        $homepage = apply_filters('lti_tool_homepage', $options['homepage']);
+        if (!empty($homepage)) {
+            $this->redirectUrl = get_option('siteurl') . '/' . $homepage;
         } else {
             $this->redirectUrl = get_bloginfo('url');
         }
 
-        lti_set_session();
+        lti_tool_set_session();
     }
 
     protected function onRegistration()
     {
+        $escape = function($value) {
+            return esc_html_e($value, 'lti-tool');
+        };
+        $sanitize = function($value) {
+            return sanitize_text_field($value);
+        };
+
         ob_start();
 
-        add_action('wp_enqueue_scripts', 'addToHeader');
+        add_action('wp_enqueue_scripts', 'lti_tool_registration_header');
 
         get_header();
 
-        $options = lti_get_options();
+        $options = lti_tool_get_options();
         if (empty($options['registration_autoenable'])) {
             $successMessage = 'Note that the tool must be enabled by the tool provider before it can be used.';
         } else if (empty($options['registration_enablefordays'])) {
@@ -300,20 +310,20 @@ class LTI_WPTool extends Tool
 <div id="primary" class="content-area">
   <div id="content" class="site-content" role="main">
 
-    <h2 class="entry-title">Registration page</h2>
+    <h2 class="entry-title">{$escape('Registration page')}</h2>
 
     <div class="entry-content">
 
       <p>
-        This page allows you to complete a dynamic tool registration with your platform.
+        {$escape('This page allows you to complete a dynamic tool registration with your platform.')}
       </p>
 
-      <p class="tbc">
-        Select how you would like users to be created within WordPress:
+      <p class="lti_tool_tbc">
+        {$escape('Select how you would like users to be created within WordPress:')}
       </p>
-      <div class="indent">
+      <div class="lti_tool_indent">
         <legend class="screen-reader-text">
-          <span>Resource-specific: Prefix the ID with the consumer key and resource link ID</span>
+          <span>{$escape('Resource-specific: Prefix the ID with the consumer key and resource link ID')}</span>
         </legend>
 
 EOD;
@@ -321,65 +331,65 @@ EOD;
             $checked3 = ($options['scope'] === strval(Tool::ID_SCOPE_RESOURCE)) ? ' checked' : '';
             $checked2 = ($options['scope'] === strval(Tool::ID_SCOPE_CONTEXT)) ? ' checked' : '';
             echo <<< EOD
-        <label for="lti_scope3">
-          <input name="lti_scope" type="radio" id="lti_scope3" value="3"{$checked3} />
-          <em>Resource-specific:</em> Prefix the ID with the consumer key and resource link ID
+        <label for="lti_tool_scope3">
+          <input name="lti_tool_scope" type="radio" id="lti_tool_scope3" value="3"{$checked3} />
+          <em>{$escape('Resource-specific:')}</em> {$escape('Prefix the ID with the consumer key and resource link ID')}
         </label><br />
         <legend class="screen-reader-text">
-          <span>Context-specific: Prefix the ID with the consumer key and context ID</span>
+          <span>{$escape('Context-specific: Prefix the ID with the consumer key and context ID')}</span>
         </legend>
-        <label for="lti_scope2">
-          <input name="lti_scope" type="radio" id="lti_scope2" value="2"{$checked2} />
-          <em>Context-specific:</em> Prefix the ID with the consumer key and context ID
+        <label for="lti_tool_scope2">
+          <input name="lti_tool_scope" type="radio" id="lti_tool_scope2" value="2"{$checked2} />
+          <em>{$escape('Context-specific:')}</em> {$escape('Prefix the ID with the consumer key and context ID')}
         </label><br />
 
 EOD;
         }
         $checked1 = ($options['scope'] === strval(Tool::ID_SCOPE_GLOBAL)) ? ' checked' : '';
         $checked0 = ($options['scope'] === strval(Tool::ID_SCOPE_ID_ONLY)) ? ' checked' : '';
-        $checkedU = ($options['scope'] === LTI_WP_User::ID_SCOPE_USERNAME) ? ' checked' : '';
-        $checkedE = ($options['scope'] === LTI_WP_User::ID_SCOPE_EMAIL) ? ' checked' : '';
+        $checkedU = ($options['scope'] === LTI_Tool_WP_User::ID_SCOPE_USERNAME) ? ' checked' : '';
+        $checkedE = ($options['scope'] === LTI_Tool_WP_User::ID_SCOPE_EMAIL) ? ' checked' : '';
         echo <<< EOD
         <legend class="screen-reader-text">
-          <span>Platform-specific: Prefix an ID with the consumer key</span>
+          <span>{$escape('Platform-specific: Prefix an ID with the consumer key')}</span>
         </legend>
-        <label for="lti_scope1">
-          <input name="lti_scope" type="radio" id="lti_scope1" value="1"{$checked1} />
-          <em>Platform-specific:</em> Prefix the ID with the consumer key
+        <label for="lti_tool_scope1">
+          <input name="lti_tool_scope" type="radio" id="lti_tool_scope1" value="1"{$checked1} />
+          <em>{$escape('Platform-specific:')}</em> {$escape('Prefix the ID with the consumer key')}
         </label><br />
         <legend class="screen-reader-text">
-          <span>Global: Use ID value only</span>
+          <span>{$escape('Global: Use ID value only')}</span>
         </legend>
-        <label for="lti_scope0">
-          <input name="lti_scope" type="radio" id="lti_scope0" value="0"{$checked0} />
-          <em>Global:</em> Use ID value only
+        <label for="lti_tool_scope0">
+          <input name="lti_tool_scope" type="radio" id="lti_tool_scope0" value="0"{$checked0} />
+          <em>{$escape('Global:')}</em> {$escape('Use ID value only')}
         </label><br />
-        <label for="lti_scopeu">
-          <input name="lti_scope" type="radio" id="lti_scopeU" value="U"{$checkedU} />
-          <em>Username:</em> Use platform username only
+        <label for="lti_tool_scopeu">
+          <input name="lti_tool_scope" type="radio" id="lti_tool_scopeU" value="U"{$checkedU} />
+          <em>{$escape('Username:')}</em> {$escape('Use platform username only')}
         </label><br />
-        <label for="lti_scopee">
-          <input name="lti_scope" type="radio" id="lti_scopeE" value="E"{$checkedE} />
-          <em>Email:</em> Use email address only
+        <label for="lti_tool_scopee">
+          <input name="lti_tool_scope" type="radio" id="lti_tool_scopeE" value="E"{$checkedE} />
+          <em>{$escape('Email:')}</em> {$escape('Use email address only')}
         </label>
       </div>
 
-      <p id="id_continue" class="aligncentre">
-        <button type="button" id="id_continuebutton" onclick="return doRegister();">Register</button>
+      <p id="id_lti_tool_continue" class="lti_tool_aligncentre">
+        <button type="button" class="lti_tool_button" id="id_lti_tool_continuebutton" onclick="return lti_tool_do_register();">{$escape('Register')}</button>
       </p>
-      <p id="id_loading" class="aligncentre hide">
-        <img src="?lti&loading">
-      </p>
-
-      <p id="id_registered" class="success hide">
-        The tool registration was successful.  {$successMessage}
-      </p>
-      <p id="id_notregistered" class="error hide">
-        The tool registration failed.  <span id="id_reason"></span>
+      <p id="id_lti_tool_loading" class="lti_tool_aligncentre hide">
+        <img src="?lti-tool&loading">
       </p>
 
-      <p id="id_close" class="aligncentre hide">
-        <button type="button" onclick="return doClose(this);">Close</button>
+      <p id="id_lti_tool_registered" class="lti_tool_success hide">
+        {$escape('The tool registration was successful.')}  {$escape($successMessage)}
+      </p>
+      <p id="id_lti_tool_notregistered" class="lti_tool_error hide">
+        {$escape('The tool registration failed.')}  <span id="id_lti_tool_reason"></span>
+      </p>
+
+      <p id="id_lti_tool_close" class="lti_tool_aligncentre hide">
+        <button type="button" class="lti_tool_button" onclick="return doClose(this);">{$escape('Close')}</button>
       </p>
 
     </div>
@@ -387,8 +397,8 @@ EOD;
   </div>
 </div>
 <script>
-var openid_configuration = '{$_REQUEST['openid_configuration']}';
-var registration_token = '{$_REQUEST['registration_token']}';
+var lti_tool_openid_configuration = '{$sanitize($_REQUEST['openid_configuration'])}';
+var lti_tool_registration_token = '{$sanitize($_REQUEST['registration_token'])}';
 </script>
 EOD;
 
@@ -402,7 +412,7 @@ EOD;
 
     public function doRegistration()
     {
-        $options = lti_get_options();
+        $options = lti_tool_get_options();
         $platformConfig = $this->getPlatformConfiguration();
         if ($this->ok) {
             $toolConfig = $this->getConfiguration($platformConfig);
@@ -411,7 +421,7 @@ EOD;
                 $now = time();
                 $this->getPlatformToRegister($platformConfig, $registrationConfig, false);
                 do {
-                    $key = self::getGUID($_POST['lti_scope']);
+                    $key = self::getGUID(sanitize_text_field($_POST['lti_scope']));
                     $platform = Platform::fromConsumerKey($key, $this->dataConnector);
                 } while (!is_null($platform->created));
                 $this->platform->setKey($key);
@@ -440,11 +450,8 @@ EOD;
 
 }
 
-function addToHeader()
+function lti_tool_registration_header()
 {
-    wp_register_style('lti-register-style', plugins_url('css/register.css', dirname(__FILE__)));
-    wp_enqueue_style('lti-register-style');
-    wp_enqueue_script('lti-register_script', plugins_url('js/registerjs.php', dirname(__FILE__)), array('jquery'));
+    wp_enqueue_style('lti-tool-register-style', plugins_url('css/register.css', __FILE__));
+    wp_enqueue_script('lti-tool-register_js', plugins_url('js/registerjs.php', __FILE__), array('jquery'));
 }
-
-?>

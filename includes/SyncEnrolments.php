@@ -17,37 +17,37 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\ResourceLink;
+use ceLTIc\LTI\UserResult;
 
 /* -------------------------------------------------------------------
  * This function handles the membership service (from the platform)
  * if it offers this LTI service
   ------------------------------------------------------------------ */
 
-function lti_sync_enrolments()
+function lti_tool_sync_enrolments()
 {
-    global $blog_id, $lti_db_connector, $lti_session;
+    global $blog_id, $lti_tool_data_connector, $lti_tool_session;
 
     // Load class
-    require_once('LTI_User_List_Table.php');
-    // Get instance of LTI_User_List_Table and get the current action
-    $user_table = new LTI_User_List_Table();
+    require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'LTI_Tool_User_List_Table.php');
+    // Get instance of LTI_Tool_User_List_Table and get the current action
+    $user_table = new LTI_Tool_User_List_Table();
     $action = $user_table->current_action();
 
-    $options = lti_get_options();
+    $options = lti_tool_get_options();
 
-    $platform = Platform::fromConsumerKey($lti_session['userkey'], $lti_db_connector);
-    $resource_link = ResourceLink::fromPlatform($platform, $lti_session['userresourcelink']);
+    $platform = Platform::fromConsumerKey($lti_tool_session['userkey'], $lti_tool_data_connector);
+    $resource_link = ResourceLink::fromPlatform($platform, $lti_tool_session['userresourcelink']);
 
     if (!$resource_link->hasMembershipsService()) {
-        echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('No Memberships service', 'lti-text') . '</h1></div>';
+        echo '<div class="wrap"><h1 class="wp-heading-inline">' . esc_html__('No Memberships service', 'lti-tool') . '</h1></div>';
         return;
     }
-
     // Deal with current action
     switch ($action) {
         case 'continue':
@@ -62,7 +62,7 @@ function lti_sync_enrolments()
             // Get the users from the resource link
             $lti_users = $resource_link->getMemberships();
             if (!$lti_users) {
-                add_action('admin_notices', 'lti_sync_error');
+                add_action('admin_notices', 'lti_tool_sync_error');
                 do_action('admin_notices');
                 return;
             }
@@ -76,7 +76,7 @@ function lti_sync_enrolments()
 
             foreach ($lti_users as $lti_user) {
                 // Get what we are using as the username (unique_id-consumer_key, e.g. _21_1-stir.ac.uk)
-                $user_login = lti_get_user_login($lti_session['userkey'], $lti_user);
+                $user_login = lti_tool_get_user_login($lti_tool_session['userkey'], $lti_user);
                 // Apply the function pre_user_login before saving to the DB.
                 $user_login = apply_filters('pre_user_login', $user_login);
 
@@ -87,45 +87,47 @@ function lti_sync_enrolments()
                 $reasons = array();
                 if (empty($user)) {
                     $category = 'new';
-                    $reasons[] = LTI_User_List_Table::REASON_NEW;
+                    $reasons[] = LTI_Tool_User_List_Table::REASON_NEW;
                 } elseif (is_multisite() && !is_user_member_of_blog($user->ID, $blog_id)) {
                     $category = 'add';
-                    $reasons[] = LTI_User_List_Table::REASON_ADD;
+                    $reasons[] = LTI_Tool_User_List_Table::REASON_ADD;
                 } else {
                     unset($blog_users[$user->ID]);
-                    if ($lti_user->fullname !== $user->display_name) {
+                    $lti_tool_platform_key = get_user_meta($user->ID, 'lti_tool_platform_key', true);
+                    $lti_tool_user_id = get_user_meta($user->ID, 'lti_tool_user_id', true);
+                    if ($user->display_name !== trim("{$lti_user->firstname} {$lti_user->lastname}")) {
                         $category = 'change';
-                        $reasons[] = LTI_User_List_Table::REASON_CHANGE_NAME;
+                        $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_NAME;
                     }
-                    if (lti_do_save_email() && ($lti_user->email !== $user->user_email)) {
+                    if (lti_tool_do_save_email() && ($lti_user->email !== $user->user_email)) {
                         $category = 'change';
-                        $reasons[] = LTI_User_List_Table::REASON_CHANGE_EMAIL;
+                        $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_EMAIL;
                     }
                     if ($lti_user->isLearner()) {
-                        if (!lti_user_has_role($user, $options['role_student'])) {
+                        if (!lti_tool_user_has_role($user, $options['role_student'])) {
                             $category = 'change';
                             $lti_user->role = $options['role_student'];
-                            $reasons[] = LTI_User_List_Table::REASON_CHANGE_ROLE;
+                            $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
                         }
                     } elseif ($lti_user->isStaff()) {
-                        if (!lti_user_has_role($user, $options['role_staff'])) {
+                        if (!lti_tool_user_has_role($user, $options['role_staff'])) {
                             $category = 'change';
                             $lti_user->role = $options['role_staff'];
-                            $reasons[] = LTI_User_List_Table::REASON_CHANGE_ROLE;
+                            $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
                         }
-                    } elseif (!lti_user_has_role($user, $options['role_other'])) {
+                    } elseif (!lti_tool_user_has_role($user, $options['role_other'])) {
                         $category = 'change';
                         $lti_user->role = $options['role_other'];
-                        $reasons[] = LTI_User_List_Table::REASON_CHANGE_ROLE;
+                        $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
                     }
-                    if (empty($user->lti_platform_key) || ($user->lti_platform_key !== $platform->getKey()) ||
-                        empty($user->lti_user_id) || ($user->lti_user_id !== $lti_user->ltiUserId)) {
+                    if (($lti_tool_platform_key !== $platform->getKey()) ||
+                        ($lti_tool_user_id !== $lti_user->ltiUserId)) {
                         $category = 'change';
-                        $reasons[] = LTI_User_List_Table::REASON_CHANGE_ID;
+                        $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ID;
                     }
                 }
                 if (!empty($category)) {
-                    $lti_wp_user = LTI_WP_User::fromUserResult($lti_user, $user_login, $options);
+                    $lti_wp_user = LTI_Tool_WP_User::fromUserResult($lti_user, $user_login, $options);
                     if (!empty($user)) {
                         $lti_wp_user->id = $user->ID;
                     }
@@ -134,15 +136,17 @@ function lti_sync_enrolments()
                 }
             }
             if (!empty($blog_users)) {
+                $lti_user = UserResult::fromResourceLink($resource_link, '');
+                $prefix = lti_tool_get_user_login($lti_tool_session['userkey'], $lti_user);
                 foreach ($blog_users as $blog_user) {
-                    if (!empty($blog_user->lti_user_id) && ($blog_user->lti_platform_key === $platform->getKey())) {
-                        $lti_wp_user = LTI_WP_User::fromWPUser($blog_user);
-                        $lti_wp_user->reasons = array(LTI_User_List_Table::REASON_DELETE);
+                    if (empty($prefix) || (strpos($blog_user->user_login, $prefix) === 0)) {
+                        $lti_wp_user = LTI_Tool_WP_User::fromWPUser($blog_user);
+                        $lti_wp_user->reasons = array(LTI_Tool_User_List_Table::REASON_DELETE);
                         $membership_platform['delete'][] = $lti_wp_user;
                     }
                 }
             }
-            $lti_session['sync'] = $membership_platform;
+            $lti_tool_session['sync'] = $membership_platform;
             $action = 'new';
             if (empty($membership_platform['new'])) {
                 if (!empty($membership_platform['add'])) {
@@ -153,7 +157,7 @@ function lti_sync_enrolments()
                     $action = 'delete';
                 }
             }
-            lti_set_session();
+            lti_tool_set_session();
         // Display the various lists
         case 'new':
         case 'add':
@@ -161,35 +165,38 @@ function lti_sync_enrolments()
         case 'delete':
             $user_table->status = $action;
             $user_table->prepare_items();
-            echo '<div class="wrap"><h1 class="wp-heading-inline">' . __('LTI Users Synchronisation', 'lti-text') . '</h1><hr class="wp-header-end">';
+            echo '<div class="wrap"><h1 class="wp-heading-inline">' . esc_html__('LTI Users Synchronisation', 'lti-tool') . '</h1><hr class="wp-header-end">';
             do_action('admin_notices');
             $user_table->views();
-            echo('  <form id="ltiuser-filter" method="get">' . "\n");
-            echo('    <input type="hidden" name="page" value="' . $_REQUEST['page'] . '" />' . "\n");
+            echo('  <form id="lti_tool_user_filter" method="get">' . "\n");
+            echo('    <input type="hidden" name="page" value="' . esc_attr(sanitize_text_field($_REQUEST['page'])) . '" />' . "\n");
             $user_table->display();
             echo ('  <p class="submit">' . "\n");
-            if (empty($lti_session['sync']['new']) && empty($lti_session['sync']['add']) && empty($lti_session['sync']['change']) && empty($lti_session['sync']['delete'])) {
-                _e('<strong>No updates found.</strong>', 'lti_text');
+            if (empty($lti_tool_session['sync']['new']) && empty($lti_tool_session['sync']['add']) && empty($lti_tool_session['sync']['change']) && empty($lti_tool_session['sync']['delete'])) {
+                echo '<strong>';
+                esc_html_e('No updates found.', 'lti-tool');
+                echo '</strong>';
             } else {
                 $disabled = '';
-                if (empty($lti_session['sync']['delete'])) {
+                if (empty($lti_tool_session['sync']['delete'])) {
                     $disabled = ' disabled';
                 }
-                echo ('    <input id="delete" class="button-primary" type="submit" value="' . __('Update with Deletions', 'lti-text') . '" name="delete"' . $disabled . ">\n");
+                echo ('    <input id="delete" class="button-primary" type="submit" value="' . esc_attr__('Update with Deletions',
+                    'lti-tool') . '" name="delete"' . $disabled . ">\n");
                 $disabled = '';
-                if (empty($lti_session['sync']['new']) && empty($lti_session['sync']['add']) && empty($lti_session['sync']['change'])) {
+                if (empty($lti_tool_session['sync']['new']) && empty($lti_tool_session['sync']['add']) && empty($lti_tool_session['sync']['change'])) {
                     $disabled = ' disabled';
                 }
-                echo ('    <input id="nodelete" class="button-primary" type="submit" value="' . __('Update without Deletions',
-                    'lti-text') . '" name="nodelete"' . $disabled . ">\n");
+                echo ('    <input id="nodelete" class="button-primary" type="submit" value="' . esc_attr__('Update without Deletions',
+                    'lti-tool') . '" name="nodelete"' . $disabled . ">\n");
             }
             echo ("  </p>\n");
             echo("  </form>\n");
             echo("</div>\n");
             break;
         default:
-            unset($lti_session['sync']);
-            lti_set_session();
+            unset($lti_tool_session['sync']);
+            lti_tool_set_session();
 
             // If platform has setting service then get date/time of last synchronisation
             $last_sync = '';
@@ -201,30 +208,31 @@ function lti_sync_enrolments()
             ?>
 
             <div class="wrap">
-              <h1 class="wp-heading-inline"><?php _e('LTI Users Synchronisation', 'lti-text') ?></h1>
+              <h1 class="wp-heading-inline"><?php _e('LTI Users Synchronisation', 'lti-tool') ?></h1>
 
               <p><?php
-                _e('This page allows you to update this site with any changes to the enrolments in the course which is its source. These updates may include:',
-                    'lti-text')
+                esc_html_e('This page allows you to update this site with any changes to the enrolments in the course which is its source. These updates may include:',
+                    'lti-tool')
                 ?></p>
               <ul style="list-style-type: disc; margin-left: 15px; padding-left: 15px;">
-                <li><?php _e('new users', 'lti-text') ?></li>
-                <li><?php _e('changes to the names of existing users', 'lti-text') ?></li>
-                <li><?php _e('changes to the role (instructor or student) of an existing user', 'lti-text') ?></li>
-                <li><?php _e('deletion of users which no longer exist in the source', 'lti-text') ?></li>
+                <li><?php esc_html_e('new users', 'lti-tool') ?></li>
+                <li><?php esc_html_e('changes to the names of existing users', 'lti-tool') ?></li>
+                <li><?php esc_html_e('changes to the role (instructor or student) of an existing user', 'lti-tool') ?></li>
+                <li><?php esc_html_e('deletion of users which no longer exist in the source', 'lti-tool') ?></li>
               </ul>
               <p><?php
-                _e('Click on the <i>Continue</i> to obtain a list of the changes to be processed. The updates will not be made until you confirm them.',
-                    'lti-text')
+                $allowed = array('em' => array(), 'strong' => array());
+                echo wp_kses(__('Click on the <em>Continue</em> to obtain a list of the changes to be processed. The updates will not be made until you confirm them.',
+                        'lti-tool'), $allowed);
                 ?></p>
               <?php
               if (!empty($last_sync)) {
-                  echo '<p>' . sprintf(__('Last Synchronisation: %s', 'lti-text'), $last_sync) . '</p>';
+                  echo '<p>' . esc_html__(sprintf(__('Last Synchronisation: %s', 'lti-tool'), $last_sync)) . '</p>';
               }
               ?>
-              <form method="post" action="<?php get_admin_url(); ?>users.php?page=lti_sync_enrolments&action=continue">
+              <form method="post" action="<?php echo esc_url(get_admin_url() . 'users.php?page=lti_tool_sync_enrolments&action=continue'); ?>">
                 <p class="submit">
-                  <input id="membership" class="button-primary" type="submit" value="<?php _e('Continue', 'lti-text'); ?>">
+                  <input id="membership" class="button-primary" type="submit" value="<?php esc_attr_e('Continue', 'lti-tool'); ?>">
                 </p>
               </form>
             </div>
@@ -233,9 +241,9 @@ function lti_sync_enrolments()
     }
 }
 
-function lti_sync_error()
+function lti_tool_sync_error()
 {
-    $message = __('An error occurred when synchronising users.', 'lti-text');
+    $message = esc_html__('An error occurred when synchronising users.', 'lti-tool');
     echo <<< EOD
     <div class="notice notice-error is-dismissible">
         <p>{$message}</p>
@@ -243,4 +251,3 @@ function lti_sync_error()
 
 EOD;
 }
-?>

@@ -17,40 +17,40 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
-require_once 'lib.php';
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
-global $lti_namespaces, $lti_schemas;
+global $lti_tool_namespaces, $lti_tool_schemas;
 
-$lti_namespaces = array(
+$lti_tool_namespaces = array(
     'xmlns' => 'http://www.imsglobal.org/xsd/imslticc_v1p0',
     'blti' => 'http://www.imsglobal.org/xsd/imsbasiclti_v1p0',
     'lticm' => 'http://www.imsglobal.org/xsd/imslticm_v1p0',
     'lticp' => 'http://www.imsglobal.org/xsd/imslticp_v1p0',
     'xsi' => 'http://www.w3.org/2001/XMLSchema-instance'
 );
-$lti_schemas = array(
+$lti_tool_schemas = array(
     'http://www.imsglobal.org/xsd/imslticc_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticc_v1p0.xsd',
     'http://www.imsglobal.org/xsd/imsbasiclti_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imsbasiclti_v1p0.xsd',
     'http://www.imsglobal.org/xsd/imslticm_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticm_v1p0.xsd',
     'http://www.imsglobal.org/xsd/imslticp_v1p0' => 'http://www.imsglobal.org/xsd/lti/ltiv1p0/imslticp_v1p0.xsd'
 );
 
-function lti_create_xml_root($dom, $name)
+function lti_tool_create_xml_root($dom, $name)
 {
-    global $lti_namespaces, $lti_schemas;
+    global $lti_tool_namespaces, $lti_tool_schemas;
 
-    $root = $dom->createElementNS($lti_namespaces['xmlns'], $name);
-    foreach ($lti_namespaces as $name => $uri) {
+    $root = $dom->createElementNS($lti_tool_namespaces['xmlns'], $name);
+    foreach ($lti_tool_namespaces as $name => $uri) {
         if ($name === 'xmlns') {
             continue;
         }
         $root->setAttributeNS('http://www.w3.org/2000/xmlns/', "xmlns:{$name}", $uri);
     }
     $locations = '';
-    foreach ($lti_schemas as $uri => $xsd) {
+    foreach ($lti_tool_schemas as $uri => $xsd) {
         $locations .= "{$uri} {$xsd} ";
     }
     $attr = $dom->createAttribute('xsi:schemaLocation');
@@ -60,12 +60,12 @@ function lti_create_xml_root($dom, $name)
     return $root;
 }
 
-function lti_add_xml_element($dom, $parent, $namespace, $name, $value = null, $attributes = array())
+function lti_tool_add_xml_element($dom, $parent, $namespace, $name, $value = null, $attributes = array())
 {
-    global $lti_namespaces, $lti_schemas;
+    global $lti_tool_namespaces, $lti_tool_schemas;
 
     if (!empty($namespace)) {
-        $element = $dom->createElementNS($lti_namespaces[$namespace], "{$namespace}:{$name}", $value);
+        $element = $dom->createElementNS($lti_tool_namespaces[$namespace], "{$namespace}:{$name}", $value);
     } else {
         $element = $dom->createElement($name, $value);
     }
@@ -81,8 +81,8 @@ function lti_add_xml_element($dom, $parent, $namespace, $name, $value = null, $a
     return $element;
 }
 
-$siteurl = get_bloginfo('url') . '/?lti=';
-$iconurl = get_bloginfo('url') . '/?lti&amp;icon';
+$siteurl = get_bloginfo('url') . '/?lti-tool=';
+$iconurl = get_bloginfo('url') . '/?lti-tool&amp;icon';
 $domain = get_bloginfo('url');
 $pos = strpos($domain, '://');
 if ($pos !== false) {
@@ -95,33 +95,33 @@ if ($pos !== false) {
 
 $dom = new DOMDocument('1.0', 'UTF-8');
 
-$root = lti_create_xml_root($dom, 'cartridge_basiclti_link');
+$root = lti_tool_create_xml_root($dom, 'cartridge_basiclti_link');
 
-lti_add_xml_element($dom, $root, 'blti', 'title', 'WordPress');
-lti_add_xml_element($dom, $root, 'blti', 'description', 'Access to WordPress Blogs using LTI');
-lti_add_xml_element($dom, $root, 'blti', 'icon', $iconurl);
-lti_add_xml_element($dom, $root, 'blti', 'launch_url', $siteurl);
+lti_tool_add_xml_element($dom, $root, 'blti', 'title', 'WordPress');
+lti_tool_add_xml_element($dom, $root, 'blti', 'description', 'Access to WordPress Blogs using LTI');
+lti_tool_add_xml_element($dom, $root, 'blti', 'icon', $iconurl);
+lti_tool_add_xml_element($dom, $root, 'blti', 'launch_url', $siteurl);
 
-$custom = lti_add_xml_element($dom, $root, 'blti', 'custom');
-lti_add_xml_element($dom, $custom, 'lticm', 'property', '$User.username', array('name' => 'username'));
+$custom = lti_tool_add_xml_element($dom, $root, 'blti', 'custom');
+lti_tool_add_xml_element($dom, $custom, 'lticm', 'property', '$User.username', array('name' => 'username'));
 
-$extensions = lti_add_xml_element($dom, $root, 'blti', 'extensions', null, array('platform' => 'canvas.instructure.com'));
-lti_add_xml_element($dom, $extensions, 'lticm', 'property', 'wordpress', array('name' => 'tool_id'));
-lti_add_xml_element($dom, $extensions, 'lticm', 'property', 'public', array('name' => 'privacy_level'));
-lti_add_xml_element($dom, $extensions, 'lticm', 'property', $domain, array('name' => 'domain'));
-lti_add_xml_element($dom, $extensions, 'lticm', 'property', 'true', array('name' => 'oauth_compliant'));
+$extensions = lti_tool_add_xml_element($dom, $root, 'blti', 'extensions', null, array('platform' => 'canvas.instructure.com'));
+lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', 'wordpress', array('name' => 'tool_id'));
+lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', 'public', array('name' => 'privacy_level'));
+lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', $domain, array('name' => 'domain'));
+lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', 'true', array('name' => 'oauth_compliant'));
 
-$vendor = lti_add_xml_element($dom, $root, 'blti', 'vendor');
-lti_add_xml_element($dom, $vendor, 'lticp', 'code', 'spvsp');
-lti_add_xml_element($dom, $vendor, 'lticp', 'name', 'SPV Software Products');
-lti_add_xml_element($dom, $vendor, 'lticp', 'description', 'Provider of open source educational tools.');
-lti_add_xml_element($dom, $vendor, 'lticp', 'url', 'http://www.spvsoftwareproducts.com/');
-$contact = lti_add_xml_element($dom, $vendor, 'lticp', 'contact');
-lti_add_xml_element($dom, $contact, 'lticp', 'email', 'stephen@spvsoftwareproducts.com');
+$vendor = lti_tool_add_xml_element($dom, $root, 'blti', 'vendor');
+lti_tool_add_xml_element($dom, $vendor, 'lticp', 'code', 'spvsp');
+lti_tool_add_xml_element($dom, $vendor, 'lticp', 'name', 'SPV Software Products');
+lti_tool_add_xml_element($dom, $vendor, 'lticp', 'description', 'Provider of open source educational tools.');
+lti_tool_add_xml_element($dom, $vendor, 'lticp', 'url', 'http://www.spvsoftwareproducts.com/');
+$contact = lti_tool_add_xml_element($dom, $vendor, 'lticp', 'contact');
+lti_tool_add_xml_element($dom, $contact, 'lticp', 'email', 'stephen@spvsoftwareproducts.com');
 
 $dom->appendChild($root);
 
-$dom = apply_filters('lti-configure-xml', $dom);
+$dom = apply_filters('lti_tool_configure_xml', $dom);
 
 $dom->formatOutput = true;
 $dom->normalizeDocument();
@@ -129,4 +129,3 @@ $dom->normalizeDocument();
 header("Content-Type: application/xml; ");
 
 echo $dom->saveXML();
-?>

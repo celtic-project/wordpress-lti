@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Tool;
@@ -29,21 +29,17 @@ use ceLTIc\LTI\Util;
 global $wpdb;
 
 // include the LTI library classes
-if (!lti_check_lti_library()) {
+if (!lti_tool_check_lti_library()) {
     require_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'vendor' . DIRECTORY_SEPARATOR . 'autoload.php');
 }
 
-if (file_exists(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php')) {
-    include_once(dirname(dirname(__FILE__)) . DIRECTORY_SEPARATOR . 'config.php');
-}
-
 /* -------------------------------------------------------------------
- * LTI_WP_User - a local smaller definition of the LTI_User that
+ * LTI_Tool_WP_User - a local smaller definition of the LTI_User that
  * simply captures what needed in WP to deal with the various states
  * that can occur when synchronising
  * ----------------------------------------------------------------- */
 
-class LTI_WP_User
+class LTI_Tool_WP_User
 {
 
     /**
@@ -73,9 +69,9 @@ class LTI_WP_User
         $user->username = $user_login;
         $user->firstname = $user_result->firstname;
         $user->lastname = $user_result->lastname;
-        $user->name = $user_result->fullname;
+        $user->name = trim("{$user_result->firstname} {$user_result->lastname}");
         $user->email = $user_result->email;
-        $user->role = lti_user_role($user_result, $options);
+        $user->role = lti_tool_user_role($user_result, $options);
         $user->lti_user_id = $user_result->ltiUserId;
 
         return $user;
@@ -110,11 +106,11 @@ class LTI_WP_User
  *  $key - key for platform
   ------------------------------------------------------------------ */
 
-function lti_delete($key)
+function lti_tool_delete($key)
 {
-    global $wpdb, $lti_db_connector;
+    global $wpdb, $lti_tool_data_connector;
 
-    $platform = Platform::fromConsumerKey($key, $lti_db_connector);
+    $platform = Platform::fromConsumerKey($key, $lti_tool_data_connector);
     $platform->delete();
 
     if (is_multisite() && !empty($options['uninstallblogs'])) {
@@ -138,11 +134,11 @@ function lti_delete($key)
  *  $key - key for platform
   ------------------------------------------------------------------ */
 
-function lti_set_enable($key, $enable)
+function lti_tool_set_enable($key, $enable)
 {
-    global $lti_db_connector;
+    global $lti_tool_data_connector;
 
-    $platform = Platform::fromConsumerKey($key, $lti_db_connector);
+    $platform = Platform::fromConsumerKey($key, $lti_tool_data_connector);
     $platform->enabled = $enable;
     $platform->save();
 }
@@ -154,11 +150,11 @@ function lti_set_enable($key, $enable)
  *  $key - key for platform
   ------------------------------------------------------------------ */
 
-function lti_get_enabled_state($key)
+function lti_tool_get_enabled_state($key)
 {
-    global $lti_db_connector;
+    global $lti_tool_data_connector;
 
-    $platform = Platform::fromConsumerKey($key, $lti_db_connector);
+    $platform = Platform::fromConsumerKey($key, $lti_tool_data_connector);
 
     return $platform->enabled;
 }
@@ -168,7 +164,7 @@ function lti_get_enabled_state($key)
  * create.
   ------------------------------------------------------------------ */
 
-function lti_create_db()
+function lti_tool_create_db()
 {
     global $wpdb;
 
@@ -397,34 +393,36 @@ function lti_create_db()
 
 /* -------------------------------------------------------------------
  * The function is run when the Synchronisation page header is
- * generated --- see lti.php and sync_admin_header
+ * generated --- see lti-tool.php and sync_admin_header
  *
  * Parameters
  *  $with_deletions - whether to run the update with deletions
   ------------------------------------------------------------------ */
 
-function lti_update($with_deletions)
+function lti_tool_update($with_deletions)
 {
-    global $blog_id, $lti_db_connector, $lti_session;
+    global $blog_id, $lti_tool_data_connector, $lti_tool_session;
 
     // Get the platform
-    $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
-    $resource_link = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
+    $platform = Platform::fromConsumerKey($lti_tool_session['key'], $lti_tool_data_connector);
+    $resource_link = ResourceLink::fromPlatform($platform, $lti_tool_session['resourceid']);
 
     $errors = array();
 
     // New users
-    $users = $lti_session['sync']['new'];
+    $users = $lti_tool_session['sync']['new'];
     foreach ($users as $user) {
+        $date = current_time('Y-m-d h:i:s');
         $user_data = array(
             'user_login' => $user->username,
             'user_nicename' => $user->username,
             'user_pass' => wp_generate_password(),
             'first_name' => $user->firstname,
             'last_name' => $user->lastname,
-            'display_name' => $user->name
+            'display_name' => $user->name,
+            'user_registered' => $date
         );
-        if (lti_do_save_email()) {
+        if (lti_tool_do_save_email()) {
             $user_data['user_email'] = $user->email;
         }
         $result = wp_insert_user($user_data);
@@ -432,12 +430,12 @@ function lti_update($with_deletions)
             $errors[] = $user->username . ': ' . $result->get_error_message();
         } else {
             $user->id = $result;
-            $lti_session['sync']['add'][] = $user;
+            $lti_tool_session['sync']['add'][] = $user;
         }
     }
 
     // Add users to blog
-    $users = $lti_session['sync']['add'];
+    $users = $lti_tool_session['sync']['add'];
     foreach ($users as $user) {
         if (is_multisite()) {
             $result = add_user_to_blog($blog_id, $user->id, $user->role);
@@ -445,24 +443,25 @@ function lti_update($with_deletions)
                 $errors[] = $user->username . ': ' . $result->get_error_message();
             }
         } else {
-            $user->set_role($user->role);
+            $wp_user = new WP_User($user->id);
+            $wp_user->set_role($user->role);
         }
         // Save LTI user ID
-        update_user_meta($user->id, 'lti_platform_key', $platform->getKey());
-        update_user_meta($user->id, 'lti_user_id', $user->lti_user_id);
+        update_user_meta($user->id, 'lti_tool_platform_key', $platform->getKey());
+        update_user_meta($user->id, 'lti_tool_user_id', $user->lti_user_id);
     }
 
     // Changed users
-    $users = $lti_session['sync']['change'];
+    $users = $lti_tool_session['sync']['change'];
     foreach ($users as $user) {
-        if (in_array(LTI_User_List_Table::REASON_CHANGE_NAME, $user->reasons) ||
-            in_array(LTI_User_List_Table::REASON_CHANGE_EMAIL, $user->reasons)) {
+        if (in_array(LTI_Tool_User_List_Table::REASON_CHANGE_NAME, $user->reasons) ||
+            in_array(LTI_Tool_User_List_Table::REASON_CHANGE_EMAIL, $user->reasons)) {
             $user_data = array
                 ('ID' => $user->id,
                 'first_name' => $user->firstname,
                 'last_name' => $user->lastname,
                 'display_name' => $user->name);
-            if (lti_do_save_email()) {
+            if (lti_tool_do_save_email()) {
                 $user_data['user_email'] = $user->email;
             }
             $result = wp_update_user($user_data);
@@ -470,19 +469,19 @@ function lti_update($with_deletions)
                 $errors[] = $user->username . ': ' . $result->get_error_message();
             }
         }
-        if (in_array(LTI_User_List_Table::REASON_CHANGE_ROLE, $user->reasons)) {
+        if (in_array(LTI_Tool_User_List_Table::REASON_CHANGE_ROLE, $user->reasons)) {
             $wpuser = new WP_User($user->id, '', $blog_id);
             $wpuser->set_role($user->role);
         }
-        if (in_array(LTI_User_List_Table::REASON_CHANGE_ID, $user->reasons)) {
-            update_user_meta($user->id, 'lti_platform_key', $platform->getKey());
-            update_user_meta($user->id, 'lti_user_id', $user->lti_user_id);
+        if (in_array(LTI_Tool_User_List_Table::REASON_CHANGE_ID, $user->reasons)) {
+            update_user_meta($user->id, 'lti_tool_platform_key', $platform->getKey());
+            update_user_meta($user->id, 'lti_tool_user_id', $user->lti_user_id);
         }
     }
 
     // Remove users from blog but not WP as could be members of other blogs.
     if ($with_deletions) {
-        $users = $lti_session['sync']['delete'];
+        $users = $lti_tool_session['sync']['delete'];
         foreach ($users as $user) {
             $result = remove_user_from_blog($user->id, $blog_id);
             if (is_wp_error($result)) {
@@ -492,17 +491,17 @@ function lti_update($with_deletions)
     }
 
     if (empty($errors)) {
-        add_action('admin_notices', 'lti_update_success');
+        add_action('admin_notices', 'lti_tool_update_success');
     } else {
-        $lti_session['sync']['errors'] = $errors;
-        add_action('admin_notices', 'lti_update_error');
+        $lti_tool_session['sync']['errors'] = $errors;
+        add_action('admin_notices', 'lti_tool_update_error');
     }
 
     if ($resource_link->hasSettingService()) {
         $resource_link->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
     }
 
-    lti_set_session();
+    lti_tool_set_session();
 }
 
 /* -------------------------------------------------------------------
@@ -512,11 +511,11 @@ function lti_update($with_deletions)
  *  $id - the particular instance
   ------------------------------------------------------------------ */
 
-function lti_set_share($id, $action)
+function lti_tool_set_share($id, $action)
 {
-    global $lti_db_connector;
+    global $lti_tool_data_connector;
 
-    $context = ResourceLink::fromRecordId($id, $lti_db_connector);
+    $context = ResourceLink::fromRecordId($id, $lti_tool_data_connector);
 
     $context->shareApproved = $action;
     $context->save();
@@ -529,31 +528,20 @@ function lti_set_share($id, $action)
  *  $id - the particular instance
   ------------------------------------------------------------------ */
 
-function lti_delete_share($id)
+function lti_tool_delete_share($id)
 {
-    global $lti_db_connector;
+    global $lti_tool_data_connector;
 
-    $context = ResourceLink::fromRecordId($id, $lti_db_connector);
+    $context = ResourceLink::fromRecordId($id, $lti_tool_data_connector);
 
     $context->delete();
-}
-
-/* -------------------------------------------------------------------
- * Strip slashes from $_POST
-  ------------------------------------------------------------------ */
-
-function lti_strip_magic_quotes()
-{
-    foreach ($_POST as $k => $v) {
-        $_POST[$k] = stripslashes($v);
-    }
 }
 
 /* -------------------------------------------------------------------
  * Extract the username scope from the consumer key/GUID
   ------------------------------------------------------------------ */
 
-function lti_get_scope($guid)
+function lti_tool_get_scope($guid)
 {
     $scope = substr($guid, 2, 1);
     if (is_numeric($scope)) {
@@ -567,12 +555,12 @@ function lti_get_scope($guid)
  * Get the WordPress user login for a user based on the scope set for the platform
   ------------------------------------------------------------------ */
 
-function lti_get_user_login($guid, $lti_user, $platform = null)
+function lti_tool_get_user_login($guid, $lti_user, $platform = null)
 {
-    $scope_userid = lti_get_scope($guid);
-    if ($scope_userid === LTI_WP_User::ID_SCOPE_USERNAME) {
+    $scope_userid = lti_tool_get_scope($guid);
+    if ($scope_userid === LTI_Tool_WP_User::ID_SCOPE_USERNAME) {
         $user_login = $lti_user->username;
-    } elseif ($scope_userid === LTI_WP_User::ID_SCOPE_EMAIL) {
+    } elseif ($scope_userid === LTI_Tool_WP_User::ID_SCOPE_EMAIL) {
         $user_login = $lti_user->email;
     } else {
         $user_login = $lti_user->getId($scope_userid, $platform);
@@ -587,12 +575,13 @@ function lti_get_user_login($guid, $lti_user, $platform = null)
  * Generate the consumer key GUID
   ------------------------------------------------------------------ */
 
-function lti_get_guid()
+function lti_tool_get_guid()
 {
-    $lti_scope = 3;
-
+    $options = lti_tool_get_options();
     if (isset($_GET['lti_scope'])) {
-        $lti_scope = $_GET['lti_scope'];
+        $lti_scope = lti_tool_validate_scope($_GET['lti_scope'], $options['scope']);
+    } else {
+        $lti_scope = $options['scope'];
     }
 
     $str = strtoupper(Util::getRandomString(6));
@@ -603,26 +592,26 @@ function lti_get_guid()
  * Generate the key for the WordPress transient used to store the plugin session variables
   ------------------------------------------------------------------ */
 
-function lti_session_key()
+function lti_tool_session_key()
 {
-    global $lti_session;
+    global $lti_tool_session;
 
     $key = null;
     $save = false;
     $token = wp_get_session_token();
-    if (isset($lti_session['_session_token'])) {
-        if (empty($token) || ($token !== $lti_session['_session_token'])) {
-            delete_site_transient("lti_{$token}");
-            $token = $lti_session['_session_token'];
+    if (isset($lti_tool_session['_session_token'])) {
+        if (empty($token) || ($token !== $lti_tool_session['_session_token'])) {
+            delete_site_transient("lti_tool_{$token}");
+            $token = $lti_tool_session['_session_token'];
         } else {
-            unset($lti_session['_session_token']);
+            unset($lti_tool_session['_session_token']);
             $save = true;
         }
     }
     if (!empty($token)) {
-        $key = "lti_{$token}";
+        $key = "lti_tool_{$token}";
         if ($save) {
-            lti_set_session($key);
+            lti_tool_set_session($key);
         }
     }
 
@@ -633,10 +622,10 @@ function lti_session_key()
  * Retrieve the plugin session variables from a WordPress transient
   ------------------------------------------------------------------ */
 
-function lti_get_session()
+function lti_tool_get_session()
 {
     $data = array();
-    $key = lti_session_key();
+    $key = lti_tool_session_key();
     if (!empty($key)) {
         $data = get_site_transient($key);
         if ($data === false) {
@@ -651,15 +640,15 @@ function lti_get_session()
  * Save the plugin session variables in a WordPress transient
   ------------------------------------------------------------------ */
 
-function lti_set_session($key = null)
+function lti_tool_set_session($key = null)
 {
-    global $lti_session;
+    global $lti_tool_session;
 
     if (empty($key)) {
-        $key = lti_session_key();
+        $key = lti_tool_session_key();
     }
     if (!empty($key)) {
-        set_site_transient($key, $lti_session);
+        set_site_transient($key, $lti_tool_session);
     }
 }
 
@@ -667,25 +656,25 @@ function lti_set_session($key = null)
  * Clear the plugin session variables
   ------------------------------------------------------------------ */
 
-function lti_reset_session($force = false)
+function lti_tool_reset_session($force = false)
 {
-    global $lti_session;
+    global $lti_tool_session;
 
     $data = array();
     // Keep the return URL to enable its domain is allowed for redirects
-    if (!$force && isset($lti_session['return_url'])) {
-        $data['return_url'] = $lti_session['return_url'];
-        if (!empty($lti_session['tool_name'])) {
-            $data['tool_name'] = $lti_session['tool_name'];
+    if (!$force && isset($lti_tool_session['return_url'])) {
+        $data['return_url'] = $lti_tool_session['return_url'];
+        if (!empty($lti_tool_session['tool_name'])) {
+            $data['tool_name'] = $lti_tool_session['tool_name'];
         }
-        $lti_session = $data;
-        lti_set_session();
+        $lti_tool_session = $data;
+        lti_tool_set_session();
     } else {
-        $key = lti_session_key();
+        $key = lti_tool_session_key();
         if (!empty($key)) {
             delete_site_transient($key);
         }
-        $lti_session = array();
+        $lti_tool_session = array();
     }
 }
 
@@ -693,68 +682,37 @@ function lti_reset_session($force = false)
  * Get the current option settings
   ------------------------------------------------------------------ */
 
-function lti_get_options()
+function lti_tool_get_options()
 {
-    global $lti_options;
+    global $lti_tool_options;
 
-    if (empty($lti_options)) {
+    if (empty($lti_tool_options)) {
         $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => strval(Tool::ID_SCOPE_RESOURCE),
             'saveemail' => '0', 'homepage' => '', 'loglevel' => strval(Util::LOGLEVEL_NONE),
             'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber',
             'lti13_signaturemethod' => 'RS256', 'lti13_kid' => Util::getRandomString(), 'lti13_privatekey' => '',
             'registration_autoenable' => '0', 'registration_enablefordays' => '0');
-
-        // Check for any default settings from deprecated config.php file
-        if (defined('LTI_LOG_LEVEL')) {
-            $default_options['loglevel'] = strval(LTI_LOG_LEVEL);
-        }
-        if (defined('LTI_SIGNATURE_METHOD')) {
-            $default_options['lti13_signaturemethod'] = LTI_SIGNATURE_METHOD;
-        }
-        if (defined('LTI_KID')) {
-            $default_options['lti13_kid'] = LTI_KID;
-        }
-        if (defined('LTI_PRIVATE_KEY')) {
-            $default_options['lti13_privatekey'] = LTI_PRIVATE_KEY;
-        }
-        if (defined('AUTO_ENABLE')) {
-            $default_options['registration_autoenable'] = strval(AUTO_ENABLE);
-        }
-        if (defined('ENABLE_FOR_DAYS')) {
-            $default_options['registration_enablefordays'] = strval(ENABLE_FOR_DAYS);
-        }
-
         if (is_multisite()) {
-            $options = get_site_option('lti_choices');
+            $options = get_site_option('lti_tool_options', array());
         } else {
             $default_options['scope'] = strval(Tool::ID_SCOPE_GLOBAL);
             $default_options['role_staff'] = 'editor';
-            $options = get_option('lti_choices');
+            $options = get_option('lti_tool_options', array());
         }
-        if ($options === false) {
-            $options = get_option('lti_options');  // Check in deprecated location
-            if ($options === false) {  // If no options set defaults
-                $options = $default_options;
-            } else {
-                delete_option('lti_options');
-            }
-            if (is_multisite()) {
-                add_site_option('lti_choices', $options);
-            } else {
-                add_option('lti_choices', $options);
-            }
+        if (!is_array($options)) {
+            $options = array();
         }
-        $lti_options = array_merge($default_options, $options);
+        $lti_tool_options = array_merge($default_options, $options);
     }
 
-    return $lti_options;
+    return $lti_tool_options;
 }
 
 /* -------------------------------------------------------------------
  * Check if a user has a specified role
   ------------------------------------------------------------------ */
 
-function lti_user_has_role($user, $role)
+function lti_tool_user_has_role($user, $role)
 {
     return in_array($role, $user->roles);
 }
@@ -763,7 +721,7 @@ function lti_user_has_role($user, $role)
  * Get role based on user type
   ------------------------------------------------------------------ */
 
-function lti_user_role($lti_user, $options)
+function lti_tool_user_role($lti_user, $options)
 {
     $role = $options['role_other'];
     if ($lti_user->isLearner()) {
@@ -779,7 +737,7 @@ function lti_user_role($lti_user, $options)
  * Check that the LTI class library is available
   ------------------------------------------------------------------ */
 
-function lti_check_lti_library()
+function lti_tool_check_lti_library()
 {
     return class_exists('ceLTIc\LTI\Platform');
 }
@@ -788,19 +746,19 @@ function lti_check_lti_library()
  * Check if user email addresses should be saved
   ------------------------------------------------------------------ */
 
-function lti_do_save_email($key = null)
+function lti_tool_do_save_email($key = null)
 {
-    global $lti_session;
+    global $lti_tool_session;
 
     $saveemail = false;
-    $options = lti_get_options();
+    $options = lti_tool_get_options();
     if (!empty($options['saveemail'])) {
         if (empty($key)) {
-            $key = $lti_session['userkey'];
+            $key = $lti_tool_session['userkey'];
         }
         if (!empty($key)) {
-            $scope = lti_get_scope($key);
-            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope = LTI_WP_User::ID_SCOPE_EMAIL);
+            $scope = lti_tool_get_scope($key);
+            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope = LTI_Tool_WP_User::ID_SCOPE_EMAIL);
         }
     }
 
@@ -811,9 +769,9 @@ function lti_do_save_email($key = null)
  * Display success message on completion of user sync
   ------------------------------------------------------------------ */
 
-function lti_update_success()
+function lti_tool_update_success()
 {
-    $message = __('Updating of LTI users completed successfully.', 'lti-text');
+    $message = esc_html__('Updating of LTI users completed successfully.', 'lti-tool');
     echo <<< EOD
     <div class="notice notice-success is-dismissible">
         <p>{$message}</p>
@@ -826,12 +784,13 @@ EOD;
  * Display error message on completion of user sync
   ------------------------------------------------------------------ */
 
-function lti_update_error()
+function lti_tool_update_error()
 {
-    global $lti_session;
+    global $lti_tool_session;
 
-    $message = __('An error occurred when synchronising users:', 'lti-text') . '<br>&nbsp;&nbsp;&nbsp;' . implode('<br>&nbsp;&nbsp;&nbsp;',
-            $lti_session['sync']['errors']);
+    $allowed = array('br' => array());
+    $message = wp_kses(__('An error occurred when synchronising users:', 'lti-tool') . '<br>&nbsp;&nbsp;&nbsp;' . implode('<br>&nbsp;&nbsp;&nbsp;',
+            $lti_tool_session['sync']['errors']), $allowed);
     echo <<< EOD
     <div class="notice notice-error is-dismissible">
         <p>{$message}</p>
@@ -840,4 +799,29 @@ function lti_update_error()
 EOD;
 }
 
-?>
+/* -------------------------------------------------------------------
+ * Sanitize the value of a user scope
+  ------------------------------------------------------------------ */
+
+function lti_tool_validate_scope($scope, $default_scope)
+{
+    $scope = sanitize_text_field($scope);
+    switch ($scope) {
+        case '3':
+        case '2':
+            if (!is_multisite()) {
+                $scope = $default_scope;
+            }
+            break;
+        case '1':
+        case '0':
+        case 'U':
+        case 'E':
+            break;
+        default:
+            $scope = $default_scope;
+            break;
+    }
+
+    return $scope;
+}

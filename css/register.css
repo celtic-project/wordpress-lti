@@ -1,33 +1,33 @@
-.aligncentre {
+.lti_tool_aligncentre {
   text-align: center;
 }
-.tbc {
+.lti_tool_tbc {
   margin-bottom: 0;
   padding-bottom: 0;
 }
-.indent {
+.lti_tool_indent {
   line-height: 1.5;
   padding-left: 2em;
   padding-bottom: 1em;
 }
-.success, .error {
+.lti_tool_success, .lti_tool_error {
   border: 1px solid;
   padding: .75rem 1.25rem;
 }
-.success {
+.lti_tool_success {
   color: #155724;
   background-color: #d4edda;
   border-color: #c3e6cb;
 }
-.error {
+.lti_tool_error {
   color: #721c24;
   background-color: #f8d7da;
   border-color: #f5c6cb;
 }
-.hide {
+.lti_tool_hide {
   display: none;
 }
-button {
+.lti_tool_button {
   background: #007cba;
   border-color: #007cba;
   color: #fff;
@@ -39,6 +39,6 @@ button {
   border-style: solid;
   border-radius: 3px;
 }
-button.disabled {
+.lti_tool_button.disabled {
   opacity: 0.65;
 }

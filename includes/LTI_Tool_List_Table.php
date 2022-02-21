@@ -17,14 +17,14 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Tool;
 
-require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php';
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
-class LTI_List_Table extends WP_List_Table
+class LTI_Tool_List_Table extends WP_List_Table
 {
 
     private $per_page;
@@ -37,8 +37,8 @@ class LTI_List_Table extends WP_List_Table
         parent::__construct
             (
             array(
-                'singular' => __('LTI', 'lti-text'), //singular name of the listed records
-                'plural' => __('LTI', 'lti-text'), //plural name of the listed records
+                'singular' => __('LTI', 'lti-tool'), //singular name of the listed records
+                'plural' => __('LTI', 'lti-tool'), //plural name of the listed records
                 'ajax' => false      //does this table support ajax?
             )
         );
@@ -65,26 +65,27 @@ class LTI_List_Table extends WP_List_Table
         $name = $item['name'];
         // Build row actions
         $actions = array();
-        $actions['edit'] = sprintf('<a href="?page=%s&action=%s&lti=%s">' . __('Edit', 'lti-text') . '</a>', "lti_add_platform",
-            'edit', $item['key']);
-        if (lti_get_enabled_state($item['key'])) {
+        $actions['edit'] = sprintf('<a href="?page=%s&action=%s&lti=%s">' . __('Edit', 'lti-tool') . '</a>',
+            'lti_tool_add_platform', 'edit', $item['key']);
+        if (lti_tool_get_enabled_state($item['key'])) {
             // Show name in bold if platform enabled
             $name = '<strong>' . $item['name'] . '</strong>';
-            $actions['disable'] = sprintf('<a href="?page=%s&action=%s&lti=%s">' . __('Disable', 'lti-text') . '</a>',
-                $_REQUEST['page'], 'disable', $item['key']);
+            $actions['disable'] = sprintf('<a href="?page=%s&action=%s&lti=%s">' . __('Disable', 'lti-tool') . '</a>',
+                sanitize_text_field($_REQUEST['page']), 'disable', $item['key']);
         } else {
-            $actions['enable'] = sprintf('<a href="?page=%s&action=%s&lti=%s">' . __('Enable', 'lti-text') . '</a>',
-                $_REQUEST['page'], 'enable', $item['key']);
+            $actions['enable'] = sprintf('<a href="?page=%s&action=%s&lti=%s">' . __('Enable', 'lti-tool') . '</a>',
+                sanitize_text_field($_REQUEST['page']), 'enable', $item['key']);
         }
         $actions['delete'] = sprintf('<a href="?page=%s&action=%s&lti=%s" onclick="return confirm(\'Delete this platform?\');">' . __('Delete',
-                'lti-text') . '</a>', $_REQUEST['page'], 'delete', $item['key']);
-        $actions['xml'] = sprintf('<a href="%s&key=%s">' . __('XML', 'lti-text') . '</a>', get_option('siteurl') . '/?lti&xml',
+                'lti-tool') . '</a>', sanitize_text_field($_REQUEST['page']), 'delete', $item['key']);
+        $actions['xml'] = sprintf('<a href="%s&key=%s">' . __('XML', 'lti-tool') . '</a>', get_option('siteurl') . '/?lti-tool&xml',
             $item['key']);
 
         // Return the name contents
+        $allowed = array('strong' => array());
         return sprintf('%1$s <span style="color:silver">(id:%2$s)</span>%3$s',
-            /* $1%s */ $name,
-            /* $2%s */ $item['ID'],
+            /* $1%s */ wp_kses($name, $allowed),
+            /* $2%s */ esc_html__($item['ID']),
             /* $3%s */ $this->row_actions($actions)
         );
     }
@@ -93,8 +94,9 @@ class LTI_List_Table extends WP_List_Table
     {
         return sprintf(
             '<input type="checkbox" name="%1$s[]" value="%2$s" />',
-            /* $1%s */ $this->_args['singular'], // Let's simply use the table's singular label ("LTI")
-            /* $2%s */ $item['key']                // The value of the checkbox should be the record's name but we use key
+            /* $1%s */
+            esc_attr($this->_args['singular']), // Let's simply use the table's singular label ("LTI")
+            /* $2%s */ esc_attr($item['key'])                // The value of the checkbox should be the record's name but we use key
         );
     }
 
@@ -102,12 +104,12 @@ class LTI_List_Table extends WP_List_Table
     {
         $columns = array(
             'cb' => '<input type="checkbox" />', //Render a checkbox instead of text
-            'name' => _x('Name', 'column name', 'lti-text'),
-            'key' => _x('Consumer Key', 'column name', 'lti-text'),
-            'pname' => _x('Platform Name', 'column name', 'lti-text'),
-            'avail' => _x('Available?', 'column name', 'lti-text'),
-            'debug' => _x('Debug?', 'column name', 'lti-text'),
-            'last' => _x('Last Access', 'column name', 'lti-text')
+            'name' => _x('Name', 'column name', 'lti-tool'),
+            'key' => _x('Consumer Key', 'column name', 'lti-tool'),
+            'pname' => _x('Platform Name', 'column name', 'lti-tool'),
+            'avail' => _x('Available?', 'column name', 'lti-tool'),
+            'debug' => _x('Debug?', 'column name', 'lti-tool'),
+            'last' => _x('Last Access', 'column name', 'lti-tool')
         );
 
         return $columns;
@@ -149,9 +151,9 @@ class LTI_List_Table extends WP_List_Table
     function get_bulk_actions()
     {
         $actions = array(
-            'enable' => _x('Enable', 'choice', 'lti-text'),
-            'disable' => _x('Disable', 'choice', 'lti-text'),
-            'delete' => _x('Delete', 'choice', 'lti-text')
+            'enable' => _x('Enable', 'choice', 'lti-tool'),
+            'disable' => _x('Disable', 'choice', 'lti-tool'),
+            'delete' => _x('Delete', 'choice', 'lti-tool')
         );
         return $actions;
     }
@@ -169,23 +171,23 @@ class LTI_List_Table extends WP_List_Table
         //Detect when a bulk action is being triggered...
         if (!empty($_REQUEST['lti'])) {
             if ('delete' === $this->current_action()) {
-                $LTI_connectors = $_REQUEST['lti'];
-                if (is_array($LTI_connectors)) {
-                    foreach ($LTI_connectors as $tool_guid) {
-                        lti_delete($tool_guid);
+                $lti_connectors = sanitize_text_field($_REQUEST['lti']);
+                if (is_array($lti_connectors)) {
+                    foreach ($lti_connectors as $tool_guid) {
+                        lti_tool_delete($tool_guid);
                     }
                 } else {
-                    lti_delete($LTI_connectors);
+                    lti_tool_delete($lti_connectors);
                 }
             } else if (('enable' === $this->current_action()) || ('disable' === $this->current_action())) {
                 $enable = $this->current_action() == 'enable';
-                $LTI_connectors = $_REQUEST['lti'];
-                if (is_array($LTI_connectors)) {
-                    foreach ($LTI_connectors as $tool_guid) {
-                        lti_set_enable($tool_guid, $enable);
+                $lti_connectors = sanitize_text_field($_REQUEST['lti']);
+                if (is_array($lti_connectors)) {
+                    foreach ($lti_connectors as $tool_guid) {
+                        lti_tool_set_enable($tool_guid, $enable);
                     }
                 } else {
-                    lti_set_enable($LTI_connectors, $enable);
+                    lti_tool_set_enable($lti_connectors, $enable);
                 }
             }
         }
@@ -208,7 +210,7 @@ class LTI_List_Table extends WP_List_Table
 
     function prepare_items()
     {
-        global $lti_db_connector;
+        global $lti_tool_data_connector;
 
         /**
          * Optional. You can handle your bulk actions however you see fit. In this
@@ -219,7 +221,7 @@ class LTI_List_Table extends WP_List_Table
         /**
          * Get all the platforms and convert in array for this class to process
          */
-        $tool = new Tool($lti_db_connector);
+        $tool = new Tool($lti_tool_data_connector);
         $lti_data = $tool->getPlatforms();
         $data = array();
         for ($i = 0; $i < count($lti_data); $i++) {
@@ -266,8 +268,8 @@ class LTI_List_Table extends WP_List_Table
          */
         function usort_reorder($a, $b)
         {
-            $orderby = (!empty($_REQUEST['orderby'])) ? $_REQUEST['orderby'] : 'name'; //If no sort, default to title
-            $order = (!empty($_REQUEST['order'])) ? $_REQUEST['order'] : 'asc'; //If no order, default to asc
+            $orderby = (!empty($_REQUEST['orderby'])) ? sanitize_text_field($_REQUEST['orderby']) : 'name'; //If no sort, default to title
+            $order = (!empty($_REQUEST['order'])) ? sanitize_text_field($_REQUEST['order']) : 'asc'; //If no order, default to asc
             $result = strcmp($a[$orderby], $b[$orderby]); //Determine sort order
             return ($order === 'asc') ? $result : -$result; //Send final sort direction to usort
         }
@@ -316,5 +318,3 @@ class LTI_List_Table extends WP_List_Table
     }
 
 }
-
-?>

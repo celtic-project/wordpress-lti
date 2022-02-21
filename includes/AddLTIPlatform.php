@@ -17,54 +17,52 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\Tool;
 
 /* -------------------------------------------------------------------
- * lti_add_platform displays the page content for the custom menu
+ * lti_tool_add_platform displays the page content for the custom menu
  * ----------------------------------------------------------------- */
 
-function lti_add_platform()
+function lti_tool_add_platform()
 {
-    global $lti_db_connector;
+    global $lti_tool_data_connector;
 
-    $options = lti_get_options();
+    $options = lti_tool_get_options();
 
-    $editmode = isset($_REQUEST['action']) && ($_REQUEST['action'] == 'edit');
+    $editmode = isset($_REQUEST['action']) && (sanitize_text_field($_REQUEST['action']) === 'edit');
     if ($editmode) {
         $verb = 'Update';
     } else {
         $verb = 'Add';
     }
     ?>
-    <script src="<?php echo plugins_url() . '/lti/js/GenKey.js' ?>" language="javascript" type="text/javascript" >
-    </script>
-    <div id="form" class="wrap">
-      <h1 class="wp-heading-inline"><?php echo $verb . __(' LTI Platform', 'lti-text'); ?></h1>
-      <p><?php echo $verb . __(' a platform connecting to this server.', 'lti-text'); ?></p>
+    <div id="lti_tool_form" class="wrap">
+      <h1 class="wp-heading-inline"><?php echo __("{$verb} LTI Platform", 'lti-tool'); ?></h1>
+      <p><?php esc_html_e("{$verb} a platform connecting to this server.", 'lti-tool'); ?></p>
 
-      <form id="addlti" name="addlti" method="post"
+      <form id="lti_tool_addlti" name="lti_tool_addlti" method="post"
 
             <?php if ($editmode) { ?>
-                action="<?php echo get_admin_url() ?>admin.php?action=lti_addplatform&edit=true"
+                action="<?php echo esc_url(get_admin_url() . 'admin.php?action=lti_tool_addplatform&edit=true'); ?>"
                 onsubmit="return verify()">
               <?php } else { ?>
             action=""
-            onsubmit="return createPlatform('<?php echo get_admin_url() ?>admin.php?action=');">
+            onsubmit="return lti_tool_create_platform('<?php echo esc_url(get_admin_url() . 'admin.php?action=') ?>');">
             <?php
         }
 
-        wp_nonce_field('add_lti', '_wpnonce_add_lti');
+        wp_nonce_field('add_lti_tool', '_wpnonce_add_lti_tool');
 
-        $button_text = __("{$verb} LTI Platform", 'lti-text');
+        $button_text = __("{$verb} LTI Platform", 'lti-tool');
 
         if ($editmode) {
-            $platform = Platform::fromConsumerKey($_REQUEST['lti'], $lti_db_connector);
+            $platform = Platform::fromConsumerKey(sanitize_text_field($_REQUEST['lti']), $lti_tool_data_connector);
         } else {
-            $platform = new Platform($lti_db_connector);
+            $platform = new Platform($lti_tool_data_connector);
         }
         $now = time();
         $enable_from_example = date('Y-m-d', $now + (24 * 60 * 60));
@@ -72,65 +70,67 @@ function lti_add_platform()
         ?>
 
         <p class="submit">
-          <input id="addltisub_top" class="button-primary" type="submit" value="<?php echo $button_text; ?>" name="addlti_top">
+          <input id="lti_tool_addltisub_top" class="button-primary" type="submit" value="<?php esc_attr_e($button_text); ?>" name="lti_tool_addlti_top">
         </p>
 
-        <h3>General Details</h3>
+        <h3><?php esc_html_e('General Details', 'lti-tool'); ?></h3>
 
         <table class="form-table">
           <tbody>
             <tr class="form-field form-required">
               <th scope="row">
-                <label for="lti_name" id="lti_name_text">
-                  <?php _e('Name', 'lti-text'); ?>
-                  <span id="req1" class="description"><?php _e('(required)', 'lti-text'); ?></span>
+                <label for="lti_tool_name" id="lti_tool_name_text">
+                  <?php esc_html_e('Name', 'lti-tool'); ?>
+                  <span id="lti_tool_req1" class="description"><?php esc_html_e('(required)', 'lti-tool'); ?></span>
                 </label>
               </th>
               <td>
-                <input id="lti_name" type="text" aria-required="true" value="<?php echo esc_attr($platform->name); ?>" name="lti_name" class="regular-text">
+                <input id="lti_tool_name" type="text" aria-required="true" value="<?php esc_attr_e($platform->name); ?>" name="lti_tool_name" class="regular-text">
               </td>
             </tr>
 
             <?php if ($editmode) { ?>
                 <tr class="form-field form-required">
                   <th scope="row">
-                    <label for="lti_key" id="lti_key_text">
-                      <?php _e('Key', 'lti-text'); ?>
-                      <span id="req2" class="description"><?php _e('(required)', 'lti-text'); ?></span>
+                    <label for="lti_tool_key" id="lti_tool_key_text">
+                      <?php esc_html_e('Key', 'lti-tool'); ?>
+                      <span id="lti_tool_req2" class="description"><?php esc_html_e('(required)', 'lti-tool'); ?></span>
                     </label>
                   </th>
                   <td>
-                    <?php echo esc_attr($platform->getKey()); ?>&nbsp;<span class="description">(Consumer keys cannot be changed)</span>
-                    <input id="lti_key" type="hidden" aria-required="true" value="<?php echo esc_attr($platform->getKey()); ?>" name="lti_key">
+                    <?php esc_html_e($platform->getKey()); ?>&nbsp;<span class="description"><?php
+                    esc_html_e('(Consumer keys cannot be changed)', 'lti-tool');
+                    ?></span>
+                    <input id="lti_tool_key" type="hidden" aria-required="true" value="<?php esc_attr_e($platform->getKey()); ?>" name="lti_tool_key">
                   </td>
                 </tr>
                 <tr class="form-field form-required">
                   <th scope="row">
-                    <label for="lti_secret" id="lti_secret_text">
-                      <?php _e('Secret', 'lti-text'); ?>
-                      <span id="req3" class="description"><?php _e('(required)', 'lti-text'); ?></span>
+                    <label for="lti_tool_secret" id="lti_tool_secret_text">
+                      <?php esc_html_e('Secret', 'lti-tool'); ?>
+                      <span id="lti_tool_req3" class="description"><?php esc_html_e('(required)', 'lti-tool'); ?></span>
                     </label>
                   </th>
                   <td>
-                    <input id="lti_secret" type="text" aria-required="true" value="<?php echo esc_attr($platform->secret); ?>" name="lti_secret" class="regular-text">
+                    <input id="lti_tool_secret" type="text" aria-required="true" value="<?php esc_attr_e($platform->secret); ?>" name="lti_tool_secret" class="regular-text">
                   </td>
                 </tr>
             <?php } ?>
             <tr>
               <th scope="row">
-                <?php _e('Protected', 'lti-text'); ?>
+                <?php esc_html_e('Protected', 'lti-tool'); ?>
               </th>
               <td>
                 <fieldset>
                   <legend class="screen-reader-text">
-                    <span><?php _e('Protected', 'lti-text') ?></span>
+                    <span><?php esc_html_e('Protected', 'lti-tool') ?></span>
                   </legend>
-                  <label for="lti_protected">
-                    <input name="lti_protected" type="checkbox" id="lti_protected" value="true" <?php
+                  <label for="lti_tool_protected">
+                    <input name="lti_tool_protected" type="checkbox" id="lti_tool_protected" value="true" <?php
                     checked(true, $platform->protected);
                     ?> />
                            <?php
-                           _e('Restrict launch requests to the same tool consumer GUID parameter', 'lti-text');
+                           esc_html_e('Restrict launch requests to the same tool consumer GUID parameter', 'lti-tool');
                            ?>
                   </label>
                 </fieldset>
@@ -138,16 +138,18 @@ function lti_add_platform()
             </tr>
             <tr>
               <th scope="row">
-                <?php _e('Enabled', 'lti-text'); ?>
+                <?php esc_html_e('Enabled', 'lti-tool'); ?>
               </th>
               <td>
                 <fieldset>
                   <legend class="screen-reader-text">
-                    <span><?php _e('Enabled', 'lti-text') ?></span>
+                    <span><?php esc_html_e('Enabled', 'lti-tool') ?></span>
                   </legend>
-                  <label for="lti_enabled">
-                    <input name="lti_enabled" type="checkbox" id="lti_enabled" value="true" <?php checked(true, $platform->enabled); ?> />
-                    <?php _e('Accept launch requests for this platform', 'lti-text'); ?>
+                  <label for="lti_tool_enabled">
+                    <input name="lti_tool_enabled" type="checkbox" id="lti_tool_enabled" value="true" <?php
+                    checked(true, $platform->enabled);
+                    ?> />
+                           <?php esc_html_e('Accept launch requests for this platform', 'lti-tool'); ?>
                   </label>
                 </fieldset>
               </td>
@@ -165,111 +167,111 @@ function lti_add_platform()
             ?>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_enable_form">
-                  <?php _e("Enable from (e.g. $enable_from_example 12:34)", 'lti-text'); ?>
+                <label for="lti_tool_enable_form">
+                  <?php esc_html_e("Enable from (e.g. {$enable_from_example} 12:34)"); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_enable_from" type="small-text" aria-required="true" value="<?php
-                if (isset($from) && $from != "") {
-                    echo date('Y-m-d H:i', (int) $from);
+                <input id="lti_tool_enable_from" type="small-text" aria-required="true" value="<?php
+                if (isset($from) && ($from != "")) {
+                    esc_html_e(date('Y-m-d H:i', (int) $from));
                 }
-                ?>" name="lti_enable_from">
+                ?>" name="lti_tool_enable_from">
               </td>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_enable_until">
-                  <?php _e("Enable until (e.g. {$enable_until_example} 12:34)", 'lti-text'); ?>
+                <label for="lti_tool_enable_until">
+                  <?php esc_html_e("Enable until (e.g. {$enable_until_example} 12:34)"); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_enable_until" type="small-text" aria-required="true" value="<?php
+                <input id="lti_tool_enable_until" type="small-text" aria-required="true" value="<?php
                 if (isset($until) && $until != "") {
-                    echo date('Y-m-d H:i', (int) $until);
+                    esc_html_e(date('Y-m-d H:i', (int) $until));
                 }
-                ?>" name="lti_enable_until">
+                ?>" name="lti_tool_enable_until">
               </td>
             <tr>
               <?php if ($editmode) { ?>
                 <tr>
                   <th scope="row">
-                    <?php _e('Username format', 'lti-text') ?>
+                    <?php esc_html_e('Username format', 'lti-tool') ?>
                   </th>
                   <td>
                     <?php
-                    switch (lti_get_scope($platform->getKey())) {
+                    switch (lti_tool_get_scope($platform->getKey())) {
                         case Tool::ID_SCOPE_RESOURCE:
-                            _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text');
+                            esc_html_e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-tool');
                             break;
                         case Tool::ID_SCOPE_CONTEXT:
-                            _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text');
+                            esc_html_e('Context: Prefix the ID with the consumer key and context ID', 'lti-tool');
                             break;
                         case Tool::ID_SCOPE_GLOBAL:
-                            _e('Platform: Prefix the ID with the consumer key', 'lti-text');
+                            esc_html_e('Platform: Prefix the ID with the consumer key', 'lti-tool');
                             break;
                         case Tool::ID_SCOPE_ID_ONLY:
-                            _e('Global: Use ID value only', 'lti-text');
+                            esc_html_e('Global: Use ID value only', 'lti-tool');
                             break;
-                        case LTI_WP_User::ID_SCOPE_USERNAME:
-                            _e('Username: Use platform username only', 'lti-text');
+                        case LTI_Tool_WP_User::ID_SCOPE_USERNAME:
+                            esc_html_e('Username: Use platform username only', 'lti-tool');
                             break;
-                        case LTI_WP_User::ID_SCOPE_EMAIL:
-                            _e('Email: Use email address only', 'lti-text');
+                        case LTI_Tool_WP_User::ID_SCOPE_EMAIL:
+                            esc_html_e('Email: Use email address only', 'lti-tool');
                             break;
                     }
                     ?>
                   </td>
               <?php } else { ?>
                   <th scope="row">
-                    <?php _e('Username format', 'lti-text') ?>
+                    <?php esc_html_e('Username format', 'lti-tool') ?>
                   </th>
                   <td>
                     <fieldset><?php if (is_multisite()) { ?>
                           <legend class="screen-reader-text">
-                            <span><?php _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text') ?></span>
+                            <span><?php esc_html_e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-tool') ?></span>
                           </legend>
-                          <label for="lti_scope3">
-                            <input name="lti_scope" type="radio" id="lti_scope3" value="3" <?php checked('3', $options['scope']); ?> />
+                          <label for="lti_tool_scope3">
+                            <input name="lti_tool_scope" type="radio" id="lti_tool_scope3" value="3" <?php checked('3', $options['scope']); ?> />
                             <?php
-                            _e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-text');
+                            esc_html_e('Resource: Prefix the ID with the consumer key and resource link ID', 'lti-tool');
                             ?>
                           </label><br />
                           <legend class="screen-reader-text">
-                            <span><?php _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text') ?></span>
+                            <span><?php esc_html_e('Context: Prefix the ID with the consumer key and context ID', 'lti-tool') ?></span>
                           </legend>
-                          <label for="lti_scope2">
-                            <input name="lti_scope" type="radio" id="lti_scope2" value="2" <?php checked('2', $options['scope']); ?> />
+                          <label for="lti_tool_scope2">
+                            <input name="lti_tool_scope" type="radio" id="lti_tool_scope2" value="2" <?php checked('2', $options['scope']); ?> />
                             <?php
-                            _e('Context: Prefix the ID with the consumer key and context ID', 'lti-text');
+                            esc_html_e('Context: Prefix the ID with the consumer key and context ID', 'lti-tool');
                             ?>
                           </label><br /><?php } ?>
                       <legend class="screen-reader-text">
-                        <span><?php _e('Platform: Prefix an ID with the consumer key', 'lti-text') ?></span>
+                        <span><?php esc_html_e('Platform: Prefix an ID with the consumer key', 'lti-tool') ?></span>
                       </legend>
-                      <label for="lti_scope1">
-                        <input name="lti_scope" type="radio" id="lti_scope1" value="1" <?php checked('1', $options['scope']); ?> />
-                        <?php _e('Platform: Prefix the ID with the consumer key', 'lti-text'); ?>
+                      <label for="lti_tool_scope1">
+                        <input name="lti_tool_scope" type="radio" id="lti_tool_scope1" value="1" <?php checked('1', $options['scope']); ?> />
+                        <?php esc_html_e('Platform: Prefix the ID with the consumer key', 'lti-tool'); ?>
                       </label><br />
                       <legend class="screen-reader-text">
-                        <span><?php _e('Global: Use ID value only', 'lti-text') ?></span>
+                        <span><?php esc_html_e('Global: Use ID value only', 'lti-tool') ?></span>
                       </legend>
-                      <label for="lti_scope0">
-                        <input name="lti_scope" type="radio" id="lti_scope0" value="0" <?php checked('0', $options['scope']); ?> />
-                        <?php _e('Global: Use ID value only', 'lti-text'); ?>
+                      <label for="lti_tool_scope0">
+                        <input name="lti_tool_scope" type="radio" id="lti_tool_scope0" value="0" <?php checked('0', $options['scope']); ?> />
+                        <?php esc_html_e('Global: Use ID value only', 'lti-tool'); ?>
                       </label><br />
                       <legend class="screen-reader-text">
-                        <span><?php _e('Email: Use email address only', 'lti-text') ?></span>
+                        <span><?php esc_html_e('Email: Use email address only', 'lti-tool') ?></span>
                       </legend>
-                      <label for="lti_scopeu">
-                        <input name="lti_scope" type="radio" id="lti_scopeU" value="U" <?php checked('U', $options['scope']); ?> />
-                        <?php _e('Username: Use platform username only', 'lti-text'); ?>
+                      <label for="lti_tool_scopeu">
+                        <input name="lti_tool_scope" type="radio" id="lti_tool_scopeU" value="U" <?php checked('U', $options['scope']); ?> />
+                        <?php esc_html_e('Username: Use platform username only', 'lti-tool'); ?>
                       </label><br />
                       <legend class="screen-reader-text">
-                        <span><?php _e('Email: Use email address only', 'lti-text') ?></span>
+                        <span><?php esc_html_e('Email: Use email address only', 'lti-tool') ?></span>
                       </legend>
-                      <label for="lti_scopee">
-                        <input name="lti_scope" type="radio" id="lti_scopeE" value="E" <?php checked('E', $options['scope']); ?> />
-                        <?php _e('Email: Use email address only', 'lti-text'); ?>
+                      <label for="lti_tool_scopee">
+                        <input name="lti_tool_scope" type="radio" id="lti_tool_scopeE" value="E" <?php checked('E', $options['scope']); ?> />
+                        <?php esc_html_e('Email: Use email address only', 'lti-tool'); ?>
                       </label>
                     </fieldset>
                   </td>
@@ -277,16 +279,18 @@ function lti_add_platform()
             <?php } ?>
             <tr>
               <th scope="row">
-                <?php _e('Debug mode?', 'lti-text'); ?>
+                <?php esc_html_e('Debug mode?', 'lti-tool'); ?>
               </th>
               <td>
                 <fieldset>
                   <legend class="screen-reader-text">
-                    <span><?php _e('Debug mode?', 'lti-text') ?></span>
+                    <span><?php esc_html_e('Debug mode?', 'lti-tool') ?></span>
                   </legend>
-                  <label for="lti_debug">
-                    <input name="lti_debug" type="checkbox" id="lti_debug" value="true" <?php checked(true, $platform->debugMode); ?> />
-                    <?php _e('Enable debug-level logging for this platform?', 'lti-text'); ?>
+                  <label for="lti_tool_debug">
+                    <input name="lti_tool_debug" type="checkbox" id="lti_tool_debug" value="true" <?php
+                    checked(true, $platform->debugMode);
+                    ?> />
+                           <?php esc_html_e('Enable debug-level logging for this platform?', 'lti-tool'); ?>
                   </label>
                 </fieldset>
               </td>
@@ -300,117 +304,119 @@ function lti_add_platform()
           <tbody>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_platformid" id="lti_platformid_text">
-                  <?php _e('Platform ID', 'lti-text'); ?>
+                <label for="lti_tool_platformid" id="lti_tool_platformid_text">
+                  <?php esc_html_e('Platform ID', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_platformid" type="text" aria-required="true" value="<?php echo esc_attr($platform->platformId); ?>" name="lti_platformid" class="regular-text">
+                <input id="lti_tool_platformid" type="text" aria-required="true" value="<?php esc_attr_e($platform->platformId); ?>" name="lti_tool_platformid" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_clientid" id="lti_clientid_text">
-                  <?php _e('Client ID', 'lti-text'); ?>
+                <label for="lti_tool_clientid" id="lti_tool_clientid_text">
+                  <?php esc_html_e('Client ID', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_clientid" type="text" aria-required="true" value="<?php echo esc_attr($platform->clientId); ?>" name="lti_clientid" class="regular-text">
+                <input id="lti_tool_clientid" type="text" aria-required="true" value="<?php esc_attr_e($platform->clientId); ?>" name="lti_tool_clientid" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_deploymentid" id="lti_deploymentid_text">
-                  <?php _e('Deployment ID', 'lti-text'); ?>
+                <label for="lti_tool_deploymentid" id="lti_tool_deploymentid_text">
+                  <?php esc_html_e('Deployment ID', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_deploymentid" type="text" aria-required="true" value="<?php echo esc_attr($platform->deploymentId); ?>" name="lti_deploymentid" class="regular-text">
+                <input id="lti_tool_deploymentid" type="text" aria-required="true" value="<?php esc_attr_e($platform->deploymentId); ?>" name="lti_tool_deploymentid" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_authorizationserverid" id="lti_authorizationserverid_text">
-                  <?php _e('Authorization server ID', 'lti-text'); ?>
+                <label for="lti_tool_authorizationserverid" id="lti_tool_authorizationserverid_text">
+                  <?php esc_html_e('Authorization server ID', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_authorizationserverid" type="text" aria-required="true" value="<?php echo esc_attr($platform->authorizationServerId); ?>" name="lti_authorizationserverid" class="regular-text">
+                <input id="lti_tool_authorizationserverid" type="text" aria-required="true" value="<?php esc_attr_e($platform->authorizationServerId); ?>" name="lti_tool_authorizationserverid" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_authenticationurl" id="lti_authenticationurl_text">
-                  <?php _e('Authentication request URL', 'lti-text'); ?>
+                <label for="lti_tool_authenticationurl" id="lti_tool_authenticationurl_text">
+                  <?php esc_html_e('Authentication request URL', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_authenticationurl" type="text" aria-required="true" value="<?php echo esc_attr($platform->authenticationUrl); ?>" name="lti_authenticationurl" class="regular-text">
+                <input id="lti_tool_authenticationurl" type="text" aria-required="true" value="<?php esc_attr_e($platform->authenticationUrl); ?>" name="lti_tool_authenticationurl" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_accesstokenurl" id="lti_accesstokenurl_text">
-                  <?php _e('Access token URL', 'lti-text'); ?>
+                <label for="lti_tool_accesstokenurl" id="lti_tool_accesstokenurl_text">
+                  <?php esc_html_e('Access token URL', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_accesstokenurl" type="text" aria-required="true" value="<?php echo esc_attr($platform->accessTokenUrl); ?>" name="lti_accesstokenurl" class="regular-text">
+                <input id="lti_tool_accesstokenurl" type="text" aria-required="true" value="<?php esc_attr_e($platform->accessTokenUrl); ?>" name="lti_tool_accesstokenurl" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_jku" id="lti_jku_text">
-                  <?php _e('Public keyset URL', 'lti-text'); ?>
+                <label for="lti_tool_jku" id="lti_tool_jku_text">
+                  <?php esc_html_e('Public keyset URL', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <input id="lti_jku" type="text" aria-required="true" value="<?php echo esc_attr($platform->jku); ?>" name="lti_jku" class="regular-text">
+                <input id="lti_tool_jku" type="text" aria-required="true" value="<?php esc_attr_e($platform->jku); ?>" name="lti_tool_jku" class="regular-text">
               </td>
             </tr>
             <tr class="form-field">
               <th scope="row">
-                <label for="lti_rsakey" id="lti_rsakey_text">
-                  <?php _e('Public key', 'lti-text'); ?>
+                <label for="lti_tool_rsakey" id="lti_tool_rsakey_text">
+                  <?php esc_html_e('Public key', 'lti-tool'); ?>
                 </label>
               </th>
               <td>
-                <textarea id="lti_rsakey" aria-required="true" name="lti_rsakey" rows="10" class="code"><?php echo esc_attr($platform->rsaKey); ?></textarea>
-                <p class="description">The public key may be specified in PEM format or in JSON (JWKS).  This may be omitted if a public keyset URL is specified.</p>
+                <textarea id="lti_tool_rsakey" aria-required="true" name="lti_tool_rsakey" rows="10" class="code"><?php esc_attr_e($platform->rsaKey); ?></textarea>
+                <p class="description"><?php
+                  esc_html_e('The public key may be specified in PEM format or in JSON (JWKS).  This may be omitted if a public keyset URL is specified.',
+                      'lti-tool');
+                  ?></p>
               </td>
             </tr>
           </tbody>
         </table>
 
         <p class="submit">
-          <input id="addltisub" class="button-primary" type="submit" value="<?php echo $button_text; ?>" name="addlti">
+          <input id="lti_tool_addltisub" class="button-primary" type="submit" value="<?php esc_attr_e($button_text); ?>" name="lti_tool_addlti">
         </p>
       </form>
     </div>
 
-    <div id="keySecret" style="display:none">
-      <h2><?php _e('Details for Platform: ', 'lti-text'); ?><span id="lti_title" style="font-weight: bold;"></span></h2>
-      <h3><?php _e('LTI 1.0/1.1/1.2 Configuration: ', 'lti-text'); ?><span id="lti_title" style="font-weight: bold;"></span></h3>
+    <div id="lti_tool_keysecret" style="display:none">
+      <h2><?php esc_html_e('Details for Platform: ', 'lti-tool'); ?><span id="lti_tool_title" style="font-weight: bold;"></span></h2>
+      <h3><?php esc_html_e('LTI 1.0/1.1/1.2 Configuration: ', 'lti-tool'); ?><span id="lti_tool_title" style="font-weight: bold;"></span></h3>
       <table>
-        <tr><td><?php echo __('Launch URL: ', 'lti-text') . '<span style="font-weight: bold;">' . get_option('siteurl') . '/?lti</span>'; ?></td></tr>
-        <tr><td><?php _e('Key: ', 'lti-text'); ?><span id="key" style="font-weight: bold;"></span></td></tr>
-        <tr><td><?php _e('Secret: ', 'lti-text'); ?><span id="secret" style="font-weight: bold;"></span></td></tr>
-        <tr><td><?php echo __('Canvas configuration URL: ', 'lti-text') . '<span style="font-weight: bold;">' . get_option('siteurl') . '/?lti&configure</span>'; ?></td></tr>
+        <tr><td><?php esc_html_e('Launch URL: ', 'lti-tool'); ?></td><td><span style="font-weight: bold;"><?php echo esc_url(get_option('siteurl') . '/?lti-tool'); ?></span></td></tr>
+        <tr><td><?php esc_html_e('Key: ', 'lti-tool'); ?></td><td><span id="lti_tool_key" style="font-weight: bold;"></span></td></tr>
+        <tr><td><?php esc_html_e('Secret: ', 'lti-tool'); ?></td><td><span id="lti_tool_secret" style="font-weight: bold;"></span></td></tr>
+        <tr><td><?php esc_html_e('Canvas configuration URL: ', 'lti-tool'); ?></td><td><span style="font-weight: bold;"><?php echo esc_url(get_option('siteurl') . '/?lti-tool&configure'); ?></span></td></tr>
       </table>
-      <form action="<?php echo get_option('siteurl') . '/?lti&xml'; ?>" method="post" name="download" id="download">
-        <input id="ltikey" type="hidden" value="" name="key" />
+      <form action="<?php echo get_option('siteurl'); ?>/?lti-tool&xml" method="post" name="lti_tool_download" id="lti_tool_download">
+        <input id="lti_tool_download_key" type="hidden" value="" name="key" />
         <p class="submit">
-          <input id="xml" class="button-primary" type="submit" value="<?php _e('Download IMS XML', 'lti-text') ?>" name="xml" />
+          <input id="xml" class="button-primary" type="submit" value="<?php esc_html_e('Download IMS XML', 'lti-tool') ?>" name="xml" />
         </p>
       </form>
 
-      <h3><?php _e('LTI 1.3 Configuration: ', 'lti-text'); ?></h3>
+      <h3><?php esc_html_e('LTI 1.3 Configuration: ', 'lti-tool'); ?></h3>
       <table>
-        <tr><td><?php echo __('Launch URL, Initiate Login URL, Redirection URI: ', 'lti-text') . '<span style="font-weight: bold;">' . get_option('siteurl') . '/?lti</span>'; ?></td></tr>
-        <tr><td><?php echo __('Public Keyset URL: ', 'lti-text') . '<span style="font-weight: bold;">' . get_option('siteurl') . '/?lti&keys</span>'; ?></td></tr>
-        <tr><td><?php echo __('Canvas configuration URL: ', 'lti-text') . '<span style="font-weight: bold;">' . get_option('siteurl') . '/?lti&configure=json</span>'; ?></td></tr>
+        <tr><td><?php esc_html_e('Launch URL, Initiate Login URL, Redirection URI: ', 'lti-tool'); ?></td><td><span style="font-weight: bold;"><?php echo esc_url(get_option('siteurl') . '/?lti-tool'); ?></span></td></tr>
+        <tr><td><?php esc_html_e('Public Keyset URL: ', 'lti-tool'); ?></td><td><span style="font-weight: bold;"><?php echo esc_url(get_option('siteurl') . '/?lti-tool&keys'); ?></span></td></tr>
+        <tr><td><?php esc_html_e('Canvas configuration URL: ', 'lti-tool'); ?></td><td><span style="font-weight: bold;"><?php echo esc_url(get_option('siteurl') . '/?lti-tool&configure=json'); ?></span></td></tr>
       </table>
     </div>
     <?php
 }
-?>

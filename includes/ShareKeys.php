@@ -17,7 +17,7 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Platform;
@@ -25,125 +25,130 @@ use ceLTIc\LTI\Tool;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\ResourceLinkShareKey;
 
-function lti_create_share_key()
+function lti_tool_create_share_key()
 {
-    global $lti_db_connector, $lti_session;
+    global $lti_tool_data_connector, $lti_tool_session;
 
     // Get the context
-    $platform = Platform::fromConsumerKey($lti_session['key'], $lti_db_connector);
-    $resource = ResourceLink::fromPlatform($platform, $lti_session['resourceid']);
+    $platform = Platform::fromConsumerKey($lti_tool_session['key'], $lti_tool_data_connector);
+    $resource = ResourceLink::fromPlatform($platform, $lti_tool_session['resourceid']);
 
     if (!empty($_POST['email'])) {
         $share_key = new ResourceLinkShareKey($resource);
         if (isset($_POST['life'])) {
-            $share_key->life = $_POST['life'];
+            $share_key->life = intval(sanitize_text_field($_POST['life']));
         }
         if (isset($_POST['enabled'])) {
-            $_POST['enabled'] ? $share_key->autoApprove = true : $share_key->autoApprove = false;
+            $share_key->autoApprove = !empty($_POST['enabled']);
         }
         $share_key->save();
 
         $current_user = wp_get_current_user();
-        $senttext = __('Instructor: ', 'lti-text') . '<b>' . $current_user->display_name . '</b>' . __(' has shared', 'lti-text') . '<br /><br />' .
-            __('Blog Name: ', 'lti-text') . '<b>' . get_bloginfo('name') . '</b>' . __(' with your module. To link up with this Blog:',
-                'lti-text') . '<br /><br />' .
-            sprintf(__('Place this key (%s) in the custom parameters of the link to WordPress in your course as:', 'lti-text'),
+        $senttext = __('Instructor: ', 'lti-tool') . '<b>' . $current_user->display_name . '</b>' . __(' has shared', 'lti-tool') . '<br /><br />' .
+            __('Blog Name: ', 'lti-tool') . '<b>' . get_bloginfo('name') . '</b>' . __(' with your module. To link up with this Blog:',
+                'lti-tool') . '<br /><br />' .
+            sprintf(__('Place this key (%s) in the custom parameters of the link to WordPress in your course as:', 'lti-tool'),
                 $share_key->getId()) . '<br /><br />' .
-            sprintf(__('share_key=%s', 'lti-text'), $share_key->getId());
+            sprintf(__('share_key=%s', 'lti-tool'), $share_key->getId());
 
         // Write friendly times
-        if ($_POST['life'] <= 12) {
-            $time = sprintf(_n('%s hour', '%s hours', $_POST['life'], 'lti-text'), $_POST['life']);
+        $life = intval(sanitize_text_field($_POST['life']));
+        if ($life <= 12) {
+            $time = sprintf(_n('%s hour', '%s hours', $life, 'lti-tool'), $life);
         }
-        if ($_POST['life'] >= 24 && $_POST['life'] <= 144) {
-            $days = intval($_POST['life'] / 24);
-            $time = sprintf(_n('%s day', '%s days', $days, 'lti-text'), $days);
+        if (($life >= 24) && ($life <= 144)) {
+            $days = intval($life / 24);
+            $time = sprintf(_n('%s day', '%s days', $days, 'lti-tool'), $days);
         }
-        if ($_POST['life'] == 168) {
+        if ($life == 168) {
             $time = '1 week';
         }
 
         if ($share_key->autoApprove) {
-            $senttext .= '<br /><br />' . sprintf(__('The share key must be activated within %s.', 'lti-text'), $time);
+            $senttext .= '<br /><br />' . sprintf(__('The share key must be activated within %s.', 'lti-tool'), $time);
         } else {
             $senttext .= '<br /><br />' .
                 sprintf(__('The share key must be activated within %s and will only work after then being approved by an administrator/editor of the site being shared.',
-                        'lti-text'), $time);
+                        'lti-tool'), $time);
         }
 
         // Send text/html
         $headers = 'Content-Type: text/html; charset=UTF-8';
-        if (wp_mail($_POST['email'], 'WordPress Share Key', $senttext, $headers)) {
-            echo '<div class="wrap"><h2>' . __('Share this Site', 'lti-text') . '</h2>';
-            echo '<p>' . sprintf(__('The text below has been emailed to %s', 'lti-text'), $_POST['email']) . '</p>';
-            echo '<p>' . $senttext . '</p></div>';
+        $email = sanitize_email($_POST['email']);
+        $allowed = array('br' => array(), 'b' => array());
+        if (wp_mail($email, 'WordPress Share Key', $senttext, $headers)) {
+            echo '<div class="wrap"><h2>' . esc_html__('Share this Site', 'lti-tool') . '</h2>';
+            echo '<p>' . esc_html(sprintf(__('The text below has been emailed to %s', 'lti-tool'), $email)) . '</p>';
+            echo '<p>' . wp_kses($senttext, $allowed) . '</p></div>';
         } else {
-            echo '<div class="wrap"><h2>' . __('Share this Site', 'lti-text') . '</h2>';
-            echo '<p>' . $senttext . '</p></div>';
+            echo '<div class="wrap"><h2>' . esc_html__('Share this Site', 'lti-tool') . '</h2>';
+            echo '<p>' . wp_kses($senttext, $allowed) . '</p></div>';
         }
     } else {
         ?>
 
-        <h2><?php _e('Add Share Key', 'lti-text') ?></h2>
+        <h2><?php esc_html_e('Add Share Key', 'lti-tool') ?></h2>
 
-        <p><?php _e('You may share this site with users using other LTI links into WordPress. These might be:', 'lti-text') ?></p>
+        <p><?php esc_html_e('You may share this site with users using other LTI links into WordPress. These might be:', 'lti-tool') ?></p>
         <ul style="list-style-type: disc; margin-left: 15px; padding-left: 15px;">
-          <li><?php _e('other links from within the same course/module', 'lti-text') ?></li>
-          <li><?php _e('links from other course/modules in the same VLE/LMS', 'lti-text') ?></li>
-          <li><?php _e('links from a different VLE/LMS within your institution or outside', 'lti-text') ?></li>
+          <li><?php esc_html_e('other links from within the same course/module', 'lti-tool') ?></li>
+          <li><?php esc_html_e('links from other course/modules in the same VLE/LMS', 'lti-tool') ?></li>
+          <li><?php esc_html_e('links from a different VLE/LMS within your institution or outside', 'lti-tool') ?></li>
         </ul>
-        <p><?php _e('To invite another link to share this site:', 'lti-text') ?></p>
+        <p><?php esc_html_e('To invite another link to share this site:', 'lti-tool') ?></p>
         <ul style="list-style-type: disc; margin-left: 15px; padding-left: 15px;">
-          <li><?php _e('use the button below to generate a new share key (you may choose to pre-approve
-          the share or leave it to be approved once the key has been activated)', 'lti-text') ?></li>
-          <li><?php _e('send the share key to an instructor for the other link', 'lti-text') ?></li>
+          <li><?php
+            esc_html_e('use the button below to generate a new share key (you may choose to pre-approve the share or leave it to be approved once the key has been activated)',
+                'lti-tool')
+            ?></li>
+          <li><?php esc_html_e('send the share key to an instructor for the other link', 'lti-tool') ?></li>
         </ul>
         <?php
-        $scope = lti_get_scope($lti_session['key']);
-        if (($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_WP_User::ID_SCOPE_EMAIL)) {
+        $scope = lti_tool_get_scope($lti_tool_session['key']);
+        if (($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL)) {
             echo
             '<p><strong>' .
-            __('A global username format has been selected for this platform so it is NOT recommended to share your site when user accounts are being created.',
-                'lti-text') .
+            esc_html__('A global username format has been selected for this platform so it is NOT recommended to share your site when user accounts are being created.',
+                'lti-tool') .
             '</strong></p>';
         }
         ?>
-        <form method="post" action="<?php get_admin_url(); ?>admin.php?page=lti_create_share_key">
+        <form method="post" action="<?php echo esc_url(get_admin_url() . 'admin.php?page=lti_tool_create_share_key'); ?>">
           <table class="form-table">
             <tbody>
               <tr class="form-required">
                 <th scope="row">
-                  <?php _e('Life', 'lti-text'); ?>
-                  <span class="description"><?php _e('(required)', 'lti-text'); ?></span>
+                  <?php esc_html_e('Life', 'lti-tool'); ?>
+                  <span class="description"><?php esc_html_e('(required)', 'lti-tool'); ?></span>
                 </th>
                 <td>
                   <select name="life">
-                    <option value="1">1 <?php _e('hour', 'lti-text') ?></option>
-                    <option value="2">2 <?php _e('hours', 'lti-text') ?></option>
-                    <option value="12">12 <?php _e('hours', 'lti-text') ?></option>
-                    <option value="24">1 <?php _e('day', 'lti-text') ?></option>
-                    <option value="48">2 <?php _e('days', 'lti-text') ?></option>
-                    <option value="72">3 <?php _e('days', 'lti-text') ?></option>
-                    <option value="96">4 <?php _e('days', 'lti-text') ?></option>
-                    <option value="120">5 <?php _e('days', 'lti-text') ?></option>
-                    <option value="144">6 <?php _e('days', 'lti-text') ?></option>
-                    <option value="168">1 <?php _e('week', 'lti-text') ?></option>
+                    <option value="1">1 <?php esc_html_e('hour', 'lti-tool') ?></option>
+                    <option value="2">2 <?php _e('hours', 'lti-tool') ?></option>
+                    <option value="12">12 <?php esc_html_e('hours', 'lti-tool') ?></option>
+                    <option value="24">1 <?php esc_html_e('day', 'lti-tool') ?></option>
+                    <option value="48">2 <?php esc_html_e('days', 'lti-tool') ?></option>
+                    <option value="72">3 <?php esc_html_e('days', 'lti-tool') ?></option>
+                    <option value="96">4 <?php esc_html_e('days', 'lti-tool') ?></option>
+                    <option value="120">5 <?php esc_html_e('days', 'lti-tool') ?></option>
+                    <option value="144">6 <?php esc_html_e('days', 'lti-tool') ?></option>
+                    <option value="168">1 <?php esc_html_e('week', 'lti-tool') ?></option>
                   </select>
                 </td>
               </tr>
               <tr>
                 <th scope="row">
-                  <?php _e('Enabled', 'lti-text'); ?>
+                  <?php esc_html_e('Enabled', 'lti-tool'); ?>
                 </th>
                 <td>
                   <fieldset>
                     <legend class="screen-reader-text">
-                      <span><?php _e('Enabled', 'lti-text') ?></span>
+                      <span><?php esc_html_e('Enabled', 'lti-tool') ?></span>
                     </legend>
                     <label for="enabled">
                       <input name="enabled" type="checkbox" id="enabled" value="true" />
                       <?php
-                      _e('Automatically allow requests from this share without further approval', 'lti-text');
+                      esc_html_e('Automatically allow requests from this share without further approval', 'lti-tool');
                       ?>
                     </label>
                   </fieldset>
@@ -152,8 +157,8 @@ function lti_create_share_key()
               <tr class="form-field form-required">
                 <th scope="row">
                   <label for="email">
-                    <?php _e('Enter the email address for the sharing recipient:', 'lti-text'); ?>
-                    <span class="description"><?php _e('(required)', 'lti-text'); ?></span>
+                    <?php esc_html_e('Enter the email address for the sharing recipient:', 'lti-tool'); ?>
+                    <span class="description"><?php esc_html_e('(required)', 'lti-tool'); ?></span>
                   </label>
                 </th>
                 <td>
@@ -164,7 +169,7 @@ function lti_create_share_key()
           </table>
           <input type="hidden" name="action" value="continue" />
           <p class="submit">
-            <input id="share" class="button-primary" type="submit" value="<?php _e('Add Share Key', 'lti-text'); ?>" name="sharekey">
+            <input id="share" class="button-primary" type="submit" value="<?php esc_attr_e('Add Share Key', 'lti-tool'); ?>" name="sharekey">
           </p>
         </form>
 
@@ -174,13 +179,13 @@ function lti_create_share_key()
 
 /* -------------------------------------------------------------------
  * Function to produce the LTI list. Basically builds the form and
- * then uses the LTI_List_Table function to produce the list
+ * then uses the LTI_Tool_List_Table function to produce the list
   ------------------------------------------------------------------ */
 
-function lti_manage_share_keys()
+function lti_tool_manage_share_keys()
 {
     // Load the class definition
-    require_once('LTI_List_Keys.php');
+    require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'LTI_Tool_List_Keys.php');
 
     $screen = get_current_screen();
     $screen_option = $screen->get_option('per_page', 'option');
@@ -192,19 +197,21 @@ function lti_manage_share_keys()
         $per_page = $screen->get_option('per_page', 'default');
     }
 
-    $lti = new LTI_List_Keys($per_page);
+    $lti = new LTI_Tool_List_Keys($per_page);
     $lti->prepare_items();
     ?>
     <div class="wrap">
 
       <div id="icon-users" class="icon32"><br/></div>
       <h2>LTI Share Keys
-        <a href="<?php echo get_admin_url() ?>admin.php?page=lti_create_share_key" class="add-new-h2"><?php _e('Add New', 'lti-text'); ?></a></h2>
+        <a href="<?php echo esc_url(get_admin_url()) ?>admin.php?page=lti_tool_create_share_key" class="add-new-h2"><?php
+          esc_html_e('Add New', 'lti-tool');
+          ?></a></h2>
 
       <!-- Forms are NOT created automatically, so you need to wrap the table in one to use features like bulk actions -->
-      <form id="lti-filter" method="get">
+      <form id="lti_tool_filter" method="get">
         <!-- For plugins, we also need to ensure that the form posts back to our current page -->
-        <input type="hidden" name="page" value="<?php echo $_REQUEST['page'] ?>" />
+        <input type="hidden" name="page" value="<?php esc_attr_e(sanitize_text_field($_REQUEST['page'])); ?>" />
         <!-- Now we can render the completed list table -->
         <?php $lti->display() ?>
       </form>
@@ -213,16 +220,16 @@ function lti_manage_share_keys()
     <?php
 }
 
-function lti_manage_share_keys_screen_options()
+function lti_tool_manage_share_keys_screen_options()
 {
     $screen = get_current_screen();
-    add_screen_option('per_page', array('label' => __('LTI Share Keys', 'lti-text'), 'default' => 10, 'option' => 'lti_per_page'));
+    add_screen_option('per_page',
+        array('label' => __('LTI Share Keys', 'lti-tool'), 'default' => 10, 'option' => 'lti_tool_per_page'));
 
     $screen->add_help_tab(array(
         'id' => 'lti-display',
-        'title' => __('Screen Display', 'lti-text'),
+        'title' => __('Screen Display', 'lti-tool'),
         'content' => '<p>' . __('You can customise the display of this screen by specifying the number of share keys to be displayed per page.',
-            'lti-text') . '</p>'
+            'lti-tool') . '</p>'
     ));
 }
-?>

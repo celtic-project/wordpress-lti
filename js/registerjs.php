@@ -17,40 +17,40 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 header('Content-Type: application/javascript');
 
 echo <<< EOD
-function doRegister() {
+function lti_tool_do_register() {
     jQuery('input[type="radio"]').attr('disabled', true);
-    jQuery('#id_continue').addClass('hide');
-    jQuery('#id_loading').removeClass('hide');
+    jQuery('#id_lti_tool_continue').addClass('hide');
+    jQuery('#id_lti_tool_loading').removeClass('hide');
     jQuery.ajax({
-        url: '?lti&registration',
+        url: '?lti-tool&registration',
         dataType: 'json',
         data: {
-            'openid_configuration': openid_configuration,
-            'registration_token': registration_token,
-            'lti_scope': jQuery('input[name="lti_scope"]:checked').val()
+            'openid_configuration': lti_tool_openid_configuration,
+            'registration_token': lti_tool_registration_token,
+            'lti_scope': jQuery('input[name="lti_tool_scope"]:checked').val()
         },
         type: 'POST',
         success: function (response) {
-            jQuery('#id_loading').addClass('hide');
+            jQuery('#id_lti_tool_loading').addClass('hide');
             if (response.ok) {
-                jQuery('#id_registered').removeClass('hide');
-                jQuery('#id_close').removeClass('hide');
+                jQuery('#id_lti_tool_registered').removeClass('hide');
+                jQuery('#id_lti_tool_close').removeClass('hide');
             } else {
-                jQuery('#id_notregistered').removeClass('hide');
+                jQuery('#id_lti_tool_notregistered').removeClass('hide');
                 if (response.message) {
-                    jQuery('#id_reason').text(response.message);
+                    jQuery('#id_lti_tool_reason').text(response.message);
                 }
             }
         },
         error: function (jxhr, msg, err) {
-        jQuery('#id_loading').addClass('hide');
-            jQuery('#id_reason').text(': Sorry an error occurred; please try again later.');
+        jQuery('#id_lti_tool_loading').addClass('hide');
+            jQuery('#id_lti_tool_reason').text(': Sorry an error occurred; please try again later.');
         }
     });
 }
@@ -61,4 +61,3 @@ function doClose(el) {
 }
 
 EOD;
-?>

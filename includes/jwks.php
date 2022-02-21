@@ -17,16 +17,15 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Jwt\Jwt;
 
-$options = lti_get_options();
+$options = lti_tool_get_options();
 
 $jwt = Jwt::getJwtClient();
 $keys = $jwt::getJWKS($options['lti13_privatekey'], $options['lti13_signaturemethod'], $options['lti13_kid']);
 
 header('Content-type: application/json');
 echo json_encode($keys);
-?>

@@ -17,14 +17,14 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
-require_once 'lib.php';
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
-$siteurl = get_bloginfo('url') . '/?lti';
-$iconurl = get_bloginfo('url') . '/?lti&icon';
-$jwksurl = get_bloginfo('url') . '/?lti&keys';
+$siteurl = get_bloginfo('url') . '/?lti-tool';
+$iconurl = get_bloginfo('url') . '/?lti-tool&icon';
+$jwksurl = get_bloginfo('url') . '/?lti-tool&keys';
 $domain = get_bloginfo('url');
 $pos = strpos($domain, '://');
 if ($pos !== false) {
@@ -63,9 +63,8 @@ $configuration = (object) array(
         )
 );
 
-$configuration = apply_filters('lti-configure-json', $configuration);
+$configuration = apply_filters('lti_tool_configure_json', $configuration);
 
 header("Content-Type: application/json; ");
 
 echo json_encode($configuration, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES);
-?>

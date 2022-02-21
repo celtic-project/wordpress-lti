@@ -17,46 +17,45 @@
  *  with this program; if not, write to the Free Software Foundation, Inc.,
  *  51 Franklin Street, Fifth Floor, Boston, MA 02110-1301 USA.
  *
- *  Contact: s.p.booth@stir.ac.uk
+ *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
 use ceLTIc\LTI\Platform;
 
-global $lti_db_connector;
+global $lti_tool_data_connector;
 
 /**
  * Create a platform in WordPress
  */
 // include the library
-require_once dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php';
+require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
-if (!empty($_POST) && check_admin_referer('add_lti', '_wpnonce_add_lti')) {
-    $options = lti_get_options();
-    $platform = Platform::fromConsumerKey($_POST['lti_key'], $lti_db_connector);
-    $platform->name = $_POST['lti_name'];
-    $platform->enabled = (isset($_POST['lti_enabled']) && ($_POST['lti_enabled'] == 'true')) ? true : false;
-    $platform->secret = $_POST['lti_secret'];
-    $platform->protected = (isset($_POST['lti_protected']) && ($_POST['lti_protected'] == 'true')) ? true : false;
-    $platform->enableFrom = (!empty($_POST['lti_enable_from'])) ? strtotime($_POST['lti_enable_from']) : null;
-    $platform->enableUntil = (!empty($_POST['lti_enable_until'])) ? strtotime($_POST['lti_enable_until']) : null;
-    $platform->idScope = (!empty($_POST['lti_scope'])) ? $_POST['lti_scope'] : $options['scope'];
-    $platform->debugMode = (isset($_POST['lti_debug']) && ($_POST['lti_debug'] == 'true')) ? true : false;
-    $platform->platformId = (!empty($_POST['lti_platformid'])) ? $_POST['lti_platformid'] : null;
-    $platform->clientId = (!empty($_POST['lti_clientid'])) ? $_POST['lti_clientid'] : null;
-    $platform->deploymentId = (!empty($_POST['lti_deploymentid'])) ? $_POST['lti_deploymentid'] : null;
-    $platform->authorizationServerId = (!empty($_POST['lti_authorizationserverid'])) ? $_POST['lti_authorizationserverid'] : null;
-    $platform->authenticationUrl = (!empty($_POST['lti_authenticationurl'])) ? $_POST['lti_authenticationurl'] : null;
-    $platform->accessTokenUrl = (!empty($_POST['lti_accesstokenurl'])) ? $_POST['lti_accesstokenurl'] : null;
-    $platform->jku = (!empty($_POST['lti_jku'])) ? $_POST['lti_jku'] : null;
-    $platform->rsaKey = (!empty($_POST['lti_rsakey'])) ? $_POST['lti_rsakey'] : null;
+if (!empty($_POST) && check_admin_referer('add_lti_tool', '_wpnonce_add_lti_tool')) {
+    $options = lti_tool_get_options();
+    $platform = Platform::fromConsumerKey(sanitize_text_field($_POST['lti_tool_key']), $lti_tool_data_connector);
+    $platform->name = sanitize_text_field($_POST['lti_tool_name']);
+    $platform->enabled = (isset($_POST['lti_tool_enabled']) && (sanitize_text_field($_POST['lti_tool_enabled']) === 'true')) ? true : false;
+    $platform->secret = sanitize_text_field($_POST['lti_tool_secret']);
+    $platform->protected = (isset($_POST['lti_tool_protected']) && (sanitize_text_field($_POST['lti_tool_protected']) === 'true')) ? true : false;
+    $platform->enableFrom = (!empty($_POST['lti_tool_enable_from'])) ? strtotime(sanitize_text_field($_POST['lti_tool_enable_from'])) : null;
+    $platform->enableUntil = (!empty($_POST['lti_tool_enable_until'])) ? strtotime(sanitize_text_field($_POST['lti_tool_enable_until'])) : null;
+    $platform->idScope = (!empty($_POST['lti_tool_scope'])) ? lti_tool_validate_scope($_POST['lti_tool_scope'], $options['scope']) : $options['scope'];
+    $platform->debugMode = (isset($_POST['lti_tool_debug']) && (sanitize_text_field($_POST['lti_tool_debug']) === 'true')) ? true : false;
+    $platform->platformId = (!empty($_POST['lti_tool_platformid'])) ? sanitize_text_field($_POST['lti_tool_platformid']) : null;
+    $platform->clientId = (!empty($_POST['lti_tool_clientid'])) ? sanitize_text_field($_POST['lti_tool_clientid']) : null;
+    $platform->deploymentId = (!empty($_POST['lti_tool_deploymentid'])) ? sanitize_text_field($_POST['lti_tool_deploymentid']) : null;
+    $platform->authorizationServerId = (!empty($_POST['lti_tool_authorizationserverid'])) ? sanitize_text_field($_POST['lti_tool_authorizationserverid']) : null;
+    $platform->authenticationUrl = (!empty($_POST['lti_tool_authenticationurl'])) ? esc_url_raw($_POST['lti_tool_authenticationurl']) : null;
+    $platform->accessTokenUrl = (!empty($_POST['lti_tool_accesstokenurl'])) ? esc_url_raw($_POST['lti_tool_accesstokenurl']) : null;
+    $platform->jku = (!empty($_POST['lti_tool_jku'])) ? esc_url_raw($_POST['lti_tool_jku']) : null;
+    $platform->rsaKey = (!empty($_POST['lti_tool_rsakey'])) ? sanitize_textarea_field($_POST['lti_tool_rsakey']) : null;
     $platform->save();
 
     if (isset($_GET['edit'])) {
         if (is_multisite()) {
-            wp_redirect(get_admin_url() . 'network/admin.php?page=lti_platforms');
+            wp_redirect(get_admin_url() . 'network/admin.php?page=lti_tool_platforms');
         } else {
-            wp_redirect(get_admin_url() . 'admin.php?page=lti_platforms');
+            wp_redirect(get_admin_url() . 'admin.php?page=lti_tool_platforms');
         }
     }
 }
-?>
