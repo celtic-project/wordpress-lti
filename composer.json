@@ -1,8 +1,9 @@
 {
   "name": "celtic/wordpress-lti",
-  "version": "3.0.0",
+  "version": "3.0.1",
   "description": "Module to enable WordPress to act as an LTI tool",
-  "type": "project",
+  "keywords": ["wordpress", "plugin", "LTI", "tool"],
+  "type": "wordpress-plugin",
   "license": "GPL-3.0",
   "authors": [
     {
@@ -18,6 +19,6 @@
     "docs": "https://github.com/celtic-project/wordpress-lti"
   },
   "require": {
-    "celtic/lti": "^4.6.3"
+    "celtic/lti": "^4.6.4"
   }
 }

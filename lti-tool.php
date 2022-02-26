@@ -3,7 +3,7 @@
   Plugin Name: LTI Tool
   Plugin URI: http://www.spvsoftwareproducts.com/php/wordpress-lti/
   Description: This plugin allows WordPress to be integrated as a tool with on-line courses using the IMS Learning Tools Interoperability (LTI) specification.
-  Version: 3.0.0
+  Version: 3.0.1
   Network: true
   Author: Simon Booth, Stephen P Vickers
   Author URI: http://www.celtic-project.org/
@@ -100,7 +100,11 @@ function lti_tool_once_wp_loaded()
         }
     } elseif (!lti_tool_check_lti_library()) {
         $allow = false;
-        add_action('admin_notices', 'lti_tool_error_deactivate');
+        if (is_multisite()) {
+            add_action('network_admin_notices', 'lti_tool_error_deactivate');
+        } else {
+            add_action('admin_notices', 'lti_tool_error_deactivate');
+        }
     }
     if (!$allow) {
         deactivate_plugins(plugin_basename(__FILE__));
@@ -249,8 +253,8 @@ function lti_tool_register_manage_submenu_page()
         'lti_tool_add_platform', // The slug name for this menu
         'lti_tool_add_platform');                // Function to call
 
-    add_submenu_page('lti_tool_platforms', __('Settings', 'lti-tool'), __('Settings', 'lti-tool'), 'edit_plugins', 'lti_tool_options',
-        'lti_tool_options_page');
+    add_submenu_page('lti_tool_platforms', __('Settings', 'lti-tool'), __('Settings', 'lti-tool'), 'edit_plugins',
+        'lti_tool_options', 'lti_tool_options_page');
 }
 
 // Add the Manage LTI option on the Network Admin page
