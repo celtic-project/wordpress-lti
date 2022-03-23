@@ -25,8 +25,8 @@ header('Content-Type: application/javascript');
 echo <<< EOD
 function lti_tool_do_register() {
     jQuery('input[type="radio"]').attr('disabled', true);
-    jQuery('#id_lti_tool_continue').addClass('hide');
-    jQuery('#id_lti_tool_loading').removeClass('hide');
+    jQuery('#id_lti_tool_continue').addClass('lti_tool_hide');
+    jQuery('#id_lti_tool_loading').removeClass('lti_tool_hide');
     jQuery.ajax({
         url: '?lti-tool&registration',
         dataType: 'json',
@@ -37,19 +37,19 @@ function lti_tool_do_register() {
         },
         type: 'POST',
         success: function (response) {
-            jQuery('#id_lti_tool_loading').addClass('hide');
+            jQuery('#id_lti_tool_loading').addClass('lti_tool_hide');
             if (response.ok) {
-                jQuery('#id_lti_tool_registered').removeClass('hide');
-                jQuery('#id_lti_tool_close').removeClass('hide');
+                jQuery('#id_lti_tool_registered').removeClass('lti_tool_hide');
+                jQuery('#id_lti_tool_close').removeClass('lti_tool_hide');
             } else {
-                jQuery('#id_lti_tool_notregistered').removeClass('hide');
+                jQuery('#id_lti_tool_notregistered').removeClass(lti_tool_'hide');
                 if (response.message) {
                     jQuery('#id_lti_tool_reason').text(response.message);
                 }
             }
         },
         error: function (jxhr, msg, err) {
-        jQuery('#id_lti_tool_loading').addClass('hide');
+        jQuery('#id_lti_tool_loading').addClass('lti_tool_hide');
             jQuery('#id_lti_tool_reason').text(': Sorry an error occurred; please try again later.');
         }
     });

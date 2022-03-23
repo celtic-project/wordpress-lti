@@ -281,7 +281,7 @@ class LTI_Tool_WPTool extends Tool
     protected function onRegistration()
     {
         $escape = function($value) {
-            return esc_html_e($value, 'lti-tool');
+            return esc_html__($value, 'lti-tool');
         };
         $sanitize = function($value) {
             return sanitize_text_field($value);
@@ -377,18 +377,18 @@ EOD;
       <p id="id_lti_tool_continue" class="lti_tool_aligncentre">
         <button type="button" class="lti_tool_button" id="id_lti_tool_continuebutton" onclick="return lti_tool_do_register();">{$escape('Register')}</button>
       </p>
-      <p id="id_lti_tool_loading" class="lti_tool_aligncentre hide">
+      <p id="id_lti_tool_loading" class="lti_tool_aligncentre lti_tool_hide">
         <img src="?lti-tool&loading">
       </p>
 
-      <p id="id_lti_tool_registered" class="lti_tool_success hide">
+      <p id="id_lti_tool_registered" class="lti_tool_success lti_tool_hide">
         {$escape('The tool registration was successful.')}  {$escape($successMessage)}
       </p>
-      <p id="id_lti_tool_notregistered" class="lti_tool_error hide">
+      <p id="id_lti_tool_notregistered" class="lti_tool_error lti_tool_hide">
         {$escape('The tool registration failed.')}  <span id="id_lti_tool_reason"></span>
       </p>
 
-      <p id="id_lti_tool_close" class="lti_tool_aligncentre hide">
+      <p id="id_lti_tool_close" class="lti_tool_aligncentre lti_tool_hide">
         <button type="button" class="lti_tool_button" onclick="return doClose(this);">{$escape('Close')}</button>
       </p>
 
@@ -452,6 +452,6 @@ EOD;
 
 function lti_tool_registration_header()
 {
-    wp_enqueue_style('lti-tool-register-style', plugins_url('css/register.css', __FILE__));
-    wp_enqueue_script('lti-tool-register_js', plugins_url('js/registerjs.php', __FILE__), array('jquery'));
+    wp_enqueue_style('lti-tool-register-style', plugins_url('../css/register.css', __FILE__));
+    wp_enqueue_script('lti-tool-register_js', plugins_url('../js/registerjs.php', __FILE__), array('jquery'));
 }
