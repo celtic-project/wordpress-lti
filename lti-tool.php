@@ -148,8 +148,9 @@ EOD;
 
 function lti_tool_error_deactivate()
 {
-    $msg = esc_html__('The LTI plugin has been deactivated because a dependency is missing; either use composer to install the dependent libraries or activate the ceLTIc LTI Library plugin.',
-        'lti-tool');
+    $allowed = array('em' => array());
+    $msg = wp_kses(__('The <em>LTI Tool</em> plugin has been deactivated because a dependency is missing; either use <em>Composer</em> to install the dependent libraries or activate the <em>ceLTIc LTI Library</em> plugin.',
+            'lti-tool'), $allowed);
     echo <<< EOD
   <div class="notice notice-error">
   <p>{$msg}</p>

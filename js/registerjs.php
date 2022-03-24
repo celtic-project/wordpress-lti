@@ -42,7 +42,7 @@ function lti_tool_do_register() {
                 jQuery('#id_lti_tool_registered').removeClass('lti_tool_hide');
                 jQuery('#id_lti_tool_close').removeClass('lti_tool_hide');
             } else {
-                jQuery('#id_lti_tool_notregistered').removeClass(lti_tool_'hide');
+                jQuery('#id_lti_tool_notregistered').removeClass('lti_tool_hide');
                 if (response.message) {
                     jQuery('#id_lti_tool_reason').text(response.message);
                 }
