@@ -269,7 +269,9 @@ class LTI_Tool_WPTool extends Tool
 
         // Return URL for re-direction by Tool Provider class
         $homepage = apply_filters('lti_tool_homepage', $options['homepage']);
-        if (!empty($homepage)) {
+        if (!empty($this->dataConnector->redirect)) {
+            $this->redirectUrl = get_option('siteurl') . '/' . $this->dataConnector->redirect;
+        } else if (!empty($homepage)) {
             $this->redirectUrl = get_option('siteurl') . '/' . $homepage;
         } else {
             $this->redirectUrl = get_bloginfo('url');

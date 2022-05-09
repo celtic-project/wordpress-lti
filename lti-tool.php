@@ -204,6 +204,11 @@ function lti_tool_parse_request($wp)
             return false;
         }
 
+        // Set redirect
+        if (!empty($_POST)) {
+            $lti_tool_data_connector->redirect = !empty($_POST['custom_redirect']) ? $_POST['custom_redirect'] : null;
+        }
+
         // Clear any existing session variables for this plugin
         lti_tool_reset_session(true);
 
