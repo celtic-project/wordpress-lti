@@ -19,6 +19,6 @@
     "docs": "https://github.com/celtic-project/wordpress-lti"
   },
   "require": {
-    "celtic/lti": "^4.6.4"
+    "celtic/lti": "^4.7.2"
   }
 }
