@@ -31,7 +31,9 @@ use ceLTIc\LTI\UserResult;
 
 function lti_tool_sync_enrolments()
 {
-    global $blog_id, $lti_tool_data_connector, $lti_tool_session;
+    global $lti_tool_data_connector, $lti_tool_session;
+
+    $blog_id = get_current_blog_id();
 
     // Load class
     require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'LTI_Tool_User_List_Table.php');
@@ -52,7 +54,7 @@ function lti_tool_sync_enrolments()
     switch ($action) {
         case 'continue':
             // Get current membership of this blog
-            $wp_user_search = new WP_User_Query($blog_id);
+            $wp_user_search = new WP_User_Query(array('blog_id' => $blog_id));
             $current_members = $wp_user_search->get_results();
             $blog_users = array();
             foreach ($current_members as $member) {

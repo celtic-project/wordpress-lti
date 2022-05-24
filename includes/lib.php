@@ -401,7 +401,9 @@ function lti_tool_create_db()
 
 function lti_tool_update($with_deletions)
 {
-    global $blog_id, $lti_tool_data_connector, $lti_tool_session;
+    global $lti_tool_data_connector, $lti_tool_session;
+
+    $blog_id = get_current_blog_id();
 
     // Get the platform
     $platform = Platform::fromConsumerKey($lti_tool_session['key'], $lti_tool_data_connector);

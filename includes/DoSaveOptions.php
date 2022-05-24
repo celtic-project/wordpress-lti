@@ -36,6 +36,7 @@ if (!wp_verify_nonce($nonce, 'lti_tool_options_settings_group-options')) {
     $rawoptions = $_POST['lti_tool_options'];
     $options = array();
     foreach ($rawoptions as $option => $value) {
+        $option = sanitize_text_field($option);
         switch ($option) {
             case 'lti13_privatekey':
                 $value = sanitize_textarea_field($value);
