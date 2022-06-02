@@ -48,7 +48,7 @@ function lti_tool_add_platform()
 
             <?php if ($editmode) { ?>
                 action="<?php echo esc_url(get_admin_url() . 'admin.php?action=lti_tool_addplatform&edit=true'); ?>"
-                onsubmit="return verify()">
+                onsubmit="return lti_tool_verify()">
               <?php } else { ?>
             action=""
             onsubmit="return lti_tool_create_platform('<?php echo esc_url(get_admin_url() . 'admin.php?action=') ?>');">

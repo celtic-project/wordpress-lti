@@ -47,7 +47,7 @@ if (!wp_verify_nonce($nonce, 'lti_tool_options_settings_group-options')) {
         }
         $options[$option] = $value;
     }
-    do_action('lti_tool_save_options', $options, lti_tool_get_options());
+    $options = apply_filters('lti_tool_save_options', $options, lti_tool_get_options());
     if (is_multisite()) {
         update_site_option('lti_tool_options', $options);
     } else {

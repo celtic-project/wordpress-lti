@@ -227,6 +227,7 @@ class LTI_Tool_WPTool extends Tool
         if (is_multisite()) {
             // Switch to blog
             switch_to_blog($blog_id);
+            $user = wp_get_current_user();
 
             // Note this is an LTI provisioned Blog.
             add_option('lti_tool_site', true);

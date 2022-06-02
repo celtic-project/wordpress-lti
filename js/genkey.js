@@ -66,6 +66,8 @@ function lti_tool_create_platform(url) {
                 "&lti_tool_enabled=" + document.lti_tool_addlti.lti_tool_enabled.checked +
                 "&lti_tool_enable_from=" + document.lti_tool_addlti.lti_tool_enable_from.value +
                 "&lti_tool_enable_until=" + document.lti_tool_addlti.lti_tool_enable_until.value +
+                "&lti_tool_scope=" + lti_scope +
+                "&lti_tool_debug=" + document.lti_tool_addlti.lti_tool_debug.checked +
                 "&lti_tool_platformid=" + document.lti_tool_addlti.lti_tool_platformid.value +
                 "&lti_tool_clientid=" + document.lti_tool_addlti.lti_tool_clientid.value +
                 "&lti_tool_deploymentid=" + document.lti_tool_addlti.lti_tool_deploymentid.value +
@@ -83,7 +85,7 @@ function lti_tool_create_platform(url) {
   return false;
 }
 
-function verify() {
+function lti_tool_verify() {
   var validated = true;
 
   if (document.lti_tool_addlti.lti_tool_name.value == "") {
