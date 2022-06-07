@@ -31,6 +31,7 @@ global $lti_tool_data_connector;
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
 if (!empty($_POST) && check_admin_referer('add_lti_tool', '_wpnonce_add_lti_tool')) {
+    $_POST = stripslashes_deep($_POST);
     $options = lti_tool_get_options();
     $platform = Platform::fromConsumerKey(sanitize_text_field($_POST['lti_tool_key']), $lti_tool_data_connector);
     $platform->name = sanitize_text_field($_POST['lti_tool_name']);

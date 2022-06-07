@@ -171,23 +171,23 @@ class LTI_Tool_List_Table extends WP_List_Table
         //Detect when a bulk action is being triggered...
         if (!empty($_REQUEST['lti'])) {
             if ('delete' === $this->current_action()) {
-                $lti_connectors = sanitize_text_field($_REQUEST['lti']);
+                $lti_connectors = $_REQUEST['lti'];
                 if (is_array($lti_connectors)) {
                     foreach ($lti_connectors as $tool_guid) {
-                        lti_tool_delete($tool_guid);
+                        lti_tool_delete(sanitize_text_field($tool_guid));
                     }
                 } else {
-                    lti_tool_delete($lti_connectors);
+                    lti_tool_delete(sanitize_text_field($lti_connectors));
                 }
             } else if (('enable' === $this->current_action()) || ('disable' === $this->current_action())) {
                 $enable = $this->current_action() == 'enable';
-                $lti_connectors = sanitize_text_field($_REQUEST['lti']);
+                $lti_connectors = $_REQUEST['lti'];
                 if (is_array($lti_connectors)) {
                     foreach ($lti_connectors as $tool_guid) {
-                        lti_tool_set_enable($tool_guid, $enable);
+                        lti_tool_set_enable(sanitize_text_field($tool_guid), $enable);
                     }
                 } else {
-                    lti_tool_set_enable($lti_connectors, $enable);
+                    lti_tool_set_enable(sanitize_text_field($lti_connectors), $enable);
                 }
             }
         }

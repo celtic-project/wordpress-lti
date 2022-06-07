@@ -33,7 +33,7 @@ $nonce = sanitize_text_field($_REQUEST['_wpnonce']);
 if (!wp_verify_nonce($nonce, 'lti_tool_options_settings_group-options')) {
     add_settings_error('general', 'settings_updated', __('Unable to submit this form, please refresh and try again.', 'lti-tool'));
 } else {
-    $rawoptions = $_POST['lti_tool_options'];
+    $rawoptions = stripslashes_deep($_POST['lti_tool_options']);
     $options = array();
     foreach ($rawoptions as $option => $value) {
         $option = sanitize_text_field($option);
