@@ -239,7 +239,7 @@ function lti_tool_register_manage_submenu_page()
         'edit_plugins', // Capability needed to see this page
         'lti_tool_platforms', // admin.php?page=lti_tool_platforms
         'lti_tool_platforms', // Function to call
-        plugins_url('images/ims.png', __FILE__)); // Image for menu item
+        plugins_url('images/1edtech-20.png', __FILE__)); // Image for menu item
     add_action('load-' . $manage_lti_page, 'lti_tool_manage_screen_options');
     if (is_multisite()) {
         $manage_lti_page .= '-network';
@@ -322,7 +322,7 @@ function lti_tool_register_user_submenu_page()
         } else {
             $sync_page = add_menu_page(
                 __('LTI Users Sync', 'lti-tool'), __('LTI Users Sync', 'lti-tool'), 'edit_others_posts', 'lti_tool_sync_enrolments',
-                'lti_tool_sync_enrolments', plugins_url('images/ims.png', __FILE__));
+                'lti_tool_sync_enrolments', plugins_url('images/1edtech-20.png', __FILE__));
         }
         add_filter("manage_{$sync_page}_columns", array('LTI_Tool_User_List_Table', 'define_columns'), 10, 0);
         add_action('load-' . $sync_page, 'lti_tool_sync_admin_header');
@@ -338,7 +338,7 @@ function lti_tool_register_user_submenu_page()
             'edit_others_posts', // Capability needed to see this page
             'lti_tool_manage_share_keys', // admin.php?page=lti_tool_manage_share_keys
             'lti_tool_manage_share_keys', // Function to call
-            plugins_url('images/ims.png', __FILE__)); // Image for menu item
+            plugins_url('images/1edtech-20.png', __FILE__)); // Image for menu item
 
         add_filter("manage_{$manage_share_keys_page}_columns", array('LTI_Tool_List_Keys', 'define_columns'), 10, 0);
         add_action('load-' . $manage_share_keys_page, 'lti_tool_manage_share_keys_screen_options');
