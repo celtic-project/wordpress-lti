@@ -535,35 +535,7 @@ function lti_tool_loginout($link)
 
 add_filter('loginout', 'lti_tool_loginout');
 
-/* -------------------------------------------------------------------
- * Function to add the last login on the home page
-  ------------------------------------------------------------------ */
-
-function lti_tool_add_sum_tips_admin_bar_link()
-{
-    global $wp_admin_bar, $current_user;
-
-    // Only write last login on the home page
-    if (!is_home()) {
-        return;
-    }
-
-    wp_get_current_user();
-    $last_login = get_user_meta($current_user->ID, 'Last Login', true);
-
-    if (empty($last_login)) {
-        return;
-    }
-
-    $wp_admin_bar->add_menu(array(
-        'id' => 'Last',
-        'title' => __('Last Login: ', 'lti-tool') . $last_login
-    ));
-}
-
 // Add the admin menu bar
-add_action('admin_bar_menu', 'lti_tool_add_sum_tips_admin_bar_link', 25);
-
 add_action('admin_init', 'lti_tool_options_init');
 
 add_action('admin_action_lti_tool_genkeysecret', 'lti_tool_genkeysecret');

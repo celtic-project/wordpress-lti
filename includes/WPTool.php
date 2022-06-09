@@ -249,25 +249,6 @@ class LTI_Tool_WPTool extends Tool
         // then their role in the blog should change
         $user->set_role($role);
 
-        // Send login time to platform if has outcomes service and can handle freetext
-        $resource_link = $this->resourceLink;
-
-        if ($resource_link->hasOutcomesService()) {
-
-            // Presently this is just a demo of the outcome services and updating the menu bar in WordPress
-            $outcome = new Outcome();
-            $outcome->type = ResourceLink::EXT_TYPE_TEXT;
-            $result = $resource_link->doOutcomesService(ResourceLink::EXT_READ, $outcome, $this->userResult);
-
-            // If we have successfully read then update the user metadata
-            if ($result) {
-                update_user_meta($user_id, 'Last Login', $outcome->getValue());
-            }
-
-            $outcome->setValue(date('d-F-Y G:i', time()));
-            $resource_link->doOutcomesService(ResourceLink::EXT_WRITE, $outcome, $this->userResult);
-        }
-
         // Return URL for re-direction by Tool Provider class
         $homepage = apply_filters('lti_tool_homepage', $options['homepage']);
         if (!empty($homepage)) {
