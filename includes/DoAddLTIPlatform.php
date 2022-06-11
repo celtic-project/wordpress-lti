@@ -50,6 +50,13 @@ if (!empty($_POST) && check_admin_referer('add_lti_tool', '_wpnonce_add_lti_tool
     $platform->accessTokenUrl = (!empty($_POST['lti_tool_accesstokenurl'])) ? esc_url_raw($_POST['lti_tool_accesstokenurl']) : null;
     $platform->jku = (!empty($_POST['lti_tool_jku'])) ? esc_url_raw($_POST['lti_tool_jku']) : null;
     $platform->rsaKey = (!empty($_POST['lti_tool_rsakey'])) ? sanitize_textarea_field($_POST['lti_tool_rsakey']) : null;
+    $platform->setSetting('__role_staff',
+        isset($_POST['lti_tool_role_staff']) ? sanitize_text_field($_POST['lti_tool_role_staff']) : null);
+    $platform->setSetting('__role_student',
+        isset($_POST['lti_tool_role_student']) ? sanitize_text_field($_POST['lti_tool_role_student']) : null);
+    $platform->setSetting('__role_other',
+        isset($_POST['lti_tool_role_other']) ? sanitize_text_field($_POST['lti_tool_role_other']) : null);
+    $platform = apply_filters('lti_tool_save_platform', $platform, $options, $_POST);
     $platform->save();
 
     if (isset($_GET['edit'])) {

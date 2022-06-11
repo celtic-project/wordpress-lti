@@ -283,6 +283,39 @@ EOD;
       </tbody>
     </table>
 
+    <h3>Roles</h3>
+
+    <table class="form-table">
+      <tbody>
+        <tr>
+          <th scope="row">Staff</th>
+          <td>
+            {$here(lti_tool_roles_select('staff', $platform->getSetting('__role_staff'), $options))}
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Student</th>
+          <td>
+            {$here(lti_tool_roles_select('student', $platform->getSetting('__role_student'), $options))}
+          </td>
+        </tr>
+        <tr>
+          <th scope="row">Other</th>
+          <td>
+            {$here(lti_tool_roles_select('other', $platform->getSetting('__role_other'), $options))}
+          </td>
+        </tr>
+
+EOD;
+    if (isset($add_html['roles'])) {
+        $html .= $add_html['roles'];
+        unset($add_html['roles']);
+    }
+
+    $html .= <<< EOD
+      </tbody>
+    </table>
+
     <h3>LTI 1.3 Configuration</h3>
 
     <table class="form-table">
@@ -423,4 +456,28 @@ EOD;
 EOD;
 
     echo $html;
+}
+
+function lti_tool_roles_select($role, $current, $options)
+{
+    $name = "role_{$role}";
+    $roles = get_editable_roles();
+    $html = <<< EOD
+                <select name="lti_tool_{$name}" id="{$name}">
+                  <option value="">&mdash; Use default ({$roles[$options[$name]]['name']}) &mdash;</option>
+
+EOD;
+    foreach ($roles as $key => $role) {
+        $selected = ($key === $current) ? ' selected' : '';
+        $html .= <<< EOD
+                  <option value="{$key}"{$selected}>{$role['name']}</option>'
+
+EOD;
+    }
+    $html .= <<< EOD
+                </select>
+
+EOD;
+
+    return $html;
 }
