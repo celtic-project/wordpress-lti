@@ -62,7 +62,7 @@ class LTI_Tool_WP_User
     public $lti_user_id;
     public $reasons = array();
 
-    public static function fromUserResult($user_result, $user_login, $options)
+    public static function fromUserResult($user_result, $user_login, $platform, $options)
     {
         $user = new static();
         $user->id = null;
@@ -71,7 +71,8 @@ class LTI_Tool_WP_User
         $user->lastname = $user_result->lastname;
         $user->name = trim("{$user_result->firstname} {$user_result->lastname}");
         $user->email = $user_result->email;
-        $user->role = lti_tool_user_role($user_result, $options);
+        $user_type = lti_tool_user_type($user_result);
+        $user->role = lti_tool_default_role($user_type, $options, $platform);
         $user->lti_user_id = $user_result->ltiUserId;
 
         return $user;
@@ -557,7 +558,7 @@ function lti_tool_get_scope($guid)
  * Get the WordPress user login for a user based on the scope set for the platform
   ------------------------------------------------------------------ */
 
-function lti_tool_get_user_login($guid, $lti_user, $platform = null)
+function lti_tool_get_user_login($guid, $lti_user, $source = null)
 {
     $scope_userid = lti_tool_get_scope($guid);
     if ($scope_userid === LTI_Tool_WP_User::ID_SCOPE_USERNAME) {
@@ -565,7 +566,7 @@ function lti_tool_get_user_login($guid, $lti_user, $platform = null)
     } elseif ($scope_userid === LTI_Tool_WP_User::ID_SCOPE_EMAIL) {
         $user_login = $lti_user->email;
     } else {
-        $user_login = $lti_user->getId($scope_userid, $platform);
+        $user_login = $lti_user->getId($scope_userid, $source);
     }
     // Sanitize username stripping out unsafe characters
     $user_login = sanitize_user($user_login);
@@ -720,16 +721,44 @@ function lti_tool_user_has_role($user, $role)
 }
 
 /* -------------------------------------------------------------------
+ * Get user type
+  ------------------------------------------------------------------ */
+
+function lti_tool_user_type($lti_user)
+{
+    if ($lti_user->isLearner()) {
+        $user_type = 'student';
+    } elseif ($lti_user->isStaff()) {
+        $user_type = 'staff';
+    } else {
+        $user_type = 'other';
+    }
+
+    return $user_type;
+}
+
+/* -------------------------------------------------------------------
  * Get role based on user type
   ------------------------------------------------------------------ */
 
 function lti_tool_user_role($lti_user, $options)
 {
-    $role = $options['role_other'];
-    if ($lti_user->isLearner()) {
-        $role = $options['role_student'];
-    } elseif ($lti_user->isStaff()) {
-        $role = $options['role_staff'];
+    $user_type = lti_tool_user_type($lti_user);
+
+    return lti_tool_default_role($user_type, $options, null);
+}
+
+/* -------------------------------------------------------------------
+ * Get default role based on user type
+  ------------------------------------------------------------------ */
+
+function lti_tool_default_role($user_type, $options, $platform)
+{
+    if (!empty($platform)) {
+        $role = $platform->getSetting("__role_{$user_type}");
+    }
+    if (empty($role)) {
+        $role = $options["role_{$user_type}"];
     }
 
     return $role;
@@ -799,6 +828,31 @@ function lti_tool_update_error()
     </div>
 
 EOD;
+}
+
+/* -------------------------------------------------------------------
+ * Sanitize the value of a user scope
+  ------------------------------------------------------------------ */
+
+function lti_tool_get_scopes()
+{
+    $scopes = array();
+    if (is_multisite()) {
+        $scopes[strval(Tool::ID_SCOPE_RESOURCE)] = array('id' => Tool::ID_SCOPE_RESOURCE, 'name' => 'Resource', 'description' => 'Prefix the ID with the consumer key and resource link ID');
+        $scopes[strval(Tool::ID_SCOPE_CONTEXT)] = array('id' => Tool::ID_SCOPE_CONTEXT, 'name' => 'Context', 'description' => 'Prefix the ID with the consumer key and context ID');
+    }
+    $scopes[Tool::ID_SCOPE_GLOBAL] = array('id' => Tool::ID_SCOPE_GLOBAL, 'name' => 'Platform', 'description' => 'Prefix an ID with the consumer key');
+    $scopes[Tool::ID_SCOPE_ID_ONLY] = array('id' => Tool::ID_SCOPE_ID_ONLY, 'name' => 'Global', 'description' => 'Use ID value only');
+    $scopes[LTI_Tool_WP_User::ID_SCOPE_USERNAME] = array('id' => LTI_Tool_WP_User::ID_SCOPE_USERNAME, 'name' => 'Username', 'description' => 'Use platform username only');
+    $scopes[LTI_Tool_WP_User::ID_SCOPE_EMAIL] = array('id' => LTI_Tool_WP_User::ID_SCOPE_EMAIL, 'name' => 'Email', 'description' => 'Use email address only');
+
+    $scopes = apply_filters('lti_tool_id_scopes', $scopes);
+
+    if (empty($scopes)) {
+        $scopes[Tool::ID_SCOPE_GLOBAL] = array('id' => Tool::ID_SCOPE_GLOBAL, 'name' => 'Platform', 'description' => 'Prefix an ID with the consumer key');
+    }
+
+    return $scopes;
 }
 
 /* -------------------------------------------------------------------

@@ -720,27 +720,14 @@ function lti_tool_scope_callback()
     <fieldset>
 
 EOD;
-    if (is_multisite()) {
+    $scopes = lti_tool_get_scopes();
+    foreach ($scopes as $scope) {
         echo <<< EOD
-      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here(Tool::ID_SCOPE_RESOURCE)}" value="{$here(Tool::ID_SCOPE_RESOURCE)}"{$checked(Tool::ID_SCOPE_RESOURCE,
-            $options['scope'])}> {$escape('Resource: Prefix the ID with the consumer key and resource link ID')}</label><br>
-      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here(Tool::ID_SCOPE_CONTEXT)}" value="{$here(Tool::ID_SCOPE_CONTEXT)}"{$checked(Tool::ID_SCOPE_CONTEXT,
-            $options['scope'])}> {$escape('Context: Prefix the ID with the consumer key and context ID')}</label><br>
+      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here($scope['id'])}"
+          value="{$here($scope['id'])}"{$checked($scope['id'], $options['scope'])}><em>{$escape($scope['name'])}</em>: {$escape($scope['description'])}</label><br>
 
 EOD;
     }
-    echo <<< EOD
-      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here(Tool::ID_SCOPE_GLOBAL)}" value="{$here(Tool::ID_SCOPE_GLOBAL)}"{$checked(Tool::ID_SCOPE_GLOBAL,
-        $options['scope'])}> {$escape('Platform: Prefix the ID with the consumer key', 'lti-tool')}</label><br>
-      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here(Tool::ID_SCOPE_ID_ONLY)}" value="{$here(Tool::ID_SCOPE_ID_ONLY)}"{$checked(Tool::ID_SCOPE_ID_ONLY,
-        $options['scope'])}> {$escape('Global: Use ID value only', 'lti-tool')}</label><br>
-      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here(LTI_Tool_WP_User::ID_SCOPE_USERNAME)}" value="{$here(LTI_Tool_WP_User::ID_SCOPE_USERNAME)}"{$checked(LTI_Tool_WP_User::ID_SCOPE_USERNAME,
-        $options['scope'])}> {$escape('Username: Use platform username only', 'lti-tool')}</label><br>
-      <label><input type="radio" name="lti_tool_options[scope]" id="lti_tool_scope{$here(LTI_Tool_WP_User::ID_SCOPE_EMAIL)}" value="{$here(LTI_Tool_WP_User::ID_SCOPE_EMAIL)}"{$checked(LTI_Tool_WP_User::ID_SCOPE_EMAIL,
-        $options['scope'])}> {$escape('Email: Use email address only', 'lti-tool')}</label>
-    </fieldset>
-
-EOD;
 }
 
 function lti_tool_homepage_callback()

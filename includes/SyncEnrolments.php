@@ -106,21 +106,26 @@ function lti_tool_sync_enrolments()
                         $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_EMAIL;
                     }
                     if ($lti_user->isLearner()) {
-                        if (!lti_tool_user_has_role($user, $options['role_student'])) {
+                        $default_role = lti_tool_default_role('student', $options, $platform);
+                        if (!lti_tool_user_has_role($user, $default_role)) {
                             $category = 'change';
                             $lti_user->role = $options['role_student'];
                             $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
                         }
                     } elseif ($lti_user->isStaff()) {
-                        if (!lti_tool_user_has_role($user, $options['role_staff'])) {
+                        $default_role = lti_tool_default_role('staff', $options, $platform);
+                        if (!lti_tool_user_has_role($user, $default_role)) {
                             $category = 'change';
-                            $lti_user->role = $options['role_staff'];
+                            $lti_user->role = $default_role;
                             $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
                         }
-                    } elseif (!lti_tool_user_has_role($user, $options['role_other'])) {
-                        $category = 'change';
-                        $lti_user->role = $options['role_other'];
-                        $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
+                    } else {
+                        $default_role = lti_tool_default_role('other', $options, $platform);
+                        if (!lti_tool_user_has_role($user, $default_role)) {
+                            $category = 'change';
+                            $lti_user->role = $default_role;
+                            $reasons[] = LTI_Tool_User_List_Table::REASON_CHANGE_ROLE;
+                        }
                     }
                     if (($lti_tool_platform_key !== $platform->getKey()) ||
                         ($lti_tool_user_id !== $lti_user->ltiUserId)) {
@@ -129,7 +134,7 @@ function lti_tool_sync_enrolments()
                     }
                 }
                 if (!empty($category)) {
-                    $lti_wp_user = LTI_Tool_WP_User::fromUserResult($lti_user, $user_login, $options);
+                    $lti_wp_user = LTI_Tool_WP_User::fromUserResult($lti_user, $user_login, $platform, $options);
                     if (!empty($user)) {
                         $lti_wp_user->id = $user->ID;
                     }
@@ -140,6 +145,7 @@ function lti_tool_sync_enrolments()
             if (!empty($blog_users)) {
                 $lti_user = UserResult::fromResourceLink($resource_link, '');
                 $prefix = lti_tool_get_user_login($lti_tool_session['userkey'], $lti_user);
+                $prefix = apply_filters('pre_user_login', $prefix);
                 foreach ($blog_users as $blog_user) {
                     if (empty($prefix) || (strpos($blog_user->user_login, $prefix) === 0)) {
                         $lti_wp_user = LTI_Tool_WP_User::fromWPUser($blog_user);
