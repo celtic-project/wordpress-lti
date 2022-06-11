@@ -543,6 +543,10 @@ add_action('admin_action_lti_tool_addplatform', 'lti_tool_addplatform');
 
 function lti_tool_options_init()
 {
+    global $lti_tool_hide_options;
+
+    $lti_tool_hide_options = apply_filters('lti_tool_hide_options', array());
+
     register_setting('lti_tool_options_settings_group', 'lti_tool_options');
     add_settings_section(
         'lti_tool_options_general_section', '', 'lti_tool_options_general_section_info', 'lti_tool_options_admin'
@@ -552,34 +556,46 @@ function lti_tool_options_init()
         'lti_tool_options_general_section'
     );
     if (is_multisite()) {
+        if (!isset($lti_tool_hide_options['uninstallblogs'])) {
+            add_settings_field(
+                'uninstallblogs', __('Delete LTI blogs on platform delete?', 'lti-tool'), 'lti_tool_uninstallblogs_callback',
+                'lti_tool_options_admin', 'lti_tool_options_general_section'
+            );
+        }
+    }
+    if (!isset($lti_tool_hide_options['adduser'])) {
         add_settings_field(
-            'uninstallblogs', __('Delete LTI blogs on platform delete?', 'lti-tool'), 'lti_tool_uninstallblogs_callback',
-            'lti_tool_options_admin', 'lti_tool_options_general_section'
+            'adduser', __('Hide <em>Add User</em> menu?', 'lti-tool'), 'lti_tool_adduser_callback', 'lti_tool_options_admin',
+            'lti_tool_options_general_section'
         );
     }
-    add_settings_field(
-        'adduser', __('Hide <em>Add User</em> menu?', 'lti-tool'), 'lti_tool_adduser_callback', 'lti_tool_options_admin',
-        'lti_tool_options_general_section'
-    );
     if (is_multisite()) {
+        if (!isset($lti_tool_hide_options['mysites'])) {
+            add_settings_field(
+                'mysites', __('Hide <em>My Sites</em> menu?', 'lti-tool'), 'lti_tool_mysites_callback', 'lti_tool_options_admin',
+                'lti_tool_options_general_section'
+            );
+        }
+    }
+    if (!isset($lti_tool_hide_options['scope'])) {
         add_settings_field(
-            'mysites', __('Hide <em>My Sites</em> menu?', 'lti-tool'), 'lti_tool_mysites_callback', 'lti_tool_options_admin',
+            'scope', __('Default username format', 'lti-tool'), 'lti_tool_scope_callback', 'lti_tool_options_admin',
             'lti_tool_options_general_section'
         );
     }
-    add_settings_field(
-        'scope', __('Default username format', 'lti-tool'), 'lti_tool_scope_callback', 'lti_tool_options_admin',
-        'lti_tool_options_general_section'
-    );
-    add_settings_field(
-        'saveemail', __('Save email addresses?', 'lti-tool'), 'lti_tool_saveemail_callback', 'lti_tool_options_admin',
-        'lti_tool_options_general_section'
-    );
-    if (!is_multisite()) {
+    if (!isset($lti_tool_hide_options['saveemail'])) {
         add_settings_field(
-            'homepage', __('Homepage', 'lti-tool'), 'lti_tool_homepage_callback', 'lti_tool_options_admin',
+            'saveemail', __('Save email addresses?', 'lti-tool'), 'lti_tool_saveemail_callback', 'lti_tool_options_admin',
             'lti_tool_options_general_section'
         );
+    }
+    if (!is_multisite()) {
+        if (!isset($lti_tool_hide_options['homepage'])) {
+            add_settings_field(
+                'homepage', __('Homepage', 'lti-tool'), 'lti_tool_homepage_callback', 'lti_tool_options_admin',
+                'lti_tool_options_general_section'
+            );
+        }
     }
     add_settings_field(
         'loglevel', __('Default logging level', 'lti-tool'), 'lti_tool_loglevel_callback', 'lti_tool_options_admin',
@@ -635,7 +651,16 @@ function lti_tool_options_init()
 
 function lti_tool_options_general_section_info()
 {
+    global $lti_tool_hide_options;
+
     echo('<h2>' . __('General', 'lti-tool') . "</h2>\n");
+
+    foreach ($lti_tool_hide_options as $name => $value) {
+        echo <<< EOD
+        <input type="hidden" name="lti_tool_options[{$name}]" id="{$name}" value="{$value}">
+
+EOD;
+    }
 }
 
 function lti_tool_options_roles_section_info()
