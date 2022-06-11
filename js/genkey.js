@@ -1,18 +1,18 @@
 function lti_tool_create_platform(url) {
 
-  var validated = true;
-
   document.getElementById("lti_tool_name_text").style.color = "";
-  document.getElementById("lti_tool_req1").style.color = "";
+  document.getElementById("lti_tool_scope_text").style.color = "";
 
+  var validated = true;
   if (document.lti_tool_addlti.lti_tool_name.value == "") {
     document.getElementById("lti_tool_name_text").style.color = "red";
-    document.getElementById("lti_tool_req1").style.color = "red";
-    return false;
+    validated = false;
   }
-
+  if (!document.querySelector('input[name="lti_tool_scope"]:checked') || (document.querySelector('input[name="lti_tool_scope"]:checked').value == "")) {
+    document.getElementById("lti_tool_scope_text").style.color = "red";
+    validated = false;
+  }
   if (validated) {
-
     var xmlhttp = false;
     var xmlhttppost = false;
 
@@ -76,34 +76,40 @@ function lti_tool_create_platform(url) {
                 "&lti_tool_accesstokenurl=" + document.lti_tool_addlti.lti_tool_accesstokenurl.value +
                 "&lti_tool_jku=" + document.lti_tool_addlti.lti_tool_jku.value +
                 "&lti_tool_rsakey=" + document.lti_tool_addlti.lti_tool_rsakey.value +
+                "&lti_tool_role_staff=" + document.lti_tool_addlti.lti_tool_role_staff.value +
+                "&lti_tool_role_student=" + document.lti_tool_addlti.lti_tool_role_student.value +
+                "&lti_tool_role_other=" + document.lti_tool_addlti.lti_tool_role_other.value +
                 "&_wpnonce_add_lti_tool=" + document.lti_tool_addlti._wpnonce_add_lti_tool.value;
 
         xmlhttppost.send(postdata);
       }
     }
+  } else {
+    document.getElementById('lti_tool_error').style.display = 'block';
   }
+
   return false;
 }
 
 function lti_tool_verify() {
+
   var validated = true;
+
+  document.getElementById("lti_tool_name_text").style.color = "";
+  document.getElementById("lti_tool_secret_text").style.color = "";
 
   if (document.lti_tool_addlti.lti_tool_name.value == "") {
     document.getElementById("lti_tool_name_text").style.color = "red";
-    document.getElementById("lti_tool_req1").style.color = "red";
     validated = false;
-  } else {
-    document.getElementById("lti_tool_name_text").style.color = "black";
-    document.getElementById("lti_tool_req1").style.color = "black";
   }
 
   if (document.lti_tool_addlti.lti_tool_secret.value == "") {
     document.getElementById("lti_tool_secret_text").style.color = "red";
-    document.getElementById("lti_tool_req3").style.color = "red";
     validated = false;
-  } else {
-    document.getElementById("lti_tool_secret_text").style.color = "black";
-    document.getElementById("lti_tool_req3").style.color = "black";
+  }
+
+  if (!validated) {
+    document.getElementById('lti_tool_error').style.display = 'block';
   }
 
   return validated;
