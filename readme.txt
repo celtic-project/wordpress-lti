@@ -4,7 +4,7 @@ Tags: lti, ims, learning tools interoperability, celtic
 Requires at least: 3.0
 Tested up to: 6.0
 Requires PHP: 5.6
-Stable tag: 3.0.2
+Stable tag: 3.1.0
 License: GNU General Public License Version 3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
