@@ -442,7 +442,7 @@ EOD;
       <form action="{$escapeurl(get_option('siteurl') . '/?lti-tool&xml')}" method="post" name="lti_tool_download" id="lti_tool_download">
         <input id="lti_tool_download_key" type="hidden" value="" name="key" />
         <p class="submit">
-          <input id="xml" class="button-primary" type="submit" value="{$escape('Download IMS XML')}" name="xml" />
+          <input id="xml" class="button-primary" type="submit" value="{$escape('Download 1EdTech XML')}" name="xml" />
         </p>
       </form>
 
