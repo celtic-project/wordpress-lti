@@ -789,7 +789,7 @@ function lti_tool_do_save_email($key = null)
         }
         if (!empty($key)) {
             $scope = lti_tool_get_scope($key);
-            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope = LTI_Tool_WP_User::ID_SCOPE_EMAIL);
+            $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
         }
     }
 
