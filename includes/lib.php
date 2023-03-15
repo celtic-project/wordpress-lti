@@ -415,7 +415,7 @@ function lti_tool_update($with_deletions)
     // New users
     $users = $lti_tool_session['sync']['new'];
     foreach ($users as $user) {
-        $date = current_time('Y-m-d h:i:s');
+        $date = current_time('Y-m-d H:i:s');
         $user_data = array(
             'user_login' => $user->username,
             'user_nicename' => $user->username,

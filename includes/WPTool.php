@@ -292,7 +292,7 @@ EOD;
 
         if (empty($user)) {
             // Create username if user provisioning is on
-            $date = current_time('Y-m-d h:i:s');
+            $date = current_time('Y-m-d H:i:s');
             $user_data = array(
                 'user_login' => $user_login,
                 'user_pass' => wp_generate_password(),
