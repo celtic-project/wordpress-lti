@@ -21,6 +21,7 @@
  */
 
 use ceLTIc\LTI\Platform;
+use ceLTIc\LTI\Util;
 
 global $lti_tool_data_connector;
 
@@ -33,10 +34,21 @@ require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 if (!empty($_POST) && check_admin_referer('add_lti_tool', '_wpnonce_add_lti_tool')) {
     $_POST = stripslashes_deep($_POST);
     $options = lti_tool_get_options();
-    $platform = Platform::fromConsumerKey(sanitize_text_field($_POST['lti_tool_key']), $lti_tool_data_connector);
+    if (empty($_POST['lti_tool_key'])) {
+        $key = lti_tool_get_guid(sanitize_text_field($_POST['lti_tool_scope']));
+        $secret = Util::getRandomString(32);
+    } else {
+        $key = sanitize_text_field($_POST['lti_tool_key']);
+        if (empty($_POST['lti_tool_secret'])) {
+            $secret = Util::getRandomString(32);
+        } else {
+            $secret = sanitize_text_field($_POST['lti_tool_secret']);
+        }
+    }
+    $platform = Platform::fromConsumerKey($key, $lti_tool_data_connector);
     $platform->name = sanitize_text_field($_POST['lti_tool_name']);
     $platform->enabled = (isset($_POST['lti_tool_enabled']) && (sanitize_text_field($_POST['lti_tool_enabled']) === 'true')) ? true : false;
-    $platform->secret = sanitize_text_field($_POST['lti_tool_secret']);
+    $platform->secret = $secret;
     $platform->protected = (isset($_POST['lti_tool_protected']) && (sanitize_text_field($_POST['lti_tool_protected']) === 'true')) ? true : false;
     $platform->enableFrom = (!empty($_POST['lti_tool_enable_from'])) ? strtotime(sanitize_text_field($_POST['lti_tool_enable_from'])) : null;
     $platform->enableUntil = (!empty($_POST['lti_tool_enable_until'])) ? strtotime(sanitize_text_field($_POST['lti_tool_enable_until'])) : null;
@@ -60,10 +72,13 @@ if (!empty($_POST) && check_admin_referer('add_lti_tool', '_wpnonce_add_lti_tool
     $platform->save();
 
     if (isset($_GET['edit'])) {
-        if (is_multisite()) {
-            wp_redirect(get_admin_url() . 'network/admin.php?page=lti_tool_platforms');
-        } else {
-            wp_redirect(get_admin_url() . 'admin.php?page=lti_tool_platforms');
-        }
+        $page = 'lti_tool_platforms';
+    } else {
+        $page = "lti_tool_add_platform&new&lti={$key}";
+    }
+    if (is_multisite()) {
+        wp_redirect(get_admin_url() . "network/admin.php?page={$page}");
+    } else {
+        wp_redirect(get_admin_url() . "admin.php?page={$page}");
     }
 }

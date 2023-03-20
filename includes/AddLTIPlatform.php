@@ -33,30 +33,6 @@ function lti_tool_add_platform()
 
     $options = lti_tool_get_options();
 
-    $editmode = isset($_REQUEST['action']) && (sanitize_text_field($_REQUEST['action']) === 'edit');
-    if ($editmode) {
-        $verb = 'Update';
-        $action = get_admin_url() . 'admin.php?action=lti_tool_addplatform&edit=true';
-        $onsubmit = 'return lti_tool_verify()';
-        $platform = Platform::fromConsumerKey(sanitize_text_field($_REQUEST['lti']), $lti_tool_data_connector);
-    } else {
-        $verb = 'Add';
-        $action = '';
-        $onsubmit = 'return lti_tool_create_platform(\'' . esc_url(get_admin_url() . 'admin.php?action') . '=\')';
-        $platform = new Platform($lti_tool_data_connector);
-    }
-
-    $button_text = esc_attr("{$verb} LTI Platform", 'lti-tool');
-
-    $now = time();
-    $enable_from_example = date('Y-m-d', $now + (24 * 60 * 60));
-    $enable_until_example = date('Y-m-d', $now + (7 * (24 * 60 * 60)));
-
-    $add_html = apply_filters('lti_tool_config_platform', array(), $platform);
-    if (!is_array($add_html)) {
-        $add_html = array();
-    }
-
     $here = function($value) {
         return $value;
     };
@@ -80,7 +56,32 @@ function lti_tool_add_platform()
         }
     };
 
-    $html = <<< EOD
+    if (!isset($_REQUEST['new'])) {
+        $editmode = isset($_REQUEST['action']) && (sanitize_text_field($_REQUEST['action']) === 'edit');
+        if ($editmode) {
+            $verb = 'Update';
+            $action = get_admin_url() . 'admin.php?action=lti_tool_addplatform&edit=true';
+            $onsubmit = 'return lti_tool_verify(false)';
+            $platform = Platform::fromConsumerKey(sanitize_text_field($_REQUEST['lti']), $lti_tool_data_connector);
+        } else {
+            $verb = 'Add';
+            $action = get_admin_url() . 'admin.php?action=lti_tool_addplatform';
+            $onsubmit = 'return lti_tool_verify(true)';
+            $platform = new Platform($lti_tool_data_connector);
+        }
+
+        $button_text = esc_attr("{$verb} LTI Platform", 'lti-tool');
+
+        $now = time();
+        $enable_from_example = date('Y-m-d', $now + (24 * 60 * 60));
+        $enable_until_example = date('Y-m-d', $now + (7 * (24 * 60 * 60)));
+
+        $add_html = apply_filters('lti_tool_config_platform', array(), $platform);
+        if (!is_array($add_html)) {
+            $add_html = array();
+        }
+
+        $html = <<< EOD
     <div id="lti_tool_form" class="wrap">
       <h1 class="wp-heading-inline">{$escape("{$verb} LTI Platform")}</h1>
       <p>{$escape("{$verb} a platform connecting to this server.")}</p>
@@ -92,9 +93,9 @@ function lti_tool_add_platform()
       <form id="lti_tool_addlti" name="lti_tool_addlti" method="post" action="{$action}" onsubmit="{$onsubmit}">
 
 EOD;
-    $html .= wp_nonce_field('add_lti_tool', '_wpnonce_add_lti_tool', true, false);
+        $html .= wp_nonce_field('add_lti_tool', '_wpnonce_add_lti_tool', true, false);
 
-    $html .= <<< EOD
+        $html .= <<< EOD
 
     <p class="submit">
       <input id="lti_tool_addltisub_top" class="button-primary" type="submit" value="{$attr($button_text)}" name="lti_tool_addlti_top">
@@ -117,8 +118,8 @@ EOD;
         </tr>
 
 EOD;
-    if ($editmode) {
-        $html .= <<< EOD
+        if ($editmode) {
+            $html .= <<< EOD
         <tr class="form-field form-required">
           <th scope="row">
             <label for="lti_tool_key" id="lti_tool_key_text">
@@ -144,8 +145,8 @@ EOD;
         </tr>
 
 EOD;
-    }
-    $html .= <<< EOD
+        }
+        $html .= <<< EOD
         <tr>
           <th scope="row">
             {$escape('Protected?')}
@@ -198,29 +199,29 @@ EOD;
           </td>
 
 EOD;
-    if ($editmode) {
-        $scope = '';
-        switch (lti_tool_get_scope($platform->getKey())) {
-            case Tool::ID_SCOPE_RESOURCE:
-                $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
-                break;
-            case Tool::ID_SCOPE_CONTEXT:
-                $scope = 'Context: Prefix the ID with the consumer key and context ID';
-                break;
-            case Tool::ID_SCOPE_GLOBAL:
-                $scope = 'Platform: Prefix the ID with the consumer key';
-                break;
-            case Tool::ID_SCOPE_ID_ONLY:
-                $scope = 'Global: Use ID value only';
-                break;
-            case LTI_Tool_WP_User::ID_SCOPE_USERNAME:
-                $scope = 'Username: Use platform username only';
-                break;
-            case LTI_Tool_WP_User::ID_SCOPE_EMAIL:
-                $scope = 'Email: Use email address only';
-                break;
-        }
-        $html .= <<< EOD
+        if ($editmode) {
+            $scope = '';
+            switch (lti_tool_get_scope($platform->getKey())) {
+                case Tool::ID_SCOPE_RESOURCE:
+                    $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
+                    break;
+                case Tool::ID_SCOPE_CONTEXT:
+                    $scope = 'Context: Prefix the ID with the consumer key and context ID';
+                    break;
+                case Tool::ID_SCOPE_GLOBAL:
+                    $scope = 'Platform: Prefix the ID with the consumer key';
+                    break;
+                case Tool::ID_SCOPE_ID_ONLY:
+                    $scope = 'Global: Use ID value only';
+                    break;
+                case LTI_Tool_WP_User::ID_SCOPE_USERNAME:
+                    $scope = 'Username: Use platform username only';
+                    break;
+                case LTI_Tool_WP_User::ID_SCOPE_EMAIL:
+                    $scope = 'Email: Use email address only';
+                    break;
+            }
+            $html .= <<< EOD
         <tr>
           <th scope="row">
             {$escape('Username format')}
@@ -230,9 +231,9 @@ EOD;
           </td>
 
 EOD;
-    } else {
-        $scopes = lti_tool_get_scopes();
-        $html .= <<< EOD
+        } else {
+            $scopes = lti_tool_get_scopes();
+            $html .= <<< EOD
         <tr class="form-field form-required">
           <th scope="row" id="lti_tool_scope_text">
             {$escape('Username format')} <span class="description">{$escape('(required)')}</span>
@@ -241,21 +242,21 @@ EOD;
             <fieldset>
 
 EOD;
-        foreach ($scopes as $scope) {
-            $html .= <<< EOD
+            foreach ($scopes as $scope) {
+                $html .= <<< EOD
         <legend class="screen-reader-text">
           <span>{$escape("{$scope['name']}: {$scope['description']}")}</span>
         </legend>
         <label for="lti_tool_scope{$scope['id']}">
           <input name="lti_tool_scope" type="radio" id="lti_tool_scope{$scope['id']}" value="{$scope['id']}"{$checked($options['scope'],
-                    strval($scope['id']))} />
+                        strval($scope['id']))} />
           <em>{$escape($scope['name'])}</em>: {$escape($scope['description'])}
         </label><br />
 
 EOD;
+            }
         }
-    }
-    $html .= <<< EOD
+        $html .= <<< EOD
     <tr>
       <th scope="row">
         {$escape('Debug mode?')}
@@ -274,12 +275,12 @@ EOD;
     </tr>
 
 EOD;
-    if (isset($add_html['general'])) {
-        $html .= $add_html['general'];
-        unset($add_html['general']);
-    }
+        if (isset($add_html['general'])) {
+            $html .= $add_html['general'];
+            unset($add_html['general']);
+        }
 
-    $html .= <<< EOD
+        $html .= <<< EOD
       </tbody>
     </table>
 
@@ -307,12 +308,12 @@ EOD;
         </tr>
 
 EOD;
-    if (isset($add_html['roles'])) {
-        $html .= $add_html['roles'];
-        unset($add_html['roles']);
-    }
+        if (isset($add_html['roles'])) {
+            $html .= $add_html['roles'];
+            unset($add_html['roles']);
+        }
 
-    $html .= <<< EOD
+        $html .= <<< EOD
       </tbody>
     </table>
 
@@ -405,23 +406,23 @@ EOD;
         </tr>
 
 EOD;
-    if (isset($add_html['ltiv1p3'])) {
-        $html .= $add_html['ltiv1p3'];
-        unset($add_html['ltiv1p3']);
-    }
+        if (isset($add_html['ltiv1p3'])) {
+            $html .= $add_html['ltiv1p3'];
+            unset($add_html['ltiv1p3']);
+        }
 
-    $html .= <<< EOD
+        $html .= <<< EOD
       </tbody>
     </table>
 
 EOD;
 
-    ksort($add_html);
-    foreach ($add_html as $add) {
-        $html .= $add;
-    }
+        ksort($add_html);
+        foreach ($add_html as $add) {
+            $html .= $add;
+        }
 
-    $html .= <<< EOD
+        $html .= <<< EOD
 
     <p class="submit">
       <input id="lti_tool_addltisub" class="button-primary" type="submit" value="{$attr($button_text)}" name="lti_tool_addlti">
@@ -429,32 +430,37 @@ EOD;
     </form>
     </div>
 
-    <div id="lti_tool_keysecret" style="display:none">
-      <h2>{$escape('Details for Platform: ')}<span id="lti_tool_title" style="font-weight: bold;"></span></h2>
+EOD;
+    } else {
+        $platform = Platform::fromConsumerKey(sanitize_text_field($_REQUEST['lti']), $lti_tool_data_connector);
+        $html = <<< EOD
+    <div id="lti_tool_keysecret">
+      <h2>{$escape('Details for Platform: ')}<span id="lti_tool_title" style="font-weight: bold;">{$escape($platform->name)}</span></h2>
 
-      <h3>{$escape('LTI 1.0/1.1/1.2 Configuration: ')}<span id="lti_tool_title" style="font-weight: bold;"></span></h3>
+      <h3>{$escape('LTI 1.0/1.1/1.2 Configuration:')}</h3>
       <table>
         <tr><td>{$escape('Launch URL: ')}</td><td><span style="font-weight: bold;">{$escapeurl(get_option('siteurl') . '/?lti-tool')}</span></td></tr>
-        <tr><td>{$escape('Key: ')}</td><td><span id="lti_tool_key" style="font-weight: bold;"></span></td></tr>
-        <tr><td>{$escape('Secret: ')}</td><td><span id="lti_tool_secret" style="font-weight: bold;"></span></td></tr>
+        <tr><td>{$escape('Key: ')}</td><td><span id="lti_tool_key" style="font-weight: bold;">{$escape($platform->getKey())}</span></td></tr>
+        <tr><td>{$escape('Secret: ')}</td><td><span id="lti_tool_secret" style="font-weight: bold;">{$escape($platform->secret)}</span></td></tr>
         <tr><td>{$escape('Canvas configuration URL: ')}</td><td><span style="font-weight: bold;">{$escapeurl(get_option('siteurl') . '/?lti-tool&configure')}</span></td></tr>
       </table>
       <form action="{$escapeurl(get_option('siteurl') . '/?lti-tool&xml')}" method="post" name="lti_tool_download" id="lti_tool_download">
-        <input id="lti_tool_download_key" type="hidden" value="" name="key" />
+        <input id="lti_tool_download_key" type="hidden" value="{$attr($platform->getKey())}" name="key" />
         <p class="submit">
           <input id="xml" class="button-primary" type="submit" value="{$escape('Download 1EdTech XML')}" name="xml" />
         </p>
       </form>
 
-      <h3>{$escape('LTI 1.3 Configuration: ')}</h3>
+      <h3>{$escape('LTI 1.3 Configuration:')}</h3>
       <table>
         <tr><td>{$escape('Launch URL, Initiate Login URL, Redirection URI: ')}</td><td><span style="font-weight: bold;">{$escapeurl(get_option('siteurl') . '/?lti-tool')}</span></td></tr>
         <tr><td>{$escape('Public Keyset URL: ')}</td><td><span style="font-weight: bold;">{$escapeurl(get_option('siteurl') . '/?lti-tool&keys')}</span></td></tr>
         <tr><td>{$escape('Canvas configuration URL: ')}</td><td><span style="font-weight: bold;">{$escapeurl(get_option('siteurl') . '/?lti-tool&configure=json')}</span></td></tr>
       </table>
     </div>
-EOD;
 
+EOD;
+    }
     echo $html;
 }
 

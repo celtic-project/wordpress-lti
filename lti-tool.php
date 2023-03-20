@@ -173,7 +173,7 @@ function lti_tool_parse_request($wp)
 
     if (isset($_GET['lti-tool']) || isset($_GET['lti'])) {  // Check for 'lti' parameter as well for backward compatibility
         if (isset($_GET['addplatform'])) {
-            require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'DoAddLTIPlatform.php');
+            lti_tool_addplatform();
             exit;
         } else if (isset($_GET['saveoptions'])) {
             require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'DoSaveOptions.php');
@@ -463,12 +463,6 @@ function lti_tool_platforms()
     <?php
 }
 
-function lti_tool_genkeysecret()
-{
-    header('Content-type: application/json');
-    echo '{"Key": "' . lti_tool_get_guid() . '","Secret": "' . Util::getRandomString(32) . '"}';
-}
-
 function lti_tool_addplatform()
 {
     require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'DoAddLTIPlatform.php');
@@ -538,7 +532,6 @@ add_filter('loginout', 'lti_tool_loginout');
 // Add the admin menu bar
 add_action('admin_init', 'lti_tool_options_init');
 
-add_action('admin_action_lti_tool_genkeysecret', 'lti_tool_genkeysecret');
 add_action('admin_action_lti_tool_addplatform', 'lti_tool_addplatform');
 
 function lti_tool_options_init()

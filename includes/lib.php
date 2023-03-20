@@ -578,11 +578,11 @@ function lti_tool_get_user_login($guid, $lti_user, $source = null)
  * Generate the consumer key GUID
   ------------------------------------------------------------------ */
 
-function lti_tool_get_guid()
+function lti_tool_get_guid($lti_scope)
 {
     $options = lti_tool_get_options();
-    if (isset($_GET['lti_scope'])) {
-        $lti_scope = lti_tool_validate_scope($_GET['lti_scope'], $options['scope']);
+    if (!empty($lti_scope)) {
+        $lti_scope = lti_tool_validate_scope($lti_scope, $options['scope']);
     } else {
         $lti_scope = $options['scope'];
     }
