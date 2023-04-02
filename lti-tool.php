@@ -37,6 +37,7 @@ use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\DataConnector\DataConnector;
 use ceLTIc\LTI\Util;
 use ceLTIc\LTI\Jwt\Jwt;
+use ceLTIc\LTI\Enum\LogLevel;
 
 // Prevent loading this file directly
 defined('ABSPATH') || exit;
@@ -116,7 +117,11 @@ function lti_tool_once_wp_loaded()
 
         // Set logging level
         $options = lti_tool_get_options();
+        if (lti_tool_use_lti_library_v5()) {
+            Util::$logLevel = LogLevel::tryFrom(intval($options['loglevel']));
+        } else {
         Util::$logLevel = intval($options['loglevel']);
+        }
 
         // Set the default tool
         $tool = apply_filters('lti_tool_tool', null, null);

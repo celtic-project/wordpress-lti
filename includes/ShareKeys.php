@@ -105,7 +105,13 @@ function lti_tool_create_share_key()
         </ul>
         <?php
         $scope = lti_tool_get_scope($lti_tool_session['key']);
-        if (($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL)) {
+        if (lti_tool_use_lti_library_v5()) {
+            $idScope = IdScope::tryFrom($scope);
+            $isGlobal = ($idScope === IdScope::IdOnly) || ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
+        } else {
+            $isGlobal = ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
+        }
+        if ($isGlobal) {
             echo
             '<p><strong>' .
             esc_html__('A global username format has been selected for this platform so it is NOT recommended to share your site when user accounts are being created.',

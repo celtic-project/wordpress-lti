@@ -73,7 +73,7 @@ class LTI_Tool_WPTool extends Tool
         );
     }
 
-    protected function onLaunch()
+    protected function onLaunch(): void
     {
         $options = lti_tool_get_options();
         $this->init_session();
@@ -91,7 +91,7 @@ class LTI_Tool_WPTool extends Tool
         lti_tool_set_session();
     }
 
-    protected function onRegistration()
+    protected function onRegistration(): void
     {
         $escape = function($value) {
             return esc_html__($value, 'lti-tool');

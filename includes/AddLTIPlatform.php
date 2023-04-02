@@ -22,6 +22,7 @@
 
 use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\Tool;
+use ceLTIc\LTI\Enum\IdScope;
 
 /* -------------------------------------------------------------------
  * lti_tool_add_platform displays the page content for the custom menu
@@ -201,25 +202,43 @@ EOD;
 EOD;
         if ($editmode) {
             $scope = '';
-            switch (lti_tool_get_scope($platform->getKey())) {
-                case Tool::ID_SCOPE_RESOURCE:
+            if (lti_tool_use_lti_library_v5()) {
+                $prefix = lti_tool_get_scope($platform->getKey());
+                $idScope = IdScope::tryFrom(intval($prefix));
+                if ($idScope === IdScope::Resource) {
                     $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
-                    break;
-                case Tool::ID_SCOPE_CONTEXT:
+                } elseif ($idScope === IdScope::Context) {
                     $scope = 'Context: Prefix the ID with the consumer key and context ID';
-                    break;
-                case Tool::ID_SCOPE_GLOBAL:
+                } elseif ($idScope === IdScope::Global) {
                     $scope = 'Platform: Prefix the ID with the consumer key';
-                    break;
-                case Tool::ID_SCOPE_ID_ONLY:
+                } elseif ($idScope === IdScope::IdOnly) {
                     $scope = 'Global: Use ID value only';
-                    break;
-                case LTI_Tool_WP_User::ID_SCOPE_USERNAME:
+                } elseif ($prefix === LTI_Tool_WP_User::ID_SCOPE_USERNAME) {
                     $scope = 'Username: Use platform username only';
-                    break;
-                case LTI_Tool_WP_User::ID_SCOPE_EMAIL:
+                } elseif ($prefix === LTI_Tool_WP_User::ID_SCOPE_EMAIL) {
                     $scope = 'Email: Use email address only';
-                    break;
+                }
+            } else {
+                switch (lti_tool_get_scope($platform->getKey())) {
+                    case Tool::ID_SCOPE_RESOURCE:
+                        $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
+                        break;
+                    case Tool::ID_SCOPE_CONTEXT:
+                        $scope = 'Context: Prefix the ID with the consumer key and context ID';
+                        break;
+                    case Tool::ID_SCOPE_GLOBAL:
+                        $scope = 'Platform: Prefix the ID with the consumer key';
+                        break;
+                    case Tool::ID_SCOPE_ID_ONLY:
+                        $scope = 'Global: Use ID value only';
+                        break;
+                    case LTI_Tool_WP_User::ID_SCOPE_USERNAME:
+                        $scope = 'Username: Use platform username only';
+                        break;
+                    case LTI_Tool_WP_User::ID_SCOPE_EMAIL:
+                        $scope = 'Email: Use email address only';
+                        break;
+                }
             }
             $html .= <<< EOD
         <tr>
