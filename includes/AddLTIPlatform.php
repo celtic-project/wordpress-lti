@@ -209,7 +209,7 @@ EOD;
                     $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
                 } elseif ($idScope === IdScope::Context) {
                     $scope = 'Context: Prefix the ID with the consumer key and context ID';
-                } elseif ($idScope === IdScope::Global) {
+                } elseif ($idScope === IdScope::Platform) {
                     $scope = 'Platform: Prefix the ID with the consumer key';
                 } elseif ($idScope === IdScope::IdOnly) {
                     $scope = 'Global: Use ID value only';

@@ -695,7 +695,7 @@ function lti_tool_get_options()
         if (lti_tool_use_lti_library_v5()) {
             $enum = IdScope::Resource;  // Avoids parse error in PHP < 8.1
             $resourceIdScope = strval($enum->value);
-            $enum = IdScope::Global;
+            $enum = IdScope::Platform;
             $globalIdScope = strval($enum->value);
             $enum = LogLevel::None;
             $noneLogLevel = strval($enum->value);
@@ -805,7 +805,7 @@ function lti_tool_do_save_email($key = null)
             $scope = lti_tool_get_scope($key);
             if (lti_tool_use_lti_library_v5()) {
                 $idScope = IdScope::tryFrom(intval($scope));
-                $saveemail = ($idScope === IdScope::Global) || ($idScope === IdScope::IdOnly) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
+                $saveemail = ($idScope === IdScope::Platform) || ($idScope === IdScope::IdOnly) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
             } else {
                 $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
             }
@@ -860,7 +860,7 @@ function lti_tool_get_scopes()
         $resourceScope = $idScope->value;
         $idScope = IdScope::Context;
         $contextScope = $idScope->value;
-        $idScope = IdScope::Global;
+        $idScope = IdScope::Platform;
         $globalScope = $idScope->value;
         $idScope = IdScope::IdOnly;
         $idOnlyScope = $idScope->value;
