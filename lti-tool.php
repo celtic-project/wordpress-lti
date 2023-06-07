@@ -11,8 +11,8 @@
  */
 
 /*
- *  wordpress-lti - WordPress module to add LTI support
- *  Copyright (C) 2022  Simon Booth, Stephen P Vickers
+ *  wordpress-lti - Enable WordPress to act as an LTI tool
+ *  Copyright (C) 2023  Simon Booth, Stephen P Vickers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
