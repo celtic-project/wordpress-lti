@@ -66,10 +66,7 @@ class LTI_Tool_WPTool extends Tool
         $this->kid = $options['lti13_kid'];
         $this->rsaKey = $options['lti13_privatekey'];
         $this->requiredScopes = array(
-            LTI\Service\Membership::$SCOPE,
-            LTI\Service\Result::$SCOPE,
-            LTI\Service\Score::$SCOPE,
-            'https://purl.imsglobal.org/spec/lti-ext/scope/outcomes'
+            LTI\Service\Membership::$SCOPE
         );
     }
 

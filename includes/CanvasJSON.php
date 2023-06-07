@@ -20,6 +20,8 @@
  *  Contact: Stephen P Vickers <stephen@spvsoftwareproducts.com>
  */
 
+use ceLTIc\LTI\Service;
+
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
 $siteurl = get_bloginfo('url') . '/?lti-tool';
@@ -42,8 +44,7 @@ $configuration = (object) array(
         'oidc_initiation_url' => $siteurl,
         'target_link_uri' => $siteurl,
         'scopes' => array(
-            'https://purl.imsglobal.org/spec/lti-ags/scope/score',
-            'https://purl.imsglobal.org/spec/lti-nrps/scope/contextmembership.readonly'
+            Service\Membership::$SCOPE
         ),
         'extensions' => array((object) array(
                 'domain' => $domain,
