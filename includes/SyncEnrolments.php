@@ -23,6 +23,7 @@
 use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\ResourceLink;
 use ceLTIc\LTI\UserResult;
+use ceLTIc\LTI\Enum\ServiceAction;
 
 /* -------------------------------------------------------------------
  * This function handles the membership service (from the platform)
@@ -209,7 +210,11 @@ function lti_tool_sync_enrolments()
             // If platform has setting service then get date/time of last synchronisation
             $last_sync = '';
             if ($resource_link->hasSettingService()) {
-                $last_sync = $resource_link->doSettingService(ResourceLink::EXT_READ);
+                if (lti_tool_use_lti_library_v5()) {
+                    $last_sync = $resource_link->doSettingService(ServiceAction::Read);
+                } else {
+                    $last_sync = $resource_link->doSettingService(ResourceLink::EXT_READ);
+                }
             }
 
             // Simply produce descriptive text when page first encountered.

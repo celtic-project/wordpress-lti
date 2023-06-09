@@ -770,8 +770,17 @@ function lti_tool_loglevel_callback()
     $current = $options[$name];
     printf('<select name="lti_tool_options[%s]" id="%s">', esc_attr($name), esc_attr($name));
     echo "\n";
-    $loglevels = array(__('No logging', 'lti-tool') => strval(Util::LOGLEVEL_NONE), __('Log errors only', 'lti-tool') => strval(Util::LOGLEVEL_ERROR),
-        __('Log error and information messages', 'lti-tool') => strval(Util::LOGLEVEL_INFO), __('Log all messages', 'lti-tool') => strval(Util::LOGLEVEL_DEBUG));
+    if (lti_tool_use_lti_library_v5()) {
+        $none_loglevel = LogLevel::None;  // Avoid parse error in PHP < 8.1
+        $error_loglevel = LogLevel::Error;
+        $info_loglevel = LogLevel::Info;
+        $debug_loglevel = LogLevel::Debug;
+        $loglevels = array(__('No logging', 'lti-tool') => strval($none_loglevel->value), __('Log errors only', 'lti-tool') => strval($error_loglevel->value),
+            __('Log error and information messages', 'lti-tool') => strval($info_loglevel->value), __('Log all messages', 'lti-tool') => strval($debug_loglevel->value));
+    } else {
+        $loglevels = array(__('No logging', 'lti-tool') => strval(Util::LOGLEVEL_NONE), __('Log errors only', 'lti-tool') => strval(Util::LOGLEVEL_ERROR),
+            __('Log error and information messages', 'lti-tool') => strval(Util::LOGLEVEL_INFO), __('Log all messages', 'lti-tool') => strval(Util::LOGLEVEL_DEBUG));
+    }
     foreach ($loglevels as $key => $value) {
         $selected = ($value === $current) ? ' selected' : '';
         printf('  <option value="%s"%s>%s</option>', esc_attr($value), esc_attr($selected), esc_html($key));

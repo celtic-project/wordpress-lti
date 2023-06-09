@@ -202,24 +202,26 @@ EOD;
 EOD;
         if ($editmode) {
             $scope = '';
+            $prefix = lti_tool_get_scope($platform->getKey());
             if (lti_tool_use_lti_library_v5()) {
-                $prefix = lti_tool_get_scope($platform->getKey());
-                $idScope = IdScope::tryFrom(intval($prefix));
-                if ($idScope === IdScope::Resource) {
-                    $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
-                } elseif ($idScope === IdScope::Context) {
-                    $scope = 'Context: Prefix the ID with the consumer key and context ID';
-                } elseif ($idScope === IdScope::Platform) {
-                    $scope = 'Platform: Prefix the ID with the consumer key';
-                } elseif ($idScope === IdScope::IdOnly) {
-                    $scope = 'Global: Use ID value only';
+                if (is_numeric($prefix)) {
+                    $idScope = IdScope::tryFrom(intval($prefix));
+                    if ($idScope === IdScope::Resource) {
+                        $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
+                    } elseif ($idScope === IdScope::Context) {
+                        $scope = 'Context: Prefix the ID with the consumer key and context ID';
+                    } elseif ($idScope === IdScope::Platform) {
+                        $scope = 'Platform: Prefix the ID with the consumer key';
+                    } elseif ($idScope === IdScope::IdOnly) {
+                        $scope = 'Global: Use ID value only';
+                    }
                 } elseif ($prefix === LTI_Tool_WP_User::ID_SCOPE_USERNAME) {
                     $scope = 'Username: Use platform username only';
                 } elseif ($prefix === LTI_Tool_WP_User::ID_SCOPE_EMAIL) {
                     $scope = 'Email: Use email address only';
                 }
             } else {
-                switch (lti_tool_get_scope($platform->getKey())) {
+                switch ($prefix) {
                     case Tool::ID_SCOPE_RESOURCE:
                         $scope = 'Resource: Prefix the ID with the consumer key and resource link ID';
                         break;

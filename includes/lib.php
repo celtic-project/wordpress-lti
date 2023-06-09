@@ -27,6 +27,7 @@ use ceLTIc\LTI\DataConnector\DataConnector;
 use ceLTIc\LTI\Util;
 use ceLTIc\LTI\Enum\LogLevel;
 use ceLTIc\LTI\Enum\IdScope;
+use ceLTIc\LTI\Enum\ServiceAction;
 
 global $wpdb;
 
@@ -503,7 +504,11 @@ function lti_tool_update($with_deletions)
     }
 
     if ($resource_link->hasSettingService()) {
-        $resource_link->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
+        if (lti_tool_use_lti_library_v5()) {
+            $resource_link->doSettingService(ServiceAction::Write, date('d-M-Y H:i'));
+        } else {
+            $resource_link->doSettingService(ResourceLink::EXT_WRITE, date('d-M-Y H:i'));
+        }
     }
 
     lti_tool_set_session();
@@ -567,6 +572,9 @@ function lti_tool_get_user_login($guid, $lti_user, $source = null)
         $user_login = $lti_user->username;
     } elseif ($scope_userid === LTI_Tool_WP_User::ID_SCOPE_EMAIL) {
         $user_login = $lti_user->email;
+    } elseif (lti_tool_use_lti_library_v5()) {
+        $scope = IdScope::tryFrom($scope_userid);
+        $user_login = $lti_user->getId($scope, $source);
     } else {
         $user_login = $lti_user->getId($scope_userid, $source);
     }
@@ -583,11 +591,7 @@ function lti_tool_get_user_login($guid, $lti_user, $source = null)
 function lti_tool_get_guid($lti_scope)
 {
     $options = lti_tool_get_options();
-    if (!empty($lti_scope)) {
-        $lti_scope = lti_tool_validate_scope($lti_scope, $options['scope']);
-    } else {
-        $lti_scope = $options['scope'];
-    }
+    $lti_scope = lti_tool_validate_scope($lti_scope, $options['scope']);
 
     $str = strtoupper(Util::getRandomString(6));
     return 'WP' . $lti_scope . '-' . $str;
@@ -693,15 +697,15 @@ function lti_tool_get_options()
 
     if (empty($lti_tool_options)) {
         if (lti_tool_use_lti_library_v5()) {
-            $enum = IdScope::Resource;  // Avoids parse error in PHP < 8.1
+            $enum = IdScope::Resource;  // Avoid parse error in PHP < 8.1
             $resourceIdScope = strval($enum->value);
             $enum = IdScope::Platform;
-            $globalIdScope = strval($enum->value);
+            $platformIdScope = strval($enum->value);
             $enum = LogLevel::None;
             $noneLogLevel = strval($enum->value);
         } else {
             $resourceIdScope = strval(Tool::ID_SCOPE_RESOURCE);
-            $globalIdScope = strval(Tool::ID_SCOPE_GLOBAL);
+            $platformIdScope = strval(Tool::ID_SCOPE_GLOBAL);
             $noneLogLevel = strval(Util::LOGLEVEL_NONE);
         }
         $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => $resourceIdScope,
@@ -712,7 +716,7 @@ function lti_tool_get_options()
         if (is_multisite()) {
             $options = get_site_option('lti_tool_options', array());
         } else {
-            $default_options['scope'] = $globalIdScope;
+            $default_options['scope'] = $platformIdScope;
             $default_options['role_staff'] = 'editor';
             $options = get_option('lti_tool_options', array());
         }
@@ -803,11 +807,13 @@ function lti_tool_do_save_email($key = null)
         }
         if (!empty($key)) {
             $scope = lti_tool_get_scope($key);
-            if (lti_tool_use_lti_library_v5()) {
-                $idScope = IdScope::tryFrom(intval($scope));
-                $saveemail = ($idScope === IdScope::Platform) || ($idScope === IdScope::IdOnly) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
-            } else {
+            if (!lti_tool_use_lti_library_v5()) {
                 $saveemail = ($scope === Tool::ID_SCOPE_GLOBAL) || ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
+            } elseif (is_numeric($scope)) {
+                $idScope = IdScope::tryFrom(intval($scope));
+                $saveemail = ($idScope === IdScope::Platform) || ($idScope === IdScope::IdOnly);
+            } else {
+                $saveemail = ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
             }
         }
     }
@@ -856,18 +862,18 @@ EOD;
 function lti_tool_get_scopes()
 {
     if (lti_tool_use_lti_library_v5()) {
-        $idScope = IdScope::Resource;
+        $idScope = IdScope::Resource;  // Avoid parse error in PHP < 8.1
         $resourceScope = $idScope->value;
         $idScope = IdScope::Context;
         $contextScope = $idScope->value;
         $idScope = IdScope::Platform;
-        $globalScope = $idScope->value;
+        $platformScope = $idScope->value;
         $idScope = IdScope::IdOnly;
         $idOnlyScope = $idScope->value;
     } else {
         $resourceScope = Tool::ID_SCOPE_RESOURCE;
         $contextScope = Tool::ID_SCOPE_CONTEXT;
-        $globalScope = Tool::ID_SCOPE_GLOBAL;
+        $platformScope = Tool::ID_SCOPE_GLOBAL;
         $idOnlyScope = Tool::ID_SCOPE_ID_ONLY;
     }
     $scopes = array();
@@ -875,7 +881,7 @@ function lti_tool_get_scopes()
         $scopes[strval($resourceScope)] = array('id' => $resourceScope, 'name' => 'Resource', 'description' => 'Prefix the ID with the consumer key and resource link ID');
         $scopes[strval($contextScope)] = array('id' => $contextScope, 'name' => 'Context', 'description' => 'Prefix the ID with the consumer key and context ID');
     }
-    $scopes[strval($globalScope)] = array('id' => $globalScope, 'name' => 'Platform', 'description' => 'Prefix an ID with the consumer key');
+    $scopes[strval($platformScope)] = array('id' => $platformScope, 'name' => 'Platform', 'description' => 'Prefix an ID with the consumer key');
     $scopes[strval($idOnlyScope)] = array('id' => $idOnlyScope, 'name' => 'Global', 'description' => 'Use ID value only');
     $scopes[LTI_Tool_WP_User::ID_SCOPE_USERNAME] = array('id' => LTI_Tool_WP_User::ID_SCOPE_USERNAME, 'name' => 'Username', 'description' => 'Use platform username only');
     $scopes[LTI_Tool_WP_User::ID_SCOPE_EMAIL] = array('id' => LTI_Tool_WP_User::ID_SCOPE_EMAIL, 'name' => 'Email', 'description' => 'Use email address only');
@@ -883,7 +889,7 @@ function lti_tool_get_scopes()
     $scopes = apply_filters('lti_tool_id_scopes', $scopes);
 
     if (empty($scopes)) {
-        $scopes[strval($globalScope)] = array('id' => $globalScope, 'name' => 'Platform', 'description' => 'Prefix an ID with the consumer key');
+        $scopes[strval($platformScope)] = array('id' => $platformScope, 'name' => 'Platform', 'description' => 'Prefix an ID with the consumer key');
     }
 
     return $scopes;
@@ -895,22 +901,27 @@ function lti_tool_get_scopes()
 
 function lti_tool_validate_scope($scope, $default_scope)
 {
-    $scope = sanitize_text_field($scope);
-    switch ($scope) {
-        case '3':
-        case '2':
-            if (!is_multisite()) {
+    if (!empty($scope)) {
+
+        $scope = sanitize_text_field($scope);
+        switch ($scope) {
+            case '3':
+            case '2':
+                if (!is_multisite()) {
+                    $scope = $default_scope;
+                }
+                break;
+            case '1':
+            case '0':
+            case 'U':
+            case 'E':
+                break;
+            default:
                 $scope = $default_scope;
-            }
-            break;
-        case '1':
-        case '0':
-        case 'U':
-        case 'E':
-            break;
-        default:
-            $scope = $default_scope;
-            break;
+                break;
+        }
+    } else {
+        $scope = $default_scope;
     }
 
     return $scope;
@@ -922,5 +933,5 @@ function lti_tool_validate_scope($scope, $default_scope)
 
 function lti_tool_use_lti_library_v5()
 {
-    return function_exists('enum_exists') && enum_exists('ceLTIc\\LTI\\Enum\\LogLevel');
+    return function_exists('enum_exists') && enum_exists('ceLTIc\\LTI\\Enum\\LtiVersion');
 }

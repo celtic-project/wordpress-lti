@@ -22,6 +22,7 @@
 
 use ceLTIc\LTI\Platform;
 use ceLTIc\LTI\Util;
+use ceLTIc\LTI\Enum\IdScope;
 
 global $lti_tool_data_connector;
 
@@ -52,7 +53,14 @@ if (!empty($_POST) && check_admin_referer('add_lti_tool', '_wpnonce_add_lti_tool
     $platform->protected = (isset($_POST['lti_tool_protected']) && (sanitize_text_field($_POST['lti_tool_protected']) === 'true')) ? true : false;
     $platform->enableFrom = (!empty($_POST['lti_tool_enable_from'])) ? strtotime(sanitize_text_field($_POST['lti_tool_enable_from'])) : null;
     $platform->enableUntil = (!empty($_POST['lti_tool_enable_until'])) ? strtotime(sanitize_text_field($_POST['lti_tool_enable_until'])) : null;
-    $platform->idScope = (!empty($_POST['lti_tool_scope'])) ? lti_tool_validate_scope($_POST['lti_tool_scope'], $options['scope']) : $options['scope'];
+    $scope = lti_tool_get_scope($key);
+    if (!lti_tool_use_lti_library_v5()) {
+        $platform->idScope = $scope;
+    } elseif (is_int($scope)) {
+        $platform->idScope = IdScope::tryFrom($scope);
+    } else {
+        $platform->idScope = null;
+    }
     $platform->debugMode = (isset($_POST['lti_tool_debug']) && (sanitize_text_field($_POST['lti_tool_debug']) === 'true')) ? true : false;
     $platform->platformId = (!empty($_POST['lti_tool_platformid'])) ? sanitize_text_field($_POST['lti_tool_platformid']) : null;
     $platform->clientId = (!empty($_POST['lti_tool_clientid'])) ? sanitize_text_field($_POST['lti_tool_clientid']) : null;

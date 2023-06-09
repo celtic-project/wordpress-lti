@@ -105,11 +105,12 @@ function lti_tool_create_share_key()
         </ul>
         <?php
         $scope = lti_tool_get_scope($lti_tool_session['key']);
-        if (lti_tool_use_lti_library_v5()) {
-            $idScope = IdScope::tryFrom($scope);
-            $isGlobal = ($idScope === IdScope::IdOnly) || ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
-        } else {
+        if (!lti_tool_use_lti_library_v5()) {
             $isGlobal = ($scope === Tool::ID_SCOPE_ID_ONLY) || ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
+        } elseif (is_numeric($scope)) {
+            $isGlobal = (IdScope::tryFrom(intval($scope)) === IdScope::IdOnly);
+        } else {
+            $isGlobal = ($scope === LTI_Tool_WP_User::ID_SCOPE_USERNAME) || ($scope === LTI_Tool_WP_User::ID_SCOPE_EMAIL);
         }
         if ($isGlobal) {
             echo
