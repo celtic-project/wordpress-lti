@@ -139,7 +139,7 @@ EOD;
 
 EOD;
             foreach ($scopes as $scope) {
-                $checked = ($options['scope'] === strval(scope['id'])) ? ' checked' : '';
+                $checked = ($options['scope'] === strval($scope['id'])) ? ' checked' : '';
                 echo <<< EOD
         <legend class="screen-reader-text">
           <span>{$escape("{$scope['name']}: {$scope['description']}")}</span>
