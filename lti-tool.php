@@ -239,9 +239,15 @@ function lti_tool_register_manage_submenu_page()
         return;
     }
 
+    if (is_multisite()) {
+        $default_capability = 'manage_network_options';
+    } else {
+        $default_capability = 'manage_options';
+    }
+
     $manage_lti_page = add_menu_page(__('LTI Platforms', 'lti-tool'), // <title>...</title>
         __('LTI Platforms', 'lti-tool'), // Menu title
-        apply_filters('lti_tool_admin_menu_page_capability', null), // Capability needed to see this page
+        apply_filters('lti_tool_admin_menu_page_capability', $default_capability), // Capability needed to see this page
         'lti_tool_platforms', // admin.php?page=lti_tool_platforms
         'lti_tool_platforms', // Function to call
         plugins_url('images/1edtech-20.png', __FILE__)); // Image for menu item
@@ -255,12 +261,12 @@ function lti_tool_register_manage_submenu_page()
     add_submenu_page('lti_tool_platforms', // Menu page for this submenu
         __('Add New', 'lti-tool'), // <title>...</title>
         __('Add New', 'lti-tool'), // Menu title
-        apply_filters('lti_tool_admin_menu_page_capability', null), // Capability needed to see this page
+        apply_filters('lti_tool_admin_menu_page_capability', $default_capability), // Capability needed to see this page
         'lti_tool_add_platform', // The slug name for this menu
         'lti_tool_add_platform');                // Function to call
 
     add_submenu_page('lti_tool_platforms', __('Settings', 'lti-tool'), __('Settings', 'lti-tool'), 
-        apply_filters('lti_tool_admin_menu_page_capability', null), 'lti_tool_options', 'lti_tool_options_page');
+        apply_filters('lti_tool_admin_menu_page_capability', $default_capability), 'lti_tool_options', 'lti_tool_options_page');
 }
 
 // Add the Manage LTI option on the Network Admin page
@@ -269,19 +275,6 @@ if (is_multisite()) {
 } else {
     add_action('admin_menu', 'lti_tool_register_manage_submenu_page');
 }
-
-/* -------------------------------------------------------------------
- * Filter the admin menu page capability
-  ------------------------------------------------------------------ */
-
-function lti_tool_filter_admin_menu_page_capability() {
-    if (is_multisite()) {
-        return 'manage_network_options';
-    } else {
-        return 'manage_options';
-    }
-}
-add_filter('lti_tool_admin_menu_page_capability', 'lti_tool_filter_admin_menu_page_capability');
 
 /* -------------------------------------------------------------------
  * Add script for input form pages to prompt before leaving changes unsaved
