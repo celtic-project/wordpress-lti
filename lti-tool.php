@@ -239,9 +239,10 @@ function lti_tool_register_manage_submenu_page()
         return;
     }
 
+    $capability = lti_tool_get_admin_menu_page_capability();
     $manage_lti_page = add_menu_page(__('LTI Platforms', 'lti-tool'), // <title>...</title>
         __('LTI Platforms', 'lti-tool'), // Menu title
-        'edit_plugins', // Capability needed to see this page
+        $capability, // Capability needed to see this page
         'lti_tool_platforms', // admin.php?page=lti_tool_platforms
         'lti_tool_platforms', // Function to call
         plugins_url('images/1edtech-20.png', __FILE__)); // Image for menu item
@@ -255,12 +256,12 @@ function lti_tool_register_manage_submenu_page()
     add_submenu_page('lti_tool_platforms', // Menu page for this submenu
         __('Add New', 'lti-tool'), // <title>...</title>
         __('Add New', 'lti-tool'), // Menu title
-        'edit_plugins', // Capability needed to see this page
+        $capability, // Capability needed to see this page
         'lti_tool_add_platform', // The slug name for this menu
         'lti_tool_add_platform');                // Function to call
 
-    add_submenu_page('lti_tool_platforms', __('Settings', 'lti-tool'), __('Settings', 'lti-tool'), 'edit_plugins',
-        'lti_tool_options', 'lti_tool_options_page');
+    add_submenu_page('lti_tool_platforms', __('Settings', 'lti-tool'), __('Settings', 'lti-tool'), $capability, 'lti_tool_options',
+        'lti_tool_options_page');
 }
 
 // Add the Manage LTI option on the Network Admin page

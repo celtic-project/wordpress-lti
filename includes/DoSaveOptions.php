@@ -22,10 +22,10 @@
 
 require_once(ABSPATH . 'wp-admin/includes/template.php');
 
-if (!current_user_can('edit_plugins')) {
+if (!current_user_can(lti_tool_get_admin_menu_page_capability())) {
     wp_die(
         '<h1>' . __('You need a higher level of permission.', 'lti-tool') . '</h1>' .
-        '<p>' . __('Sorry, you are not allowed to edit plugins for this site.', 'lti-tool') . '</p>', 403
+        '<p>' . __('Sorry, you are not allowed to access admin options for this site.', 'lti-tool') . '</p>', 403
     );
 }
 

@@ -936,3 +936,19 @@ function lti_tool_use_lti_library_v5()
 {
     return function_exists('enum_exists') && enum_exists('ceLTIc\\LTI\\Enum\\LtiVersion');
 }
+
+/* -------------------------------------------------------------------
+ * Get capability required to access admin options
+  ------------------------------------------------------------------ */
+
+function lti_tool_get_admin_menu_page_capability()
+{
+    if (is_multisite()) {
+        $capability = 'manage_network_options';
+    } else {
+        $capability = 'manage_options';
+    }
+    $capability = apply_filters('lti_tool_admin_menu_page_capability', $capability);
+
+    return $capability;
+}

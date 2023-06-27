@@ -24,7 +24,7 @@ use ceLTIc\LTI\Platform;
 
 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'lib.php');
 
-if (!current_user_can('edit_plugins')) {
+if (!current_user_can(lti_tool_get_admin_menu_page_capability())) {
     http_response_code(401);
     die;
 }
