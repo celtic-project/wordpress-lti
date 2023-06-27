@@ -117,6 +117,7 @@ function lti_tool_delete($key)
     $platform = Platform::fromConsumerKey($key, $lti_tool_data_connector);
     $platform->delete();
 
+    $options = lti_tool_get_options();
     if (is_multisite() && !empty($options['uninstallblogs'])) {
         // Now delete the blogs associated with this key. The WP function that lists all
         // blog is deprecated and so we'll do a direct DB access (look the other way)
