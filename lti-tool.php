@@ -3,7 +3,7 @@
   Plugin Name: LTI Tool
   Plugin URI: http://www.spvsoftwareproducts.com/php/wordpress-lti/
   Description: This plugin allows WordPress to be integrated as a tool with on-line courses using the 1EdTech (formerly IMS) Learning Tools Interoperability (LTI) specification.
-  Version: 3.2.0
+  Version: 3.2.1
   Network: true
   Author: Simon Booth, Stephen P Vickers
   Author URI: http://www.celtic-project.org/
@@ -445,8 +445,8 @@ function lti_tool_platforms()
       if (is_multisite())
           echo 'network/';
       ?>admin.php?page=lti_tool_add_platform" class="page-title-action"><?php
-         _e('Add New', 'lti-tool');
-         ?></a>
+           _e('Add New', 'lti-tool');
+           ?></a>
       <hr class="wp-header-end">
       <p>
         <?php echo __('Launch URL, Initiate Login URL, Redirection URI, Dynamic Registration URL: ', 'lti-tool') . '<b>' . esc_html(get_option('siteurl')) . '/?lti-tool</b><br>'; ?>
