@@ -1,6 +1,6 @@
 {
   "name": "celtic/wordpress-lti",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "description": "Module to enable WordPress to act as an LTI tool",
   "keywords": ["wordpress", "plugin", "LTI", "tool"],
   "type": "wordpress-plugin",

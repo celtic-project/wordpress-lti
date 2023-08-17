@@ -228,7 +228,13 @@ EOD;
                     $this->platform->enableFrom = $now;
                     $this->platform->enableUntil = $now + (intval($options['registration_enablefordays']) * 24 * 60 * 60);
                 }
-                $this->platform->idScope = $scope;
+                if (!lti_tool_use_lti_library_v5()) {
+                    $this->platform->idScope = $scope;
+                } elseif (is_int($scope)) {
+                    $this->platform->idScope = IdScope::tryFrom($scope);
+                } else {
+                    $this->platform->idScope = null;
+                }
                 $this->platform->debugMode = false;
                 $this->platform = apply_filters('lti_tool_save_platform', $this->platform, $options, array());
                 $this->ok = $this->platform->save();
