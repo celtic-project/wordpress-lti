@@ -212,6 +212,9 @@ function lti_tool_parse_request($wp)
         // Clear any existing session variables for this plugin
         lti_tool_reset_session(true);
 
+        // Deal with backslashes before they cause auth checks to fail
+        lti_tool_strip_slashes();
+
         // Do the necessary
         $tool = apply_filters('lti_tool_tool', null, $lti_tool_data_connector);
         if (empty($tool)) {

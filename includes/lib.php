@@ -549,6 +549,15 @@ function lti_tool_delete_share($id)
 }
 
 /* -------------------------------------------------------------------
+ * Strip slashes from $_POST
+  ------------------------------------------------------------------ */
+
+function lti_tool_strip_slashes()
+{
+    $_POST = stripslashes_deep($_POST);
+}
+
+/* -------------------------------------------------------------------
  * Extract the username scope from the consumer key/GUID
   ------------------------------------------------------------------ */
 
