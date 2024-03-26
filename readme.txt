@@ -2,7 +2,7 @@
 Contributors: spb1, spvickers
 Tags: lti, ims, 1edtech, learning tools interoperability, celtic
 Requires at least: 3.0
-Tested up to: 6.3.2
+Tested up to: 6.5
 Requires PHP: 7.0
 Stable tag: 3.2.3
 License: GNU General Public License Version 3

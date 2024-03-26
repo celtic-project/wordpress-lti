@@ -5,6 +5,8 @@
   Description: This plugin allows WordPress to be integrated as a tool with on-line courses using the 1EdTech (formerly IMS) Learning Tools Interoperability (LTI) specification.
   Version: 3.2.3
   Network: true
+  Requires at least: 3.0
+  Requires PHP: 7.0
   Author: Simon Booth, Stephen P Vickers
   Author URI: http://www.celtic-project.org/
   License: GPL3
