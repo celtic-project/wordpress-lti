@@ -109,6 +109,16 @@ function lti_tool_once_wp_loaded()
             add_action('admin_notices', 'lti_tool_error_deactivate');
         }
     }
+    if ($allow && isset($_GET['activate'])) {
+        $allow = lti_tool_create_db();
+        if (!$allow) {
+            if (is_multisite()) {
+                add_action('network_admin_notices', 'lti_tool_error_database');
+            } else {
+                add_action('admin_notices', 'lti_tool_error_database');
+            }
+        }
+    }
     if (!$allow) {
         deactivate_plugins(plugin_basename(__FILE__));
         if (isset($_GET['activate'])) {
@@ -157,6 +167,19 @@ function lti_tool_error_deactivate()
 {
     $allowed = array('em' => array());
     $msg = wp_kses(__('The <em>LTI Tool</em> plugin has been deactivated because a dependency is missing; either use <em>Composer</em> to install the dependent libraries or activate the <em>ceLTIc LTI Library</em> plugin.',
+            'lti-tool'), $allowed);
+    echo <<< EOD
+  <div class="notice notice-error">
+  <p>{$msg}</p>
+  </div>
+
+EOD;
+}
+
+function lti_tool_error_database()
+{
+    $allowed = array('em' => array());
+    $msg = wp_kses(__('The <em>LTI Tool</em> plugin has not been activated because an error occurred creating the database tables (see the WoirdPress error log file for details).',
             'lti-tool'), $allowed);
     echo <<< EOD
   <div class="notice notice-error">
@@ -896,19 +919,6 @@ function lti_tool_options_page()
     </div>
     <?php
 }
-
-/* -------------------------------------------------------------------
- * Activate hook to create database tables
-  ------------------------------------------------------------------ */
-
-function lti_tool_create_db_tables()
-{
-    if (lti_tool_check_lti_library()) {
-        lti_tool_create_db();
-    }
-}
-
-register_activation_hook(__FILE__, 'lti_tool_create_db_tables');
 
 /* -------------------------------------------------------------------
  * Remove the Your Profile from the side-menu
