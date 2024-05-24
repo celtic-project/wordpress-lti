@@ -1,6 +1,6 @@
 === LTI Tool ===
 Contributors: spb1, spvickers
-Tags: lti, ims, 1edtech, learning tools interoperability, celtic
+Tags: lti, 1edtech, learning tools interoperability, celtic, tool
 Requires at least: 3.0
 Tested up to: 6.5
 Requires PHP: 7.0
