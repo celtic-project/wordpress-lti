@@ -280,7 +280,10 @@ EOD;
         // Apply the function pre_user_login before saving to the DB.
         $user_login = apply_filters('pre_user_login', $user_login);
 
-        $this->ok = !empty($user_login);
+        if (empty($user_login)) {
+            $this->ok = false;
+            $this->reason = 'Unable to generate a WordPress user_login';
+        }
 
         return $user_login;
     }
@@ -384,7 +387,7 @@ EOD;
 
                 // Blog will exist by this point unless this user is student/no role.
                 if (!$blog_id) {
-                    $this->reason = __('No Blog has been created for this context', 'lti-tool');
+                    $this->reason = __('No blog exists for this connection', 'lti-tool');
                     $this->ok = false;
                 } else {
                     // Update/create blog name
