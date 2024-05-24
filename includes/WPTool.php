@@ -344,9 +344,9 @@ EOD;
         $blog_id = null;
 
         // set up some useful variables
-        $key = $this->resourceLink->getKey();
-        $context_id = $this->context->getId();
-        $resource_id = $this->resourceLink->getId();
+        $key = !empty($this->resourceLink) ? $this->resourceLink->getKey() : '';
+        $context_id = !empty($this->context) ? $this->context->getId() : '';
+        $resource_id = !empty($this->resourceLink) ? $this->resourceLink->getId() : '';
 
         if (is_multisite()) {  // Create blog
             $use_context = false;
