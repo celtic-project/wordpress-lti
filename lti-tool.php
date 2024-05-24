@@ -1017,10 +1017,12 @@ add_action('auth_cookie_valid', 'lti_tool_init_session', 10, 2);
 
 function lti_tool_plugin_settings_link($links)
 {
-    $url = add_query_arg(array('page' => "lti_tool_options"), 'admin.php');
-    array_unshift($links,
-        sprintf('<a href="%1$s" title="%2$s">%3$s</a>', esc_url($url), esc_html__('Change plugin settings', 'lti-tool'),
-            esc_html__('Settings', 'lti-tool')));
+    if (!isset($links['activate'])) {
+        $url = add_query_arg(array('page' => "lti_tool_options"), 'admin.php');
+        array_unshift($links,
+            sprintf('<a href="%1$s" title="%2$s">%3$s</a>', esc_url($url), esc_html__('Change plugin settings', 'lti-tool'),
+                esc_html__('Settings', 'lti-tool')));
+    }
 
     return $links;
 }
