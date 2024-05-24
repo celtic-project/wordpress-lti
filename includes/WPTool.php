@@ -56,9 +56,6 @@ class LTI_Tool_WPTool extends Tool
         $this->resourceHandlers[] = new Profile\ResourceHandler(
             new Profile\Item('wp', 'WordPress', 'Create a beautiful blog.'), '?lti-tool&icon', $requiredMessages, array());
 
-        $this->setParameterConstraint('resource_link_id', true, 40, array('basic-lti-launch-request'));
-        $this->setParameterConstraint('user_id', true);
-
         $this->allowSharing = is_multisite();
 
         $this->signatureMethod = $options['lti13_signaturemethod'];
