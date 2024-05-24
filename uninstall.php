@@ -38,6 +38,7 @@ require_once (dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_S
 // check if data should be deleted on uninstall
 $options = lti_tool_get_options();
 
+$lti_tool_data_connector = DataConnector::getDataConnector($wpdb->dbh, $wpdb->base_prefix);
 $tool = new Tool($lti_tool_data_connector);
 $platforms = $tool->getPlatforms();
 foreach ($platforms as $platform) {
