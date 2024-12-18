@@ -248,7 +248,9 @@ EOD;
 
         // Clear any existing connections
         $lti_tool_session['logging_in'] = true;
-        wp_logout();
+        if (is_user_logged_in()) {
+         wp_logout();
+        }
         unset($lti_tool_session['logging_in']);
 
         // Clear these before use
