@@ -292,8 +292,8 @@ EOD;
 
     protected function init_user($user_login)
     {
-        // Check if this username, $user_login, is already defined
-        $user = get_user_by('login', $user_login);
+        // Check if this username, $user_login, is already defined as username or an existing email
+        $user = get_user_by('login', $user_login) ?: get_user_by('email', $user_login);
 
         if (empty($user)) {
             // Create username if user provisioning is on
