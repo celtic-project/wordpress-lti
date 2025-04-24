@@ -2,14 +2,14 @@
 /*
   Plugin Name: LTI Tool
   Plugin URI: http://www.spvsoftwareproducts.com/php/wordpress-lti/
-  Description: This plugin allows WordPress to be integrated as a tool with on-line courses using the 1EdTech (formerly IMS) Learning Tools Interoperability (LTI) specification.
-  Version: 3.2.4
+  Description: This plugin allows WordPress to be integrated as a tool with on-line courses using the 1EdTech Learning Tools Interoperability (LTI) specification.
+  Version: 3.2.5
   Network: true
   Requires at least: 3.0
   Requires PHP: 7.0
   Author: Simon Booth, Stephen P Vickers
   Author URI: http://www.celtic-project.org/
-  License: GPL3
+  License: GPLv3
  */
 
 /*
@@ -141,6 +141,9 @@ function lti_tool_once_wp_loaded()
             $tool = new LTI_Tool_WPTool(null);
         }
         Tool::$defaultTool = $tool;
+        if (property_exists($tool, 'allowCustomQueryParameters')) {
+            Tool::$allowCustomQueryParameters = !empty($options['customqueryparameters']);
+        }
 
         $lti_tool_data_connector = DataConnector::getDataConnector($wpdb->dbh, $wpdb->base_prefix);
     }
@@ -628,6 +631,12 @@ function lti_tool_options_init()
         'loglevel', __('Default logging level', 'lti-tool'), 'lti_tool_loglevel_callback', 'lti_tool_options_admin',
         'lti_tool_options_general_section'
     );
+    if (!isset($lti_tool_hide_options['customqueryparameters']) && property_exists(Tool::$defaultTool, 'allowCustomQueryParameters')) {
+        add_settings_field(
+            'customqueryparameters', __('Accept custom parameters in launch URL?', 'lti-tool'),
+            'lti_tool_customqueryparameters_callback', 'lti_tool_options_admin', 'lti_tool_options_general_section'
+        );
+    }
 
     add_settings_section(
         'lti_tool_options_roles_section', '', 'lti_tool_options_roles_section_info', 'lti_tool_options_admin'
@@ -741,6 +750,16 @@ function lti_tool_saveemail_callback()
     printf(
         '<input type="checkbox" name="lti_tool_options[saveemail]" id="savemeail" value="1"%s> <label for="saveemail">' . __('Check this box if email addresses should be saved in WordPress (only applies when a platforms uses a platform or global username format)',
             'lti-tool') . '</label>', (!empty($options['saveemail'])) ? ' checked' : ''
+    );
+    echo "\n";
+}
+
+function lti_tool_customqueryparameters_callback()
+{
+    $options = lti_tool_get_options();
+    printf(
+        '<input type="checkbox" name="lti_tool_options[customqueryparameters]" id="customqueryparameters" value="1"%s> <label for="customqueryparameters">' . __('Check this box to allow custom parameters to be passed by a platform in the query string of the launch URL',
+            'lti-tool') . '</label>', (!empty($options['customqueryparameters'])) ? ' checked' : ''
     );
     echo "\n";
 }

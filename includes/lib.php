@@ -755,7 +755,7 @@ function lti_tool_get_options()
             $noneLogLevel = strval(Util::LOGLEVEL_NONE);
         }
         $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => $resourceIdScope,
-            'saveemail' => '0', 'homepage' => '', 'loglevel' => $noneLogLevel,
+            'saveemail' => '0', 'homepage' => '', 'loglevel' => $noneLogLevel, 'customqueryparameters' => '0',
             'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber',
             'lti13_signaturemethod' => 'RS256', 'lti13_kid' => Util::getRandomString(), 'lti13_privatekey' => '',
             'registration_autoenable' => '0', 'registration_enablefordays' => '0');
