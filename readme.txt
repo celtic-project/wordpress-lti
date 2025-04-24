@@ -2,10 +2,10 @@
 Contributors: spb1, spvickers
 Tags: lti, 1edtech, learning tools interoperability, celtic, tool
 Requires at least: 3.0
-Tested up to: 6.5.3
+Tested up to: 6.8
 Requires PHP: 7.0
-Stable tag: 3.2.4
-License: GNU General Public License Version 3
+Stable tag: 3.2.5
+License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
 This plugin allows WordPress to be integrated as a tool with on-line courses using the 1EdTech (formerly IMS) [Learning Tools Interoperability (LTI)](https://www.imsglobal.org/activity/learning-tools-interoperability) specification.
