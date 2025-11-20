@@ -590,6 +590,7 @@ function lti_tool_delete_share($id)
 
 function lti_tool_strip_slashes()
 {
+    $_GET = stripslashes_deep($_GET);
     $_POST = stripslashes_deep($_POST);
 }
 
