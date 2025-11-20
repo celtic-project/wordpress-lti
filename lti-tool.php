@@ -59,7 +59,7 @@ require_once (dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_S
 
 function lti_tool_once_wp_loaded()
 {
-    global $wpdb, $lti_tool_data_connector;
+    global $wpdb, $lti_tool_data_connector, $celtic_lti_options;
 
     $allow = true;
     if (!empty(get_plugins('/lti'))) {  // Check for old version of plugin
@@ -129,10 +129,10 @@ function lti_tool_once_wp_loaded()
 
         // Set logging level
         $options = lti_tool_get_options();
-        if (lti_tool_use_lti_library_v5()) {
-            Util::$logLevel = LogLevel::tryFrom(intval($options['loglevel']));
-        } else {
+        if (!lti_tool_use_lti_library_v5()) {
             Util::$logLevel = intval($options['loglevel']);
+        } elseif (!isset($celtic_lti_options)) {
+            Util::$logLevel = LogLevel::tryFrom(intval($options['loglevel']));
         }
 
         // Set the default tool
@@ -812,10 +812,18 @@ function lti_tool_homepage_callback()
 
 function lti_tool_loglevel_callback()
 {
+    global $celtic_lti_options;
+
     $name = 'loglevel';
-    $options = lti_tool_get_options();
-    $current = $options[$name];
-    printf('<select name="lti_tool_options[%s]" id="%s">', esc_attr($name), esc_attr($name));
+    if (!isset($celtic_lti_options)) {
+        $options = lti_tool_get_options();
+        $current = $options[$name];
+        printf('<select name="lti_tool_options[%s]" id="%s">', esc_attr($name), esc_attr($name));
+    } else {
+        $options = celtic_lti_get_options();
+        $current = $options[$name];
+        printf('<select id="%s" disabled>', esc_attr($name));
+    }
     echo "\n";
     if (lti_tool_use_lti_library_v5()) {
         $none_loglevel = LogLevel::None;  // Avoid parse error in PHP < 8.1
@@ -833,7 +841,11 @@ function lti_tool_loglevel_callback()
         printf('  <option value="%s"%s>%s</option>', esc_attr($value), esc_attr($selected), esc_html($key));
         echo "\n";
     }
-    echo ("</select>\n");
+    if (!isset($celtic_lti_options)) {
+        echo ("</select>\n");
+    } else {
+        echo ("</select> Use the settings page for the <em>ceLTIc LTI Library</em> plugin to set this option\n");
+    }
 }
 
 function lti_tool_roles_callback($args)

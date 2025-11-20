@@ -739,7 +739,7 @@ function lti_tool_reset_session($force = false)
 
 function lti_tool_get_options()
 {
-    global $lti_tool_options;
+    global $lti_tool_options, $celtic_lti_options;
 
     if (empty($lti_tool_options)) {
         if (lti_tool_use_lti_library_v5()) {
@@ -755,10 +755,13 @@ function lti_tool_get_options()
             $noneLogLevel = strval(Util::LOGLEVEL_NONE);
         }
         $default_options = array('uninstalldb' => '0', 'uninstallblogs' => '0', 'adduser' => '0', 'mysites' => '0', 'scope' => $resourceIdScope,
-            'saveemail' => '0', 'homepage' => '', 'loglevel' => $noneLogLevel, 'customqueryparameters' => '0',
+            'saveemail' => '0', 'homepage' => '', 'customqueryparameters' => '0',
             'role_staff' => 'administrator', 'role_student' => 'author', 'role_other' => 'subscriber',
             'lti13_signaturemethod' => 'RS256', 'lti13_kid' => Util::getRandomString(), 'lti13_privatekey' => '',
             'registration_autoenable' => '0', 'registration_enablefordays' => '0');
+        if (!isset($celtic_lti_options)) {
+            $default_options['loglevel'] = $noneLogLevel;
+        }
         if (is_multisite()) {
             $options = get_site_option('lti_tool_options', array());
         } else {
