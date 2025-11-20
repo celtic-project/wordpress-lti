@@ -179,7 +179,7 @@ class LTI_Tool_List_Table extends WP_List_Table
                 } else {
                     lti_tool_delete(sanitize_text_field($lti_connectors));
                 }
-            } else if (('enable' === $this->current_action()) || ('disable' === $this->current_action())) {
+            } elseif (('enable' === $this->current_action()) || ('disable' === $this->current_action())) {
                 $enable = $this->current_action() == 'enable';
                 $lti_connectors = $_REQUEST['lti'];
                 if (is_array($lti_connectors)) {
@@ -235,7 +235,7 @@ class LTI_Tool_List_Table extends WP_List_Table
             $mouseover_dates = '';
             if (isset($lti_data[$i]->enableFrom) && ($lti_data[$i]->enableFrom > $now)) {
                 $mouseover_dates = 'From ' . date('j-M-Y H:i', $lti_data[$i]->enableFrom);
-            } else if (isset($lti_data[$i]->enableUntil)) {
+            } elseif (isset($lti_data[$i]->enableUntil)) {
                 if ($lti_data[$i]->enableUntil > $now) {
                     $mouseover_dates = 'Until ' . date('j-M-Y H:i', $lti_data[$i]->enableUntil);
                 } else {

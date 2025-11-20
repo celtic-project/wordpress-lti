@@ -103,7 +103,7 @@ class LTI_Tool_WPTool extends Tool
         $options = lti_tool_get_options();
         if (empty($options['registration_autoenable'])) {
             $successMessage = 'Note that the tool must be enabled by the tool provider before it can be used.';
-        } else if (empty($options['registration_enablefordays'])) {
+        } elseif (empty($options['registration_enablefordays'])) {
             $successMessage = 'The tool has been automatically enabled by the tool provider for immediate use.';
         } else {
             $successMessage = "The tool has been enabled for you to use for the next {$options['registration_enablefordays']} day";

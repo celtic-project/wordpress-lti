@@ -208,32 +208,32 @@ function lti_tool_parse_request($wp)
         if (isset($_GET['addplatform'])) {
             lti_tool_addplatform();
             exit;
-        } else if (isset($_GET['saveoptions'])) {
+        } elseif (isset($_GET['saveoptions'])) {
             require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'DoSaveOptions.php');
             exit;
-        } else if (isset($_GET['keys'])) {
+        } elseif (isset($_GET['keys'])) {
             require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'jwks.php');
             exit;
-        } else if (isset($_GET['icon'])) {
+        } elseif (isset($_GET['icon'])) {
             wp_redirect(plugins_url('images/wp.png', __FILE__));
             exit;
-        } else if (isset($_GET['xml'])) {
+        } elseif (isset($_GET['xml'])) {
             require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'XML.php');
             exit;
-        } else if (isset($_GET['configure'])) {
+        } elseif (isset($_GET['configure'])) {
             if (strtolower(trim(sanitize_text_field($_GET['configure']))) !== 'json') {
                 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'CanvasXML.php');
             } else {
                 require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'CanvasJSON.php');
             }
             exit;
-        } else if (isset($_GET['registration'])) {
+        } elseif (isset($_GET['registration'])) {
             require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'registration.php');
             exit;
-        } else if (isset($_GET['loading'])) {
+        } elseif (isset($_GET['loading'])) {
             wp_redirect(plugins_url('images/loading.gif', __FILE__));
             exit;
-        } else if (($_SERVER['REQUEST_METHOD'] !== 'POST') && empty($_GET['iss']) && empty($_GET['openid_configuration'])) {
+        } elseif (($_SERVER['REQUEST_METHOD'] !== 'POST') && empty($_GET['iss']) && empty($_GET['openid_configuration'])) {
             return false;
         }
 
@@ -576,7 +576,6 @@ function lti_tool_options_init()
     global $lti_tool_hide_options;
 
     $lti_tool_hide_options = apply_filters('lti_tool_hide_options', array());
-
     register_setting('lti_tool_options_settings_group', 'lti_tool_options');
     add_settings_section(
         'lti_tool_options_general_section', '', 'lti_tool_options_general_section_info', 'lti_tool_options_admin'
@@ -882,7 +881,7 @@ function lti_tool_lti13_privatekey_callback()
 {
     $options = lti_tool_get_options();
     printf(
-        '<textarea name="lti_tool_options[lti13_privatekey]" id="lti13_privatekey" rows="10" cols="70" class="code">%s</textarea>',
+        "<textarea name=\"lti_tool_options[lti13_privatekey]\" id=\"lti13_privatekey\" rows=\"10\" cols=\"70\" class=\"code\" placeholder=\"e.g.\n-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----\">%s</textarea>",
         esc_attr($options['lti13_privatekey'])
     );
     echo "\n";
@@ -1041,7 +1040,7 @@ function lti_tool_init_session($cookie_elements, $user)
 add_action('auth_cookie_valid', 'lti_tool_init_session', 10, 2);
 
 /* -------------------------------------------------------------------
- * Keep the expiration time of the session the same as the logged-in cookie
+ * Add a settings link to the plugins page
   ------------------------------------------------------------------ */
 
 function lti_tool_plugin_settings_link($links)
