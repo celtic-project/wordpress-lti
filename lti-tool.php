@@ -14,7 +14,7 @@
 
 /*
  *  wordpress-lti - Enable WordPress to act as an LTI tool
- *  Copyright (C) 2023  Simon Booth, Stephen P Vickers
+ *  Copyright (C) Simon Booth, Stephen P Vickers
  *
  *  This program is free software; you can redistribute it and/or modify
  *  it under the terms of the GNU General Public License as published by
