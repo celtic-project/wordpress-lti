@@ -60,7 +60,7 @@ function lti_tool_create_xml_root($dom, $name)
     return $root;
 }
 
-function lti_tool_add_xml_element($dom, $parent, $namespace, $name, $value = null, $attributes = array())
+function lti_tool_add_xml_element($dom, $parent, $namespace, $name, $value = '', $attributes = array())
 {
     global $lti_tool_namespaces, $lti_tool_schemas;
 
@@ -105,7 +105,7 @@ lti_tool_add_xml_element($dom, $root, 'blti', 'launch_url', $siteurl);
 $custom = lti_tool_add_xml_element($dom, $root, 'blti', 'custom');
 lti_tool_add_xml_element($dom, $custom, 'lticm', 'property', '$User.username', array('name' => 'username'));
 
-$extensions = lti_tool_add_xml_element($dom, $root, 'blti', 'extensions', null, array('platform' => 'canvas.instructure.com'));
+$extensions = lti_tool_add_xml_element($dom, $root, 'blti', 'extensions', '', array('platform' => 'canvas.instructure.com'));
 lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', 'wordpress', array('name' => 'tool_id'));
 lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', 'public', array('name' => 'privacy_level'));
 lti_tool_add_xml_element($dom, $extensions, 'lticm', 'property', $domain, array('name' => 'domain'));
