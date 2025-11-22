@@ -532,11 +532,11 @@ function lti_tool_allow_ms_parent_redirect($allowed)
  * Update the logout url if the platform has provided.
   ------------------------------------------------------------------ */
 
-function lti_tool_set_logout_url($logout_url)
+function lti_tool_set_logout_url($logout_url, $redirect)
 {
     global $lti_tool_session;
 
-    if (isset($lti_tool_session['key']) && !empty($lti_tool_session['return_url'])) {
+    if (!empty($lti_tool_session['return_url'])) {
         $tool_name = (!empty($lti_tool_session['tool_name'])) ? $lti_tool_session['tool_name'] : 'WordPress';
         $urlencode = '&redirect_to=' . urlencode($lti_tool_session['return_url'] .
                 'lti_msg=' . urlencode(__("You have been logged out of {$tool_name}", 'lti-tool')));
@@ -547,7 +547,7 @@ function lti_tool_set_logout_url($logout_url)
 }
 
 // Use platform URL if provided instead of usual.
-add_filter('logout_url', 'lti_tool_set_logout_url');
+add_filter('logout_url', 'lti_tool_set_logout_url', 10, 2);
 
 /* -------------------------------------------------------------------
  * Update the logout link name.
