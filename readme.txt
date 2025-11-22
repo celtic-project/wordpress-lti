@@ -4,7 +4,7 @@ Tags: lti, 1edtech, learning tools interoperability, celtic, tool
 Requires at least: 3.0
 Tested up to: 6.8
 Requires PHP: 7.0
-Stable tag: 3.2.5
+Stable tag: 3.2.6
 License: GPLv3
 License URI: https://www.gnu.org/licenses/gpl-3.0.html
 
