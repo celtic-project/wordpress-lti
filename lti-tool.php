@@ -125,14 +125,16 @@ function lti_tool_once_wp_loaded()
             unset($_GET['activate']);
         }
     } else {
-        // Set cookie options
-        ini_set('session.cookie_httponly', true);
-        if (wp_is_using_https()) {
-            ini_set('session.cookie_secure', true);
-            ini_set('session.cookie_samesite', 'None; Partitioned');
-        } else {
-            ini_set('session.cookie_secure', false);
-            ini_set('session.cookie_samesite', 'Lax');
+        if (empty(session_id())) {
+            // Set cookie options
+            ini_set('session.cookie_httponly', true);
+            if (wp_is_using_https()) {
+                ini_set('session.cookie_secure', true);
+                ini_set('session.cookie_samesite', 'None; Partitioned');
+            } else {
+                ini_set('session.cookie_secure', false);
+                ini_set('session.cookie_samesite', 'Lax');
+            }
         }
 
         require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'WPTool.php');
@@ -475,6 +477,32 @@ function lti_tool_platforms()
         $per_page = $screen->get_option('per_page', 'default');
     }
 
+    $secureSetting = ini_get('session.cookie_secure');
+    $samesiteSetting = ini_get('session.cookie_samesite');
+    if (wp_is_using_https()) {
+        if (!$secureSetting) {
+            add_settings_error('lti-tool', 'cookie_secure',
+                __('It is strongly recommended that the PHP \'session.cookie_secure\' setting is set to \'true\' to help avoid browser security issues when processing LTI messages.',
+                    'lti-tool'), 'warning');
+        }
+        if (!str_starts_with(strtolower($samesiteSetting), 'none')) {
+            add_settings_error('lti-tool', 'cookie_samesite',
+                __('It is strongly recommended that the PHP \'session.cookie_samesite\' setting is set to \'None\' to help avoid browser security issues when processing LTI messages.',
+                    'lti-tool'), 'warning');
+        }
+    } else {
+        if ($secureSetting) {
+            add_settings_error('lti-tool', 'cookie_secure',
+                __('It is strongly recommended that the PHP \'session.cookie_secure\' setting is set to \'false\' to help avoid browser security issues when processing LTI messages.',
+                    'lti-tool'), 'warning');
+        }
+        if (strtolower($samesiteSetting) !== 'lax') {
+            add_settings_error('lti-tool', 'cookie_samesite',
+                __('It is strongly recommended that the PHP \'session.cookie_samesite\' setting is set to \'Lax\' to help avoid browser security issues when processing LTI messages.',
+                    'lti-tool'), 'warning');
+        }
+    }
+
     $lti = new LTI_Tool_List_Table($per_page);
     $lti->prepare_items();
     ?>
@@ -489,6 +517,9 @@ function lti_tool_platforms()
            _e('Add New', 'lti-tool');
            ?></a>
       <hr class="wp-header-end">
+
+      <?php settings_errors(); ?>
+
       <p>
         <?php echo __('Launch URL, Initiate Login URL, Redirection URI, Dynamic Registration URL: ', 'lti-tool') . '<b>' . esc_html(get_option('siteurl')) . '/?lti-tool</b><br>'; ?>
         <?php echo __('Public Keyset URL: ', 'lti-tool') . '<b>' . esc_html(get_option('siteurl')) . '/?lti-tool&keys</b><br>'; ?>
