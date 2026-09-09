@@ -3,7 +3,7 @@
   Plugin Name: LTI Tool
   Plugin URI: http://www.spvsoftwareproducts.com/php/wordpress-lti/
   Description: This plugin allows WordPress to be integrated as a tool with on-line courses using the 1EdTech Learning Tools Interoperability (LTI) specification.
-  Version: 3.2.6
+  Version: 3.2.7
   Network: true
   Requires at least: 3.0
   Requires PHP: 7.0
@@ -125,6 +125,16 @@ function lti_tool_once_wp_loaded()
             unset($_GET['activate']);
         }
     } else {
+        // Set cookie options
+        ini_set('session.cookie_httponly', true);
+        if (wp_is_using_https()) {
+            ini_set('session.cookie_secure', true);
+            ini_set('session.cookie_samesite', 'None; Partitioned');
+        } else {
+            ini_set('session.cookie_secure', false);
+            ini_set('session.cookie_samesite', 'Lax');
+        }
+
         require_once(dirname(__FILE__) . DIRECTORY_SEPARATOR . 'includes' . DIRECTORY_SEPARATOR . 'WPTool.php');
 
         // Set logging level
